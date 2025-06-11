@@ -10,6 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToOne;
 import kr.kro.airbob.common.BaseEntity;
 import kr.kro.airbob.domain.accommodation.common.AccommodationType;
+import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest;
 import kr.kro.airbob.domain.member.Member;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -47,4 +48,18 @@ public class Accommodation extends BaseEntity {
 
 	@OneToOne(fetch = FetchType.LAZY)
 	private Member member;
+
+	public static Accommodation createAccommodation(AccommodationRequest.CreateAccommodationDto request,
+													Address address, OccupancyPolicy occupancyPolicy, Member member) {
+		return Accommodation.builder()
+				.name(request.getName())
+				.description(request.getDescription())
+				.basePrice(request.getBasePrice())
+				.thumbnailUrl(request.getThumbnail_url())
+				.type(AccommodationType.valueOf(request.getType()))
+				.address(address)
+				.occupancyPolicy(occupancyPolicy)
+				.member(member)
+				.build();
+	}
 }

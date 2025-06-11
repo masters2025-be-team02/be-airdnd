@@ -5,6 +5,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import kr.kro.airbob.common.BaseEntity;
+import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -30,4 +31,16 @@ public class Address extends BaseEntity {
 	private Integer postalCode;
 	private Double latitude;
 	private Double longitude;
+
+	public static Address createAddress(AccommodationRequest.AddressInfo addressInfo) {
+		// todo 위도, 경도 계산 로직 추가
+		return Address.builder()
+				.country(addressInfo.getCountry())
+				.city(addressInfo.getCity())
+				.district(addressInfo.getDistrict())
+				.street(addressInfo.getStreet())
+				.detail(addressInfo.getDetail())
+				.postalCode(addressInfo.getPostalCode())
+				.build();
+	}
 }

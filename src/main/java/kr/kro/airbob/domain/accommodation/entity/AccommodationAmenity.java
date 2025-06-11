@@ -25,6 +25,8 @@ public class AccommodationAmenity extends BaseEntity {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
+	private Integer count;
+
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "accommodation_id")
 	private Accommodation accommodation;
@@ -32,4 +34,13 @@ public class AccommodationAmenity extends BaseEntity {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "amenity_id")
 	private Amenity amenity;
+
+	public static AccommodationAmenity createAccommodationAmenity(Accommodation accommodation, Amenity amenity, int count) {
+		return AccommodationAmenity.builder()
+				.accommodation(accommodation)
+				.amenity(amenity)
+				.count(count)
+				.build();
+	}
+
 }

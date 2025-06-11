@@ -23,9 +23,4 @@ public class Amenity extends BaseEntity {
 	private Long id;
 
 	private String name;
-	private Integer count;
-
-
-
-
 }
