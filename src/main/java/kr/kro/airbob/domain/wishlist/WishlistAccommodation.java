@@ -8,8 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import kr.kro.airbob.common.BaseEntity;
-import kr.kro.airbob.domain.accommodation.entity.Accommodation;
-import kr.kro.airbob.domain.member.Member;
+import kr.kro.airbob.domain.accommodation.Accommodation;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,15 +20,19 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Wishlist extends BaseEntity {
+public class WishlistAccommodation extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	private String name;
+	private String memo;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "member_id")
-	private Member member;
+	@JoinColumn(name = "wishlist_id")
+	private Wishlist wishlist;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "accommodation_id")
+	private Accommodation accommodation;
 }
