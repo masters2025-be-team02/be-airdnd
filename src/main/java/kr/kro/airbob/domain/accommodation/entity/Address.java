@@ -1,4 +1,4 @@
-package kr.kro.airbob.domain.accommodation;
+package kr.kro.airbob.domain.accommodation.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -16,16 +16,18 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Amenity extends BaseEntity {
+public class Address extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	private String name;
-	private Integer count;
-
-
-
-
+	private String country;
+	private String city;
+	private String district;
+	private String street;
+	private String detail;
+	private Integer postalCode;
+	private Double latitude;
+	private Double longitude;
 }

@@ -1,4 +1,4 @@
-package kr.kro.airbob.domain.accommodation;
+package kr.kro.airbob.domain.accommodation.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
