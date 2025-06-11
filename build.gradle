@@ -18,6 +18,7 @@ configurations {
 	compileOnly {
 		extendsFrom annotationProcessor
 	}
+	asciidoctorExt
 }
 
 repositories {
@@ -25,7 +26,7 @@ repositories {
 }
 
 ext {
-	set('snippetsDir', file("build/generated-snippets"))
+	snippetsDir = layout.buildDirectory.dir("generated-snippets").get().asFile
 }
 
 dependencies {
@@ -61,7 +62,76 @@ tasks.named('test') {
 	useJUnitPlatform()
 }
 
-tasks.named('asciidoctor') {
-	inputs.dir snippetsDir
-	dependsOn test
+
+tasks.register('copyDocument', Copy) {
+	dependsOn asciidoctor
+
+	from file("build/docs/asciidoc/")
+	into file("src/main/resources/static/docs")
 }
+
+build {
+	dependsOn copyDocument
+	dependsOn asciidoctor
+}
+
+tasks.register('generateAdoc') {
+	dependsOn test
+	doLast {
+		def dir = layout.buildDirectory.dir("generated-snippets").get().asFile
+		def adocDir = file("src/docs/asciidoc/generated")
+
+		if (!adocDir.exists()) {
+			adocDir.mkdirs()
+		}
+
+		def indexFile = file("src/docs/asciidoc/index.adoc")
+		def content = new StringBuilder()
+
+		content << "= Airbob REST API 문서\n"
+		content << ":toc: left\n"
+		content << ":toclevels: 2\n"
+		content << ":sectnums:\n\n"
+		content << "== API 문서 목록\n\n"
+
+		dir.listFiles()?.each { snippetDir ->
+			def snippetName = snippetDir.name
+			def adocFile = new File(adocDir, "${snippetName}.adoc")
+
+			def includes = new StringBuilder()
+			includes << "=== ${snippetName}\n\n"
+
+			def parts = ["http-request", "http-response", "request-fields", "response-fields", "path-parameters", "request-parameters", "response-headers"]
+
+			parts.each { part ->
+				def fileToInclude = new File(snippetDir, "${part}.adoc")
+				if (fileToInclude.exists()) {
+					includes << "include::{snippets}/${snippetName}/${part}.adoc[]\n"
+				}
+			}
+
+			adocFile.text = includes.toString()
+
+			// index.adoc에 포함되도록 추가
+			content << "include::{generated}/${snippetName}.adoc[]\n\n"
+		}
+
+		indexFile.text = content.toString()
+	}
+}
+
+
+asciidoctor {
+	dependsOn generateAdoc
+	sourceDir = file('src/docs/asciidoc')
+	sources {
+		include 'index.adoc'
+	}
+	outputDir = layout.buildDirectory.dir("docs/asciidoc").get().asFile
+	attributes(
+			'snippets': snippetsDir,
+			'generated': file('src/docs/asciidoc/generated')
+	)
+}
+
+
