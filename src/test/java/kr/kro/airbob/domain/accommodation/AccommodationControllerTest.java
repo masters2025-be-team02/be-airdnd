@@ -49,7 +49,7 @@ class AccommodationControllerTest {
                 .basePrice(50000)
                 .hostId(1L)
                 .thumbnail_url("http://example.com/image.jpg")
-                .type(AccommodationType.HOUSE)
+                .type("house")
                 .addressInfo(AddressInfo.builder()
                         .postalCode(12345)
                         .city("서울")
