@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 
 import kr.kro.airbob.common.exception.MemberNotFoundException;
 import kr.kro.airbob.domain.member.Member;
+import kr.kro.airbob.domain.member.MemberRepository;
 import kr.kro.airbob.domain.wishlist.dto.WishlistDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +27,7 @@ public class WishlistService {
 			.member(member)
 			.build();
 
-		Long id = wishlistRepository.save(wishlist);
-		return new WishlistDto.createResponse(id);
+		Wishlist savedWishlist = wishlistRepository.save(wishlist);
+		return new WishlistDto.createResponse(savedWishlist.getId());
 	}
 }
