@@ -23,7 +23,6 @@ import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDoc
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.restdocs.RestDocumentationContextProvider;
-import org.springframework.restdocs.mockmvc.RestDocumentationResultHandler;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -47,16 +46,9 @@ class AccommodationControllerTest {
 
     @Autowired
     private WebApplicationContext context;
-    private RestDocumentationResultHandler document;
 
     @BeforeEach
     void setUp(RestDocumentationContextProvider restDocumentation) {
-        this.document = document(
-                "{class-name}/{method-name}",
-                preprocessRequest(prettyPrint()),
-                preprocessResponse(prettyPrint())
-        );
-
         this.mockMvc = MockMvcBuilders
                 .webAppContextSetup(context)
                 .apply(documentationConfiguration(restDocumentation)
