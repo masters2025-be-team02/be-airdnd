@@ -93,9 +93,14 @@ tasks.register('generateAdoc') {
 		def content = new StringBuilder()
 
 		content << "= Airbob REST API 문서\n"
+		content << ":doctype: book\n"
 		content << ":toc: left\n"
 		content << ":toclevels: 2\n"
-		content << ":sectnums:\n\n"
+		content << ":sectnums:\n"
+		content << ":icons: font\n"
+		content << ":source-highlighter: highlightjs\n"
+		content << ":highlightjs-theme: github\n"
+		content << ":docinfo1:\n\n"
 		content << "== API 문서 목록\n\n"
 
 		dir.listFiles()?.each { snippetDir ->
@@ -105,12 +110,23 @@ tasks.register('generateAdoc') {
 			def includes = new StringBuilder()
 			includes << "=== ${snippetName}\n\n"
 
-			def parts = ["http-request", "http-response", "request-fields", "response-fields", "path-parameters", "request-parameters", "response-headers"]
+			def descriptions = [
+					"http-request": "요청 예시",
+					"http-response": "응답 예시",
+					"request-fields": "요청 필드 설명",
+					"response-fields": "응답 필드 설명",
+					"path-parameters": "경로 변수 설명",
+					"request-parameters": "요청 파라미터 설명",
+					"response-headers": "응답 헤더 설명"
+			]
 
-			parts.each { part ->
+			descriptions.each { part, desc ->
+				includes << "==== ${desc}\n"
 				def fileToInclude = new File(snippetDir, "${part}.adoc")
 				if (fileToInclude.exists()) {
-					includes << "include::{snippets}/${snippetName}/${part}.adoc[]\n"
+					includes << "include::{snippets}/${snippetName}/${part}.adoc[]\n\n"
+				} else {
+					includes << "_해당 정보가 없습니다._\n\n"
 				}
 			}
 
