@@ -39,11 +39,17 @@ public class AccommodationService {
         Member member = memberRepository.findById(request.getHostId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
 
-        OccupancyPolicy occupancyPolicy = OccupancyPolicy.createOccupancyPolicy(request.getOccupancyPolicyInfo());
-        occupancyPolicyRepository.save(occupancyPolicy);
+        OccupancyPolicy occupancyPolicy = null;
+        if (request.getOccupancyPolicyInfo() != null) {
+            occupancyPolicy = OccupancyPolicy.createOccupancyPolicy(request.getOccupancyPolicyInfo());
+            occupancyPolicyRepository.save(occupancyPolicy);
+        }
 
-        Address address = Address.createAddress(request.getAddressInfo());
-        addressRepository.save(address);
+        Address address = null;
+        if (request.getAddressInfo() != null) {
+            address = Address.createAddress(request.getAddressInfo());
+            addressRepository.save(address);
+        }
 
         Accommodation accommodation = Accommodation.createAccommodation(request, address, occupancyPolicy, member);
         Accommodation savedAccommodation = accommodationRepository.save(accommodation);
@@ -65,8 +71,7 @@ public class AccommodationService {
     private void saveAccommodationAmenity(Accommodation savedAccommodation, List<Amenity> amenities,
                            Map<AmenityType, Integer> amenityCountMap) {
         for (Amenity amenity : amenities) {
-            AmenityType type = AmenityType.valueOf(amenity.getName().toUpperCase());
-            int count = amenityCountMap.get(type);
+            int count = amenityCountMap.get(amenity.getName());
 
             AccommodationAmenity accommodationAmenity = AccommodationAmenity.createAccommodationAmenity(
                     savedAccommodation, amenity, count);

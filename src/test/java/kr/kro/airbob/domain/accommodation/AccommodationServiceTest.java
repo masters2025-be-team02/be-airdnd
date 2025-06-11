@@ -75,8 +75,8 @@ class AccommodationServiceTest {
 
         List<AmenityInfo> amenityInfos = List.of(wifiInfo, tvInfo);
 
-        Amenity wifiAmenity = Amenity.builder().id(1L).name("WIFI").build();
-        Amenity tvAmenity = Amenity.builder().id(2L).name("TV").build();
+        Amenity wifiAmenity = Amenity.builder().id(1L).name(AmenityType.WIFI).build();
+        Amenity tvAmenity = Amenity.builder().id(2L).name(AmenityType.TV).build();
 
         given(request.getHostId()).willReturn(hostId);
         given(memberRepository.findById(hostId)).willReturn(Optional.of(host));
@@ -115,7 +115,7 @@ class AccommodationServiceTest {
 
         List<AccommodationAmenity> savedAmenities = captor.getAllValues();
         Map<String, Integer> countMap = savedAmenities.stream()
-                .collect(Collectors.toMap(a -> a.getAmenity().getName(), AccommodationAmenity::getCount));
+                .collect(Collectors.toMap(a -> a.getAmenity().getName().toString(), AccommodationAmenity::getCount));
 
         assertEquals(2, countMap.get("WIFI"));
         assertEquals(1, countMap.get("TV"));
