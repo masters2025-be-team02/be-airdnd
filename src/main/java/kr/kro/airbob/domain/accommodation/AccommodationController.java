@@ -21,9 +21,9 @@ public class AccommodationController {
 
     @PostMapping
     public ResponseEntity<Map<String, Long>> registerAccommodation(@RequestBody @Valid AccommodationRequest.CreateAccommodationDto request){
-        Accommodation accommodation = accommodationService.createAccommodation(request);
+        Long savedAccommodationId = accommodationService.createAccommodation(request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(Map.of("id", accommodation.getId()));
+                .body(Map.of("id", savedAccommodationId));
     }
 }
 

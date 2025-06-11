@@ -77,7 +77,7 @@ class AccommodationControllerTest {
                 .build();
 
         given(accommodationService.createAccommodation(any()))
-                .willReturn(Accommodation.builder().id(1L).build());
+                .willReturn(1L);
 
         // when & then
         mockMvc.perform(post("/api/accommodations")
