@@ -1,18 +1,10 @@
 ---
-name: Bug report
-about: Create a report to help us improve
+name: "\U0001F41B Bug Report"
+about: 버그를 발견했을 때 사용합니다
 title: "[Bug]"
 labels: bug
 assignees: ''
 
----
-
----
-name: 🐛 Bug Report
-about: 버그를 발견했을 때 사용합니다.
-title: "[Bug] "
-labels: ["bug"]
-assignees: []
 ---
 
 ## 🐞 버그 설명

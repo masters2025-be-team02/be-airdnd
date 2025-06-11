@@ -1,18 +1,10 @@
 ---
-name: Feature request
-about: Suggest an idea for this project
+name: "✨Feature Request"
+about: 새로운 기능이나 개선 사항을 제안합니다.
 title: "[Feat]"
 labels: feat
 assignees: ''
 
----
-
----
-name: :sparkles: Feature Request
-about: 새로운 기능이나 개선 사항을 제안합니다.
-title: "[Feat] "
-labels: ["feature", "needs-triage"]
-assignees: []
 ---
 
 ## :dart: 목적
