@@ -77,3 +77,15 @@ jacoco.exec
 *.local
 *.key
 *.pem
+
+# Gradle build info (추가)
+.gradle/
+
+# Generated AsciiDoc files
+src/docs/asciidoc/generated/
+
+# Static build output
+src/main/resources/static/
+
+# Flyway migration lock
+flyway_schema_history.lock
