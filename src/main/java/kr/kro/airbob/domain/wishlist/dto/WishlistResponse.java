@@ -15,4 +15,15 @@ public class WishlistResponse {
 				'}';
 		}
 	}
+
+	public record updateResponse(
+		long id
+	) {
+		@Override
+		public String toString() {
+			return "updateResponse{" +
+				"id=" + id +
+				'}';
+		}
+	}
 }

@@ -20,4 +20,17 @@ public class WishlistRequest {
 				'}';
 		}
 	}
+
+	public record updateRequest(
+		@NotBlank(message = "위시리스트 이름은 공백일 수 없습니다.")
+		@Size(max = 255)
+		String name
+	) {
+		@Override
+		public String toString() {
+			return "updateRequest{" +
+				"name='" + name + '\'' +
+				'}';
+		}
+	}
 }

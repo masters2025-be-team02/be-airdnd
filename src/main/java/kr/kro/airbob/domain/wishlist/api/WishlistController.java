@@ -32,4 +32,14 @@ public class WishlistController {
 		log.info(response.toString());
 		return ResponseEntity.ok(response);
 	}
+
+	@PatchMapping("/members/wishlists/{wishlistId}")
+	public ResponseEntity<WishlistResponse.updateResponse> updateWishlist(
+		@PathVariable Long wishlistId,
+		@Valid @RequestBody WishlistRequest.updateRequest request){
+		log.info(request.toString());
+		WishlistResponse.updateResponse response = wishlistService.updateWishlist(wishlistId, request, TEMP_LOGGED_IN_MEMBER_ID);
+		log.info(response.toString());
+		return ResponseEntity.ok(response);
+	}
 }
