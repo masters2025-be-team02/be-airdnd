@@ -1,5 +1,6 @@
 package kr.kro.airbob.domain.accommodation;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -70,18 +71,22 @@ public class AccommodationService {
 
     private void saveAccommodationAmenity(Accommodation savedAccommodation, List<Amenity> amenities,
                            Map<AmenityType, Integer> amenityCountMap) {
+
+        List<AccommodationAmenity> accommodationAmenityList = new ArrayList<>();
         for (Amenity amenity : amenities) {
             int count = amenityCountMap.get(amenity.getName());
 
             AccommodationAmenity accommodationAmenity = AccommodationAmenity.createAccommodationAmenity(
                     savedAccommodation, amenity, count);
-            accommodationAmenityRepository.save(accommodationAmenity);
+            accommodationAmenityList.add(accommodationAmenity);
         }
+        accommodationAmenityRepository.saveAll(accommodationAmenityList);
     }
 
     private Map<AmenityType, Integer> getAmenityCountMap(CreateAccommodationDto request) {
         return request.getAmenityInfos().stream()
                 .filter(info -> AmenityType.isValid(info.getName()))
+                .filter(info -> info.getCount() > 0)
                 .collect(Collectors.toMap(
                         info -> AmenityType.valueOf(info.getName().toUpperCase()),
                         AmenityInfo::getCount,

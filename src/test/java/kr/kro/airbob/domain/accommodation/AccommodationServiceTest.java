@@ -110,10 +110,10 @@ class AccommodationServiceTest {
         verify(addressRepository).save(any());
         verify(accommodationRepository).save(any());
 
-        ArgumentCaptor<AccommodationAmenity> captor = ArgumentCaptor.forClass(AccommodationAmenity.class);
-        verify(accommodationAmenityRepository, times(2)).save(captor.capture());
+        ArgumentCaptor<List<AccommodationAmenity>> captor = ArgumentCaptor.forClass(List.class);
+        verify(accommodationAmenityRepository, times(1)).saveAll(captor.capture());
 
-        List<AccommodationAmenity> savedAmenities = captor.getAllValues();
+        List<AccommodationAmenity> savedAmenities = captor.getValue();
         Map<String, Integer> countMap = savedAmenities.stream()
                 .collect(Collectors.toMap(a -> a.getAmenity().getName().toString(), AccommodationAmenity::getCount));
 
@@ -133,5 +133,96 @@ class AccommodationServiceTest {
         assertThatThrownBy(() -> accommodationService.createAccommodation(request))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("존재하지 않는 회원입니다.");
+    }
+
+
+    @Test
+    @DisplayName("DB에 사전에 등록되지 않은 어메니티는 등록할 수 없다.")
+    void ignoresInvalidAmenityNames() {
+        // given
+        List<AmenityInfo> amenities = List.of(
+                new AmenityInfo("WIFI", 1),
+                new AmenityInfo("UNKNOWN", 1),
+                new AmenityInfo("POOL", 1)
+        );
+
+        CreateAccommodationDto request = CreateAccommodationDto.builder()
+                .hostId(1L)
+                .amenityInfos(amenities)
+                .type("HOTEL_ROOM")
+                .build();
+
+        Member member = Member.builder()
+                .id(1L)
+                .nickname("testMember")
+                .build();
+        given(memberRepository.findById(1L)).willReturn(Optional.of(member));
+
+        List<Amenity> amenityList = List.of(
+                Amenity.builder().id(1L).name(AmenityType.WIFI).build(),
+                Amenity.builder().id(2L).name(AmenityType.POOL).build());
+        given(amenityRepository.findByNameIn(any())).willReturn(amenityList);
+
+        Accommodation accommodation = Accommodation.builder().id(1L).build();
+        given(accommodationRepository.save(any())). willReturn(accommodation);
+
+        ArgumentCaptor<List<AccommodationAmenity>> captor = ArgumentCaptor.forClass(List.class);
+
+        // when
+        accommodationService.createAccommodation(request);
+
+        // then
+        verify(accommodationAmenityRepository).saveAll(captor.capture());
+
+        List<AccommodationAmenity> saved = captor.getValue();
+        List<AmenityType> types = saved.stream()
+                .map(AccommodationAmenity::getAmenity)
+                .map(Amenity::getName)
+                .toList();
+
+        assertThat(types).containsExactlyInAnyOrder(AmenityType.WIFI, AmenityType.POOL);
+        assertThat(types).doesNotContain(AmenityType.UNKNOWN);
+    }
+
+    @Test
+    @DisplayName("어메니티 갯수가 0개 이하면 저장되지 않는다 ")
+    void ignoresAmenitiesWithNonPositiveCount() {
+        // given
+        List<AmenityInfo> amenities = List.of(
+                new AmenityInfo("WIFI", 1),
+                new AmenityInfo("POOL", 0),       // 무시됨
+                new AmenityInfo("PARKING", -1)    // 무시됨
+        );
+        CreateAccommodationDto request = CreateAccommodationDto.builder()
+                .hostId(1L)
+                .amenityInfos(amenities)
+                .type("HOTEL_ROOM")
+                .build();
+
+        Member member = Member.builder()
+                .id(1L)
+                .nickname("testMember")
+                .build();
+        given(memberRepository.findById(1L)).willReturn(Optional.of(member));
+
+        given(amenityRepository.findByNameIn(Set.of(AmenityType.WIFI)))
+                .willReturn(List.of(Amenity.builder().id(1L).name(AmenityType.WIFI).build()));
+
+        Accommodation accommodation = Accommodation.builder().id(1L).build();
+        given(accommodationRepository.save(any())). willReturn(accommodation);
+
+        // when
+        accommodationService.createAccommodation(request);
+
+        // then
+        ArgumentCaptor<List<AccommodationAmenity>> captor = ArgumentCaptor.forClass(List.class);
+        verify(accommodationAmenityRepository).saveAll(captor.capture());
+
+        List<AccommodationAmenity> savedAmenities = captor.getValue();
+        assertThat(savedAmenities)
+                .hasSize(1)
+                .extracting(AccommodationAmenity::getAmenity)
+                .extracting(Amenity::getName)
+                .containsOnly(AmenityType.WIFI);
     }
 }

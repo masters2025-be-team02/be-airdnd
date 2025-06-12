@@ -30,12 +30,13 @@ public enum AmenityType {
     PETS_ALLOWED,       // 반려동물 허용
     OUTDOOR_SPACE,      // 야외 공간
     BBQ_GRILL,          // 바베큐 그릴
-    BALCONY;             // 발코니
+    BALCONY,             // 발코니
+    UNKNOWN;
 
     public static boolean isValid(String name) {
         if (name == null) return false;
         try {
-            AmenityType.valueOf(name.toUpperCase()); // 대소문자 구분 피하려면 toUpperCase()
+            AmenityType.valueOf(name.toUpperCase());
             return true;
         } catch (IllegalArgumentException e) {
             return false;
