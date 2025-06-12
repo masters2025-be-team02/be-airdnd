@@ -9,6 +9,9 @@ import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.docu
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.documentationConfiguration;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.*;
+import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
+import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -73,7 +76,7 @@ class AccommodationControllerTest {
                 .basePrice(50000)
                 .hostId(1L)
                 .thumbnail_url("http://example.com/image.jpg")
-                .type("house")
+                .type("VILLA")
                 .addressInfo(AddressInfo.builder()
                         .postalCode(12345)
                         .city("서울")
@@ -83,7 +86,7 @@ class AccommodationControllerTest {
                         .street("테헤란로")
                         .build())
                 .amenityInfos(List.of(
-                        AmenityInfo.builder().name("bed").count(2).build(),
+                        AmenityInfo.builder().name("bed_linens").count(2).build(),
                         AmenityInfo.builder().name("parking").count(1).build()
                 ))
                 .occupancyPolicyInfo(OccupancyPolicyInfo.builder()
@@ -131,6 +134,69 @@ class AccommodationControllerTest {
                         ),
                         responseFields(
                                 fieldWithPath("id").type(NUMBER).description("생성된 숙소 ID")
+                        )
+                ));
+    }
+
+    @Test
+    void updateAccommodationTest() throws Exception {
+        Long accommodationId = 1L;
+
+        UpdateAccommodationDto request = UpdateAccommodationDto.builder()
+                .name("테스트 수정 숙소")
+                .description("나쁘지 않은 숙소입니다.")
+                .basePrice(500000)
+                .type("VILLA")
+                .addressInfo(AddressInfo.builder()
+                        .postalCode(33333)
+                        .city("서울")
+                        .country("대한민국")
+                        .detail("상세주소")
+                        .district("성북구")
+                        .street("테스트로")
+                        .build())
+                .amenityInfos(List.of(
+                        AmenityInfo.builder().name("bed_linens").count(2).build(),
+                        AmenityInfo.builder().name("parking").count(1).build()
+                ))
+                .occupancyPolicyInfo(OccupancyPolicyInfo.builder()
+                        .maxOccupancy(6)
+                        .adultOccupancy(4)
+                        .childOccupancy(1)
+                        .infantOccupancy(1)
+                        .petOccupancy(0)
+                        .build())
+                .build();
+
+        mockMvc.perform(patch("/api/accommodations/{accommodationId}", accommodationId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andDo(document("update-accommodation",
+                        pathParameters(
+                                parameterWithName("accommodationId").description("수정할 숙소의 ID")
+                        ),
+                        requestFields(
+                                fieldWithPath("name").description("숙소 이름").optional(),
+                                fieldWithPath("description").description("숙소 설명").optional(),
+                                fieldWithPath("basePrice").description("기본 가격").optional(),
+                                fieldWithPath("addressInfo").description("주소 정보").optional(),
+                                fieldWithPath("addressInfo.postalCode").description("우편번호").optional(),
+                                fieldWithPath("addressInfo.city").description("도시").optional(),
+                                fieldWithPath("addressInfo.country").description("국가").optional(),
+                                fieldWithPath("addressInfo.detail").description("상세 주소").optional(),
+                                fieldWithPath("addressInfo.district").description("구/군").optional(),
+                                fieldWithPath("addressInfo.street").description("거리").optional(),
+                                fieldWithPath("occupancyPolicyInfo").description("숙박 정책 정보").optional(),
+                                fieldWithPath("occupancyPolicyInfo.maxOccupancy").description("최대 수용 인원").optional(),
+                                fieldWithPath("occupancyPolicyInfo.adultOccupancy").description("성인 수용 인원").optional(),
+                                fieldWithPath("occupancyPolicyInfo.childOccupancy").description("어린이 수용 인원").optional(),
+                                fieldWithPath("occupancyPolicyInfo.infantOccupancy").description("유아 수용 인원").optional(),
+                                fieldWithPath("occupancyPolicyInfo.petOccupancy").description("반려동물 수용 인원").optional(),
+                                fieldWithPath("amenityInfos").description("편의 시설 리스트").optional(),
+                                fieldWithPath("amenityInfos[].name").description("편의 시설 이름").optional(),
+                                fieldWithPath("amenityInfos[].count").description("편의 시설 개수").optional(),
+                                fieldWithPath("type").description("숙소 타입 (예: HOTEL, GUESTHOUSE 등)").optional()
                         )
                 ));
     }
