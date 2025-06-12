@@ -8,5 +8,11 @@ public class WishlistResponse {
 	public record createResponse(
 		long id
 	) {
+		@Override
+		public String toString() {
+			return "createResponse{" +
+				"id=" + id +
+				'}';
+		}
 	}
 }

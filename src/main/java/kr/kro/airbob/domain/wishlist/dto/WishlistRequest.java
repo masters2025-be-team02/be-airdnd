@@ -13,5 +13,11 @@ public class WishlistRequest {
 		@Size(max = 255)
 		String name
 	) {
+		@Override
+		public String toString() {
+			return "createRequest{" +
+				"name='" + name + '\'' +
+				'}';
+		}
 	}
 }
