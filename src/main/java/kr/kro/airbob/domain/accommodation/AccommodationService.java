@@ -114,7 +114,7 @@ public class AccommodationService {
             accommodation.updateOccupancyPolicy(savedOccupancyPolicy);
         }
 
-        if (!request.getAmenityInfos().isEmpty()){
+        if (request.getAmenityInfos() != null && !request.getAmenityInfos().isEmpty()){
             accommodationAmenityRepository.deleteAllByAccommodationId(accommodationId);
             saveValidAmenities(request.getAmenityInfos(), accommodation);
         }

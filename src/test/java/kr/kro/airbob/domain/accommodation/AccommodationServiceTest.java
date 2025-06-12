@@ -16,6 +16,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import kr.kro.airbob.domain.accommodation.common.AccommodationType;
 import kr.kro.airbob.domain.accommodation.common.AmenityType;
+import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest;
 import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest.AddressInfo;
 import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest.AmenityInfo;
 import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest.CreateAccommodationDto;
@@ -35,6 +36,8 @@ import kr.kro.airbob.domain.member.MemberRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -225,4 +228,140 @@ class AccommodationServiceTest {
                 .extracting(Amenity::getName)
                 .containsOnly(AmenityType.WIFI);
     }
+
+    @Test
+    @DisplayName("모든 정보가 정상적으로 주어졌을 때 Accommodation, Address, OccupancyPolicy, Amenity까지 모두 수정된다")
+    void updateAccommodationSuccess() {
+        // given
+        Long accommodationId = 1L;
+
+        AccommodationRequest.AddressInfo addressInfo = AccommodationRequest.AddressInfo.builder()
+                .postalCode(12345)
+                .city("Seoul")
+                .country("KR")
+                .district("Gangnam")
+                .street("Teheran-ro")
+                .detail("101")
+                .build();
+
+        AccommodationRequest.OccupancyPolicyInfo occupancyPolicyInfo = AccommodationRequest.OccupancyPolicyInfo.builder()
+                .maxOccupancy(5)
+                .adultOccupancy(3)
+                .childOccupancy(1)
+                .infantOccupancy(1)
+                .petOccupancy(0)
+                .build();
+
+        List<AccommodationRequest.AmenityInfo> amenityInfos = List.of(
+                new AccommodationRequest.AmenityInfo("WIFI", 2),
+                new AccommodationRequest.AmenityInfo("TV", 1)
+        );
+
+        AccommodationRequest.UpdateAccommodationDto request = AccommodationRequest.UpdateAccommodationDto.builder()
+                .name("Updated Name")
+                .description("Updated Description")
+                .basePrice(150000)
+                .addressInfo(addressInfo)
+                .occupancyPolicyInfo(occupancyPolicyInfo)
+                .type("GUESTHOUSE")
+                .amenityInfos(amenityInfos)
+                .build();
+
+        Accommodation accommodation = Accommodation.builder()
+                .name("Old Name")
+                .description("Old Description")
+                .basePrice(100000)
+                .type(AccommodationType.APARTMENT)
+                .member(mock(Member.class))
+                .build();
+
+        given(accommodationRepository.findById(accommodationId)).willReturn(Optional.of(accommodation));
+
+        // Address, Policy 저장 mock
+        given(addressRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
+        given(occupancyPolicyRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
+
+        // when
+        accommodationService.updateAccommodation(accommodationId, request);
+
+        // then
+        assertThat(accommodation.getName()).isEqualTo("Updated Name");
+        assertThat(accommodation.getDescription()).isEqualTo("Updated Description");
+        assertThat(accommodation.getBasePrice()).isEqualTo(150000);
+        assertThat(accommodation.getType()).isEqualTo(AccommodationType.GUESTHOUSE);
+
+        assertThat(accommodation.getAddress().getCity()).isEqualTo("Seoul");
+        assertThat(accommodation.getAddress().getPostalCode()).isEqualTo(12345);
+
+        assertThat(accommodation.getOccupancyPolicy().getMaxOccupancy()).isEqualTo(5);
+        assertThat(accommodation.getOccupancyPolicy().getAdultOccupancy()).isEqualTo(3);
+
+        verify(accommodationAmenityRepository).deleteAllByAccommodationId(accommodationId);
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 숙소 ID로 업데이트 시 예외가 발생한다")
+    void updateAccommodationNonexistentAccommodation() {
+        // given
+        Long invalidAccommodationId = 999L;
+
+        AccommodationRequest.UpdateAccommodationDto request = AccommodationRequest.UpdateAccommodationDto.builder()
+                .name("Test")
+                .build();
+
+        given(accommodationRepository.findById(invalidAccommodationId))
+                .willReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> accommodationService.updateAccommodation(invalidAccommodationId, request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("존재하지 않는 숙소입니다.");
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "'Updated Name',,,",                          // name만 있음
+            ", 'Updated Desc',,",                         // description만 있음
+            ",, 200000,",                                 // basePrice만 있음
+            ",,, 'GUESTHOUSE'",                           // type만 있음
+            "'Updated Name','Updated Desc',,",            // name + description
+            "'Updated Name',,200000,",                    // name + basePrice
+            "'Updated Name',,200000,'GUESTHOUSE'",        // name + basePrice + type
+            ", 'Updated Desc',200000,'HOTEL'",            // description + basePrice + type
+            "'Updated Name','Updated Desc',200000,'HOTEL'", // name + description + basePrice + type
+            ",,,",                                        // 모두 null (변경 없음)
+    })
+    @DisplayName("일부 필드만 주어진 경우 해당 필드만 업데이트된다")
+    void updateAccommodation_partialFields(String name, String description, Integer basePrice) {
+        // given
+        Long accommodationId = 1L;
+
+        AccommodationRequest.UpdateAccommodationDto request = AccommodationRequest.UpdateAccommodationDto.builder()
+                .name(name)
+                .description(description)
+                .basePrice(basePrice)
+                .build();
+
+        Accommodation accommodation = Accommodation.builder()
+                .name("Old Name")
+                .description("Old Desc")
+                .basePrice(100000)
+                .build();
+
+        given(accommodationRepository.findById(accommodationId)).willReturn(Optional.of(accommodation));
+
+        // when
+        accommodationService.updateAccommodation(accommodationId, request);
+
+        // then
+        if (name != null) assertThat(accommodation.getName()).isEqualTo(name);
+        else assertThat(accommodation.getName()).isEqualTo("Old Name");
+
+        if (description != null) assertThat(accommodation.getDescription()).isEqualTo(description);
+        else assertThat(accommodation.getDescription()).isEqualTo("Old Desc");
+
+        if (basePrice != null) assertThat(accommodation.getBasePrice()).isEqualTo(basePrice);
+        else assertThat(accommodation.getBasePrice()).isEqualTo(100000);
+    }
+
 }
