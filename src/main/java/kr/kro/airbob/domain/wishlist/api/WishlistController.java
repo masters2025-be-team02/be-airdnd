@@ -1,6 +1,7 @@
 package kr.kro.airbob.domain.wishlist.api;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,10 +37,19 @@ public class WishlistController {
 	@PatchMapping("/members/wishlists/{wishlistId}")
 	public ResponseEntity<WishlistResponse.updateResponse> updateWishlist(
 		@PathVariable Long wishlistId,
-		@Valid @RequestBody WishlistRequest.updateRequest request){
+		@Valid @RequestBody WishlistRequest.updateRequest request) {
 		log.info(request.toString());
-		WishlistResponse.updateResponse response = wishlistService.updateWishlist(wishlistId, request, TEMP_LOGGED_IN_MEMBER_ID);
+		WishlistResponse.updateResponse response = wishlistService.updateWishlist(wishlistId, request,
+			TEMP_LOGGED_IN_MEMBER_ID);
 		log.info(response.toString());
 		return ResponseEntity.ok(response);
+	}
+
+	@DeleteMapping("/members/wishlists/{wishlistId}")
+	public ResponseEntity<Void> deleteWishlist(@PathVariable Long wishlistId) {
+		log.info("{} 위시리스트 삭제 요청", wishlistId);
+		wishlistService.deleteWishlist(wishlistId, TEMP_LOGGED_IN_MEMBER_ID);
+		log.info("{} 위시리스트 삭제 요청 완료", wishlistId);
+		return ResponseEntity.noContent().build();
 	}
 }
