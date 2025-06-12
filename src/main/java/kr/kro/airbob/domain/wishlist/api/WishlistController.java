@@ -1,6 +1,8 @@
 package kr.kro.airbob.domain.wishlist.api;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -8,7 +10,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
 import kr.kro.airbob.domain.wishlist.WishlistService;
-import kr.kro.airbob.domain.wishlist.dto.WishlistDto;
+import kr.kro.airbob.domain.wishlist.dto.WishlistRequest;
+import kr.kro.airbob.domain.wishlist.dto.WishlistResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -19,13 +22,13 @@ import lombok.extern.slf4j.Slf4j;
 public class WishlistController {
 
 	private final WishlistService wishlistService;
-	private static final Long TEMP_MEMBER_ID = 1L;
+	private static final Long TEMP_LOGGED_IN_MEMBER_ID = 1L;
 
 	@PostMapping("/members/wishlists")
-	public ResponseEntity<WishlistDto.createResponse> createWishlist(
-		@Valid @RequestBody WishlistDto.createRequest request) {
+	public ResponseEntity<WishlistResponse.createResponse> createWishlist(
+		@Valid @RequestBody WishlistRequest.createRequest request) {
 		log.info(request.toString());
-		WishlistDto.createResponse response = wishlistService.createWishlist(request, TEMP_MEMBER_ID);
+		WishlistResponse.createResponse response = wishlistService.createWishlist(request, TEMP_LOGGED_IN_MEMBER_ID);
 		log.info(response.toString());
 		return ResponseEntity.ok(response);
 	}

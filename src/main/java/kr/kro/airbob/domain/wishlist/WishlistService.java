@@ -6,7 +6,8 @@ import org.springframework.transaction.annotation.Transactional;
 import kr.kro.airbob.common.exception.MemberNotFoundException;
 import kr.kro.airbob.domain.member.Member;
 import kr.kro.airbob.domain.member.MemberRepository;
-import kr.kro.airbob.domain.wishlist.dto.WishlistDto;
+import kr.kro.airbob.domain.wishlist.dto.WishlistRequest;
+import kr.kro.airbob.domain.wishlist.dto.WishlistResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -19,7 +20,7 @@ public class WishlistService {
 	private final MemberRepository memberRepository;
 
 	@Transactional
-	public WishlistDto.createResponse createWishlist(WishlistDto.createRequest request, Long currentMemberId) {
+	public WishlistResponse.createResponse createWishlist(WishlistRequest.createRequest request, Long currentMemberId) {
 
 		Member member = memberRepository.findById(currentMemberId).orElseThrow(MemberNotFoundException::new);
 		log.info("{} 사용자 조회 성공", member.getId());
@@ -30,6 +31,6 @@ public class WishlistService {
 			.build();
 
 		Wishlist savedWishlist = wishlistRepository.save(wishlist);
-		return new WishlistDto.createResponse(savedWishlist.getId());
+		return new WishlistResponse.createResponse(savedWishlist.getId());
 	}
 }
