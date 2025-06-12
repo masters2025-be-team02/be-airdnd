@@ -7,9 +7,9 @@ import static kr.kro.airbob.domain.accommodation.common.AmenityType.SHAMPOO;
 import static kr.kro.airbob.domain.accommodation.common.AmenityType.TV;
 import static kr.kro.airbob.domain.accommodation.common.AmenityType.WIFI;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 import jakarta.transaction.Transactional;
-import java.util.Collections;
 import java.util.List;
 import kr.kro.airbob.domain.accommodation.common.AccommodationType;
 import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest;
@@ -286,6 +286,66 @@ public class AccommodationIntegrationTest {
         assertThat(accommodationAmenityList).hasSize(2);
         assertThat(accommodationAmenityList).extracting("amenity")
                 .extracting("name").containsExactlyInAnyOrder(WIFI, TV);
+    }
+
+    @Test
+    @DisplayName("숙소가 삭제될때 숙소의 어메니티도 함께 삭제된다")
+    void deleteAccommodationSuccess() {
+        // given
+        List<AmenityInfo> amenities = List.of(
+                new AmenityInfo("WIFI", 1),
+                new AmenityInfo("wifi", 2)
+        );
+
+        CreateAccommodationDto request = CreateAccommodationDto.builder()
+                .name("테스트 숙소")
+                .description("설명")
+                .basePrice(100000)
+                .hostId(testMember.getId())
+                .type("HOSTEL")
+                .amenityInfos(amenities)
+                .build();
+        Long id = accommodationService.createAccommodation(request);
+
+        // when
+        accommodationService.deleteAccommodation(id);
+
+        // then
+        assertThat(accommodationRepository.findById(id)).isEmpty();
+        assertThat(accommodationAmenityRepository.existsByAccommodationId(id)).isFalse();
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 숙소를 삭제하려고 하면 예외가 발생한다")
+    void deleteAccommodationThrowsExceptionIfNotFound() {
+        // given
+        Long nonExistentId = 999L;
+
+        // when & then
+        assertThatThrownBy(() -> accommodationService.deleteAccommodation(nonExistentId))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("존재하지 않는 숙소입니다.");
+    }
+
+    @Test
+    @DisplayName("어메니티가 없는 숙소는 숙소만 삭제된다")
+    void deleteAccommodationSucceedsEvenIfNoAmenities() {
+        // given
+        CreateAccommodationDto request = CreateAccommodationDto.builder()
+                .name("테스트 숙소")
+                .description("설명")
+                .basePrice(100000)
+                .hostId(testMember.getId())
+                .type("HOSTEL")
+                .amenityInfos(null)
+                .build();
+        Long id = accommodationService.createAccommodation(request);
+
+        // when
+        accommodationService.deleteAccommodation(id);
+
+        // then
+        assertThat(accommodationRepository.existsById(id)).isFalse();
     }
 
     private Address createAddress(String city) {

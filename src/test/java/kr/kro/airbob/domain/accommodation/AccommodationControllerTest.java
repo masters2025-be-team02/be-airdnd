@@ -12,6 +12,7 @@ import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.*;
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
 import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -107,7 +108,7 @@ class AccommodationControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andDo(document("register-accommodation",
+                .andDo(document("숙소 등록",
                         requestFields(
                                 fieldWithPath("name").type(STRING).description("숙소 이름"),
                                 fieldWithPath("description").type(STRING).description("숙소 설명"),
@@ -140,6 +141,7 @@ class AccommodationControllerTest {
     }
 
     @Test
+    @DisplayName("입력받은 정보로 숙소를 수정한다")
     void updateAccommodationTest() throws Exception {
         Long accommodationId = 1L;
 
@@ -173,7 +175,7 @@ class AccommodationControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andDo(document("update-accommodation",
+                .andDo(document("숙소 정보 수정",
                         pathParameters(
                                 parameterWithName("accommodationId").description("수정할 숙소의 ID")
                         ),
@@ -201,6 +203,22 @@ class AccommodationControllerTest {
                                 fieldWithPath("amenityInfos").type(ARRAY).description("편의 시설 리스트").optional(),
                                 fieldWithPath("amenityInfos[].name").type(STRING).description("편의 시설 이름").optional(),
                                 fieldWithPath("amenityInfos[].count").type(NUMBER).description("편의 시설 개수").optional()
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("숙소를 삭제한다")
+    void deleteAccommodation() throws Exception {
+        // given
+        Long accommodationId = 1L;
+
+        // when & then
+        mockMvc.perform(delete("/api/accommodations/{accommodationId}", accommodationId))
+                .andExpect(status().isNoContent())
+                .andDo(document("숙소 삭제",
+                        pathParameters(
+                                parameterWithName("accommodationId").description("삭제할 숙소의 ID")
                         )
                 ));
     }

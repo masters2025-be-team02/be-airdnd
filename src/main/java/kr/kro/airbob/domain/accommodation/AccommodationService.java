@@ -57,7 +57,9 @@ public class AccommodationService {
         Accommodation savedAccommodation = accommodationRepository.save(accommodation);
 
         //사전에 정의해둔 어메니티만 저장 가능
-        saveValidAmenities(request.getAmenityInfos(), savedAccommodation);
+        if (request.getAmenityInfos() != null) {
+            saveValidAmenities(request.getAmenityInfos(), savedAccommodation);
+        }
 
         return savedAccommodation.getId();
     }
