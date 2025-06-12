@@ -1,6 +1,7 @@
 package kr.kro.airbob.domain.wishlist;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import kr.kro.airbob.common.exception.MemberNotFoundException;
 import kr.kro.airbob.domain.member.Member;
@@ -17,10 +18,11 @@ public class WishlistService {
 	private final WishlistRepository wishlistRepository;
 	private final MemberRepository memberRepository;
 
+	@Transactional
 	public WishlistDto.createResponse createWishlist(WishlistDto.createRequest request, Long currentMemberId) {
 
 		Member member = memberRepository.findById(currentMemberId).orElseThrow(MemberNotFoundException::new);
-		log.info(currentMemberId + " 사용자 조회 성공");
+		log.info("{} 사용자 조회 성공", member.getId());
 
 		Wishlist wishlist = Wishlist.builder()
 			.name(request.name())
