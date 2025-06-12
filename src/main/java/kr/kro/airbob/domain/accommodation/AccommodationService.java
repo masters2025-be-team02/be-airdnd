@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import kr.kro.airbob.domain.accommodation.common.AmenityType;
+import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest;
 import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest.AmenityInfo;
 import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest.CreateAccommodationDto;
 import kr.kro.airbob.domain.accommodation.entity.Accommodation;
@@ -56,12 +57,12 @@ public class AccommodationService {
         Accommodation savedAccommodation = accommodationRepository.save(accommodation);
 
         //사전에 정의해둔 어메니티만 저장 가능
-        saveValidAmenities(request, savedAccommodation);
+        saveValidAmenities(request.getAmenityInfos(), savedAccommodation);
 
         return savedAccommodation.getId();
     }
 
-    private void saveValidAmenities(CreateAccommodationDto request, Accommodation savedAccommodation) {
+    private void saveValidAmenities(List<AmenityInfo> request, Accommodation savedAccommodation) {
         Map<AmenityType, Integer> amenityCountMap = getAmenityCountMap(request);
 
         List<Amenity> amenities = amenityRepository.findByNameIn(amenityCountMap.keySet());
@@ -83,8 +84,8 @@ public class AccommodationService {
         accommodationAmenityRepository.saveAll(accommodationAmenityList);
     }
 
-    private Map<AmenityType, Integer> getAmenityCountMap(CreateAccommodationDto request) {
-        return request.getAmenityInfos().stream()
+    private Map<AmenityType, Integer> getAmenityCountMap(List<AmenityInfo> request) {
+        return request.stream()
                 .filter(info -> AmenityType.isValid(info.getName()))
                 .filter(info -> info.getCount() > 0)
                 .collect(Collectors.toMap(
@@ -92,5 +93,30 @@ public class AccommodationService {
                         AmenityInfo::getCount,
                         Integer::sum
                 ));
+    }
+
+    @Transactional
+    public void updateAccommodation(Long accommodationId, AccommodationRequest.UpdateAccommodationDto request) {
+        Accommodation accommodation = accommodationRepository.findById(accommodationId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 숙소입니다."));
+
+        accommodation.updateAccommodation(request);
+
+        if (request.getAddressInfo() != null) {
+            Address newAddress = Address.createAddress(request.getAddressInfo());
+            Address savedAddress = addressRepository.save(newAddress);
+            accommodation.updateAddress(savedAddress);
+        }
+
+        if (request.getOccupancyPolicyInfo() != null) {
+            OccupancyPolicy occupancyPolicy = OccupancyPolicy.createOccupancyPolicy(request.getOccupancyPolicyInfo());
+            OccupancyPolicy savedOccupancyPolicy = occupancyPolicyRepository.save(occupancyPolicy);
+            accommodation.updateOccupancyPolicy(savedOccupancyPolicy);
+        }
+
+        if (!request.getAmenityInfos().isEmpty()){
+            accommodationAmenityRepository.deleteAllByAccommodationId(accommodationId);
+            saveValidAmenities(request.getAmenityInfos(), accommodation);
+        }
     }
 }

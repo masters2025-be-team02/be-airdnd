@@ -59,4 +59,17 @@ public class AccommodationRequest {
         private Integer infantOccupancy;
         private Integer petOccupancy;
     }
+
+    @Getter
+    @Builder
+    @AllArgsConstructor
+    public static class UpdateAccommodationDto {
+        private String name;
+        private String description;
+        private Integer basePrice;
+        private AddressInfo addressInfo;
+        private OccupancyPolicyInfo occupancyPolicyInfo;
+        private List<AmenityInfo> amenityInfos;
+        private String type;
+    }
 }

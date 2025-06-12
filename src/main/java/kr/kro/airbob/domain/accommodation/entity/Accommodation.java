@@ -11,6 +11,7 @@ import jakarta.persistence.OneToOne;
 import kr.kro.airbob.common.BaseEntity;
 import kr.kro.airbob.domain.accommodation.common.AccommodationType;
 import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest;
+import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest.UpdateAccommodationDto;
 import kr.kro.airbob.domain.member.Member;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -40,10 +41,10 @@ public class Accommodation extends BaseEntity {
 	@Enumerated(EnumType.STRING)
 	private AccommodationType type;
 
-	@OneToOne(fetch = FetchType.LAZY)
+	@OneToOne(fetch = FetchType.LAZY, orphanRemoval = true)
 	private Address address;
 
-	@OneToOne(fetch = FetchType.LAZY)
+	@OneToOne(fetch = FetchType.LAZY, orphanRemoval = true)
 	private OccupancyPolicy occupancyPolicy;
 
 	@OneToOne(fetch = FetchType.LAZY)
@@ -61,5 +62,31 @@ public class Accommodation extends BaseEntity {
 				.occupancyPolicy(occupancyPolicy)
 				.member(member)
 				.build();
+	}
+
+	public void updateAccommodation(UpdateAccommodationDto request) {
+		if (request.getName() != null) {
+			this.name = request.getName();
+		}
+
+		if (request.getDescription() != null) {
+			this.description = request.getDescription();
+		}
+
+		if (request.getBasePrice() != null) {
+			this.basePrice = request.getBasePrice();
+		}
+
+		if (request.getType() != null) {
+			this.type = AccommodationType.valueOf(request.getType().toUpperCase());
+		}
+	}
+
+	public void updateAddress(Address newAddress) {
+		this.address = newAddress;
+	}
+
+	public void updateOccupancyPolicy(OccupancyPolicy occupancyPolicy) {
+		this.occupancyPolicy = occupancyPolicy;
 	}
 }
