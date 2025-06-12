@@ -64,6 +64,8 @@ public class AccommodationIntegrationTest {
     @Autowired
     private AddressRepository addressRepository;
 
+    private Member testMember;
+
     @Container
     static MySQLContainer<?> mysql = new MySQLContainer<>("mysql:8.0")
             .withDatabaseName("testdb")
@@ -87,7 +89,7 @@ public class AccommodationIntegrationTest {
                 .nickname("테스트 사용자")
                 .email("test@example.com")
                 .build();
-        memberRepository.save(member);
+        testMember = memberRepository.save(member);
 
         amenityRepository.save(Amenity.builder().name(WIFI).build());
         amenityRepository.save(Amenity.builder().name(PARKING).build());
@@ -107,7 +109,7 @@ public class AccommodationIntegrationTest {
                 .name("테스트 숙소")
                 .description("설명")
                 .basePrice(100000)
-                .hostId(1L)
+                .hostId(testMember.getId())
                 .type("HOSTEL")
                 .amenityInfos(amenities)
                 .build();
@@ -116,8 +118,7 @@ public class AccommodationIntegrationTest {
         Long accommodationId = accommodationService.createAccommodation(request);
 
         // then
-        List<AccommodationAmenity> savedAmenities = accommodationAmenityRepository.findAllById(
-                Collections.singleton(accommodationId));
+        List<AccommodationAmenity> savedAmenities = accommodationAmenityRepository.findAllByAccommodationId(accommodationId);
 
         assertThat(savedAmenities).hasSize(1);
 
