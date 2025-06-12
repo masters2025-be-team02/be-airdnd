@@ -6,6 +6,7 @@ import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,10 +30,16 @@ public class AccommodationController {
                 .body(Map.of("id", savedAccommodationId));
     }
 
-    @PatchMapping("{accommodationId}")
+    @PatchMapping("/{accommodationId}")
     @ResponseStatus(HttpStatus.OK)
     public void updateAccommodation(@PathVariable Long accommodationId, @RequestBody AccommodationRequest.UpdateAccommodationDto request){
         accommodationService.updateAccommodation(accommodationId, request);
+    }
+
+    @DeleteMapping("/{accommodationId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteAccommodation(@PathVariable Long accommodationId) {
+        accommodationService.deleteAccommodation(accommodationId);
     }
 }
 

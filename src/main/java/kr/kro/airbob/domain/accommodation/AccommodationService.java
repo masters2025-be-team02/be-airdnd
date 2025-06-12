@@ -119,4 +119,13 @@ public class AccommodationService {
             saveValidAmenities(request.getAmenityInfos(), accommodation);
         }
     }
+
+    @Transactional
+    public void deleteAccommodation(Long accommodationId) {
+        Accommodation accommodation = accommodationRepository.findById(accommodationId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 숙소입니다."));
+
+        accommodationAmenityRepository.deleteByAccommodationId(accommodationId);
+        accommodationRepository.delete(accommodation);
+    }
 }
