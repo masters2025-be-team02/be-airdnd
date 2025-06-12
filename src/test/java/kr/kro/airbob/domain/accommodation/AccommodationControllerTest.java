@@ -2,6 +2,7 @@ package kr.kro.airbob.domain.accommodation;
 
 import static com.fasterxml.jackson.databind.node.JsonNodeType.ARRAY;
 import static com.fasterxml.jackson.databind.node.JsonNodeType.NUMBER;
+import static com.fasterxml.jackson.databind.node.JsonNodeType.OBJECT;
 import static com.fasterxml.jackson.databind.node.JsonNodeType.STRING;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -177,26 +178,29 @@ class AccommodationControllerTest {
                                 parameterWithName("accommodationId").description("수정할 숙소의 ID")
                         ),
                         requestFields(
-                                fieldWithPath("name").description("숙소 이름").optional(),
-                                fieldWithPath("description").description("숙소 설명").optional(),
-                                fieldWithPath("basePrice").description("기본 가격").optional(),
-                                fieldWithPath("addressInfo").description("주소 정보").optional(),
-                                fieldWithPath("addressInfo.postalCode").description("우편번호").optional(),
-                                fieldWithPath("addressInfo.city").description("도시").optional(),
-                                fieldWithPath("addressInfo.country").description("국가").optional(),
-                                fieldWithPath("addressInfo.detail").description("상세 주소").optional(),
-                                fieldWithPath("addressInfo.district").description("구/군").optional(),
-                                fieldWithPath("addressInfo.street").description("거리").optional(),
-                                fieldWithPath("occupancyPolicyInfo").description("숙박 정책 정보").optional(),
-                                fieldWithPath("occupancyPolicyInfo.maxOccupancy").description("최대 수용 인원").optional(),
-                                fieldWithPath("occupancyPolicyInfo.adultOccupancy").description("성인 수용 인원").optional(),
-                                fieldWithPath("occupancyPolicyInfo.childOccupancy").description("어린이 수용 인원").optional(),
-                                fieldWithPath("occupancyPolicyInfo.infantOccupancy").description("유아 수용 인원").optional(),
-                                fieldWithPath("occupancyPolicyInfo.petOccupancy").description("반려동물 수용 인원").optional(),
-                                fieldWithPath("amenityInfos").description("편의 시설 리스트").optional(),
-                                fieldWithPath("amenityInfos[].name").description("편의 시설 이름").optional(),
-                                fieldWithPath("amenityInfos[].count").description("편의 시설 개수").optional(),
-                                fieldWithPath("type").description("숙소 타입 (예: HOTEL, GUESTHOUSE 등)").optional()
+                                fieldWithPath("name").type(STRING).description("숙소 이름").optional(),
+                                fieldWithPath("description").type(STRING).description("숙소 설명").optional(),
+                                fieldWithPath("basePrice").type(NUMBER).description("기본 가격").optional(),
+                                fieldWithPath("type").type(STRING).description("숙소 타입 (예: HOTEL, GUESTHOUSE, MOTEL 등)").optional(),
+
+                                fieldWithPath("addressInfo").type(OBJECT).description("주소 정보").optional(),
+                                fieldWithPath("addressInfo.postalCode").type(NUMBER).description("우편번호").optional(),
+                                fieldWithPath("addressInfo.city").type(STRING).description("도시").optional(),
+                                fieldWithPath("addressInfo.country").type(STRING).description("국가").optional(),
+                                fieldWithPath("addressInfo.district").type(STRING).description("구/군").optional(),
+                                fieldWithPath("addressInfo.street").type(STRING).description("거리").optional(),
+                                fieldWithPath("addressInfo.detail").type(STRING).description("상세 주소").optional(),
+
+                                fieldWithPath("occupancyPolicyInfo").type(OBJECT).description("숙박 정책 정보").optional(),
+                                fieldWithPath("occupancyPolicyInfo.maxOccupancy").type(NUMBER).description("최대 수용 인원").optional(),
+                                fieldWithPath("occupancyPolicyInfo.adultOccupancy").type(NUMBER).description("성인 수용 인원").optional(),
+                                fieldWithPath("occupancyPolicyInfo.childOccupancy").type(NUMBER).description("어린이 수용 인원").optional(),
+                                fieldWithPath("occupancyPolicyInfo.infantOccupancy").type(NUMBER).description("유아 수용 인원").optional(),
+                                fieldWithPath("occupancyPolicyInfo.petOccupancy").type(NUMBER).description("반려동물 수용 인원").optional(),
+
+                                fieldWithPath("amenityInfos").type(ARRAY).description("편의 시설 리스트").optional(),
+                                fieldWithPath("amenityInfos[].name").type(STRING).description("편의 시설 이름").optional(),
+                                fieldWithPath("amenityInfos[].count").type(NUMBER).description("편의 시설 개수").optional()
                         )
                 ));
     }
