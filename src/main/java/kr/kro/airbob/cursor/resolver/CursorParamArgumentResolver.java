@@ -1,4 +1,4 @@
-package kr.kro.airbob.common.resolver;
+package kr.kro.airbob.cursor.resolver;
 
 import org.springframework.core.MethodParameter;
 import org.springframework.stereotype.Component;
@@ -7,11 +7,11 @@ import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
-import kr.kro.airbob.common.annotation.CursorParam;
-import kr.kro.airbob.common.dto.CursorRequest;
-import kr.kro.airbob.common.dto.CursorResponse;
-import kr.kro.airbob.common.exception.CursorException;
-import kr.kro.airbob.common.util.CursorDecoder;
+import kr.kro.airbob.cursor.annotation.CursorParam;
+import kr.kro.airbob.cursor.dto.CursorRequest;
+import kr.kro.airbob.cursor.dto.CursorResponse;
+import kr.kro.airbob.cursor.exception.CursorException;
+import kr.kro.airbob.cursor.util.CursorDecoder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -25,7 +25,7 @@ public class CursorParamArgumentResolver implements HandlerMethodArgumentResolve
 	@Override
 	public boolean supportsParameter(MethodParameter parameter) {
 		return parameter.hasParameterAnnotation(CursorParam.class) &&
-			parameter.getParameterType().equals(CursorResponse.CursorData.class);
+			parameter.getParameterType().equals(CursorRequest.CursorPageRequest.class);
 	}
 
 	@Override

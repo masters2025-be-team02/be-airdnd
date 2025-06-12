@@ -1,4 +1,4 @@
-package kr.kro.airbob.common.dto;
+package kr.kro.airbob.cursor.dto;
 
 import java.time.LocalDateTime;
 

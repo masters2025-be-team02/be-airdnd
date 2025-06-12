@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
-import kr.kro.airbob.common.annotation.CursorParam;
-import kr.kro.airbob.common.dto.CursorRequest;
+import kr.kro.airbob.cursor.annotation.CursorParam;
+import kr.kro.airbob.cursor.dto.CursorRequest;
 import kr.kro.airbob.domain.wishlist.WishlistService;
 import kr.kro.airbob.domain.wishlist.dto.WishlistRequest;
 import kr.kro.airbob.domain.wishlist.dto.WishlistResponse;
@@ -55,5 +55,14 @@ public class WishlistController {
 		log.info("{} 위시리스트 삭제 요청 완료", wishlistId);
 		return ResponseEntity.noContent().build();
 	}
-	
+
+	@GetMapping("/members/wishlists")
+	public ResponseEntity<WishlistResponse.WishlistInfos> findWishlists(
+		@CursorParam CursorRequest.CursorPageRequest request) {
+		log.info(request.toString());
+		WishlistResponse.WishlistInfos response =
+			wishlistService.findWishlists(request, TEMP_LOGGED_IN_MEMBER_ID);
+		log.info(response.toString());
+		return ResponseEntity.ok(response);
+	}
 }

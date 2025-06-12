@@ -1,9 +1,21 @@
 package kr.kro.airbob.domain.wishlist;
 
+import static java.util.stream.Collectors.*;
+
+import java.awt.print.Pageable;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import kr.kro.airbob.common.exception.MemberNotFoundException;
+import kr.kro.airbob.cursor.dto.CursorRequest;
+import kr.kro.airbob.cursor.dto.CursorResponse;
+import kr.kro.airbob.cursor.util.CursorPageInfoCreator;
 import kr.kro.airbob.domain.member.Member;
 import kr.kro.airbob.domain.member.MemberRepository;
 import kr.kro.airbob.domain.member.common.MemberRole;
@@ -24,6 +36,8 @@ public class WishlistService {
 	private final MemberRepository memberRepository;
 	private final WishlistRepository wishlistRepository;
 	private final WishlistAccommodationRepository wishlistAccommodationRepository;
+
+	private final CursorPageInfoCreator cursorPageInfoCreator;
 
 	@Transactional
 	public WishlistResponse.createResponse createWishlist(WishlistRequest.createRequest request, Long currentMemberId) {
@@ -67,6 +81,52 @@ public class WishlistService {
 		// 위시리스트에 속한 숙소 삭제
 		wishlistAccommodationRepository.deleteAllByWishlistId(foundWishlist.getId());
 		wishlistRepository.delete(foundWishlist);
+	}
+
+	@Transactional(readOnly = true)
+	public WishlistResponse.WishlistInfos findWishlists(CursorRequest.CursorPageRequest request, Long currentMemberId) {
+
+		Member member = findMemberById(currentMemberId); // 사용자 존재 여부를 위해 넣었는데, 필요한지 의문. member는 사용하지 않음
+
+		Long lastId = request.lastId();
+		LocalDateTime lastCreatedAt = request.lastCreatedAt();
+
+		Slice<Wishlist> wishlistSlice = wishlistRepository.findByMemberIdWithCursor(
+			currentMemberId,
+			lastId,
+			lastCreatedAt,
+			PageRequest.of(0, request.size())
+		);
+		log.info("위시리스크 목록 조회: {} 개, 다음 페이지 여부: {}", wishlistSlice.getContent().size(), wishlistSlice.hasNext());
+
+		List<Long> wishlistIds = wishlistSlice.getContent().stream()
+			.map(Wishlist::getId)
+			.toList();
+
+		// 위시리스트별 숙소 개수 조회
+		Map<Long, Long> wishlistItemCounts = wishlistAccommodationRepository.countByWishlistIds(wishlistIds);
+
+		// 위시리스트별 가장 최근에 추가된 숙소 썸네일 Url 조회
+		Map<Long, String> thumbnailUrls = wishlistAccommodationRepository.findLatestThumbnailUrlsByWishlistIds(wishlistIds);
+
+		List<WishlistResponse.WishlistInfo> wishlistInfos = wishlistSlice.getContent().stream()
+			.map(wishlist ->
+				new WishlistResponse.WishlistInfo(
+					wishlist.getId(),
+					wishlist.getName(),
+					wishlist.getCreatedAt(),
+					wishlistItemCounts.getOrDefault(wishlist.getId(), 0L),
+					thumbnailUrls.get(wishlist.getId()) // nullable
+				)).toList();
+
+		CursorResponse.PageInfo pageInfo = cursorPageInfoCreator.createPageInfo(
+			wishlistSlice.getContent(),
+			wishlistSlice.hasNext(),
+			Wishlist::getId,
+			Wishlist::getCreatedAt
+		);
+
+		return new WishlistResponse.WishlistInfos(wishlistInfos, pageInfo);
 	}
 
 	private Wishlist findWishlistById(Long wishlistId) {

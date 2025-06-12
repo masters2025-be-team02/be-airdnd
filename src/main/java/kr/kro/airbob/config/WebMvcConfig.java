@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import kr.kro.airbob.common.resolver.CursorParamArgumentResolver;
+import kr.kro.airbob.cursor.resolver.CursorParamArgumentResolver;
 import lombok.RequiredArgsConstructor;
 
 @Configuration

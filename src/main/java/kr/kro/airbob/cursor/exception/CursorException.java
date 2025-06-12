@@ -1,4 +1,4 @@
-package kr.kro.airbob.common.exception;
+package kr.kro.airbob.cursor.exception;
 
 public class CursorException extends RuntimeException {
 

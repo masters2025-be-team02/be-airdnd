@@ -1,4 +1,4 @@
-package kr.kro.airbob.common.util;
+package kr.kro.airbob.cursor.util;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -6,8 +6,7 @@ import java.util.function.Function;
 
 import org.springframework.stereotype.Component;
 
-import kr.kro.airbob.common.domain.BaseEntity;
-import kr.kro.airbob.common.dto.CursorResponse;
+import kr.kro.airbob.cursor.dto.CursorResponse;
 import lombok.RequiredArgsConstructor;
 
 @Component

@@ -1,4 +1,4 @@
-package kr.kro.airbob.common.annotation;
+package kr.kro.airbob.cursor.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

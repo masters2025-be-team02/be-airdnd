@@ -1,4 +1,4 @@
-package kr.kro.airbob.common.dto;
+package kr.kro.airbob.cursor.dto;
 
 import java.time.LocalDateTime;
 
@@ -19,6 +19,15 @@ public class CursorRequest {
 			if (size == null) {
 				size = 20; // 기본값
 			}
+		}
+
+		@Override
+		public String toString() {
+			return "CursorPageRequest{" +
+				"size=" + size +
+				", lastId=" + lastId +
+				", lastCreatedAt=" + lastCreatedAt +
+				'}';
 		}
 	}
 }

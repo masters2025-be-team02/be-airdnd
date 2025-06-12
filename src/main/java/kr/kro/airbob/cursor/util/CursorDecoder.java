@@ -1,4 +1,4 @@
-package kr.kro.airbob.common.util;
+package kr.kro.airbob.cursor.util;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -7,8 +7,7 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import kr.kro.airbob.common.dto.CursorRequest;
-import kr.kro.airbob.common.dto.CursorResponse;
+import kr.kro.airbob.cursor.dto.CursorResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
