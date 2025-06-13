@@ -1,25 +1,31 @@
 package kr.kro.airbob.domain.accommodation;
 
+import static com.fasterxml.jackson.databind.jsonFormatVisitors.JsonValueFormat.DATE;
 import static com.fasterxml.jackson.databind.node.JsonNodeType.ARRAY;
 import static com.fasterxml.jackson.databind.node.JsonNodeType.NUMBER;
 import static com.fasterxml.jackson.databind.node.JsonNodeType.OBJECT;
 import static com.fasterxml.jackson.databind.node.JsonNodeType.STRING;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.documentationConfiguration;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.*;
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
 import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
+import static org.springframework.restdocs.request.RequestDocumentation.queryParameters;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.LocalDate;
 import java.util.List;
 import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest.*;
+import kr.kro.airbob.domain.accommodation.dto.AccommodationResponse.AccommodationSearchResponseDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -222,4 +228,55 @@ class AccommodationControllerTest {
                         )
                 ));
     }
+
+    @Test
+    @DisplayName("숙소를 필터링 조건으로 검색한다")
+    void searchAccommodationsByConditionTest() throws Exception {
+        AccommodationSearchResponseDto dummyResponse = AccommodationSearchResponseDto.builder()
+                .name("테스트 숙소")
+                .thumbnailUrl("http://example.com/image.jpg")
+                .pricePerNight(100000)
+                .averageRating(4.5)
+                .maxOccupancy(4)
+                .amenityInfos(List.of(new AmenityInfo("WIFI", 1), new AmenityInfo("TV", 1)))
+                .reviewCount(18)
+                .build();
+
+        given(accommodationService.searchAccommodations(any())).willReturn(dummyResponse);
+
+        mockMvc.perform(get("/api/accommodations")
+                        .param("checkIn", "2025-07-01")
+                        .param("checkOut", "2025-07-05")
+                        .param("city", "서울")
+                        .param("minPrice", "50000")
+                        .param("maxPrice", "300000")
+                        .param("guestCount", "2")
+                        .param("amenityTypes", "WIFI", "PARKING")
+                        .param("accommodationTypes", "HOTEL", "VILLA"))
+                .andExpect(status().isOk())
+                .andDo(document("숙소 조건 검색",
+                        queryParameters(
+                                parameterWithName("checkIn").description("체크인 날짜 (yyyy-MM-dd)"),
+                                parameterWithName("checkOut").description("체크아웃 날짜 (yyyy-MM-dd)"),
+                                parameterWithName("city").description("도시명"),
+                                parameterWithName("minPrice").description("최소 가격").optional(),
+                                parameterWithName("maxPrice").description("최대 가격").optional(),
+                                parameterWithName("guestCount").description("게스트 수").optional(),
+                                parameterWithName("amenityTypes").description("어메니티 필터 (예: WIFI, PARKING)").optional(),
+                                parameterWithName("accommodationTypes").description("숙소 유형 필터 (예: HOTEL, VILLA)").optional()
+                        ),
+                        responseFields(
+                                fieldWithPath("name").type(STRING).description("숙소 이름"),
+                                fieldWithPath("thumbnailUrl").type(STRING).description("썸네일 URL"),
+                                fieldWithPath("pricePerNight").type(NUMBER).description("1박당 가격"),
+                                fieldWithPath("maxOccupancy").type(NUMBER).description("최대 수용 인원"),
+                                fieldWithPath("amenityInfos").type(ARRAY).description("편의 시설 목록"),
+                                fieldWithPath("amenityInfos[].name").type(STRING).description("편의 시설 이름"),
+                                fieldWithPath("amenityInfos[].count").type(NUMBER).description("편의 시설 개수"),
+                                fieldWithPath("averageRating").type(NUMBER).description("평균 평점"),
+                                fieldWithPath("reviewCount").type(NUMBER).description("리뷰 개수")
+                        )
+                ));
+    }
+
 }

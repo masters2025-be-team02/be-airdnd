@@ -116,7 +116,7 @@ tasks.register('generateAdoc') {
 					"request-fields": "요청 필드 설명",
 					"response-fields": "응답 필드 설명",
 					"path-parameters": "경로 변수 설명",
-					"request-parameters": "요청 파라미터 설명",
+					"query-parameters": "요청 파라미터 설명",
 					"response-headers": "응답 헤더 설명"
 			]
 

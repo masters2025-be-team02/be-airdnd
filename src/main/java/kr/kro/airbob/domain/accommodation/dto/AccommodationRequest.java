@@ -1,6 +1,7 @@
 package kr.kro.airbob.domain.accommodation.dto;
 
 import jakarta.validation.constraints.NotNull;
+import java.time.LocalDate;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -71,5 +72,19 @@ public class AccommodationRequest {
         private OccupancyPolicyInfo occupancyPolicyInfo;
         private List<AmenityInfo> amenityInfos;
         private String type;
+    }
+
+    @Getter
+    @Builder
+    @AllArgsConstructor
+    public static class AccommodationSearchConditionDto {
+        private String city;
+        private Integer minPrice;
+        private Integer maxPrice;
+        private LocalDate checkIn;
+        private LocalDate checkOut;
+        private Integer guestCount;
+        private List<String> amenityTypes;
+        private List<String> accommodationTypes;
     }
 }
