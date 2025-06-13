@@ -46,9 +46,6 @@ CREATE TABLE accommodation (
                                thumbnail_url VARCHAR(255),
                                type VARCHAR(50),
                                PRIMARY KEY (id),
-                               UNIQUE KEY UK_accommodation_address_id (address_id),
-                               UNIQUE KEY UK_accommodation_member_id (member_id),
-                               UNIQUE KEY UK_accommodation_occupancy_policy_id (occupancy_policy_id),
                                CONSTRAINT FK_accommodation_address_id FOREIGN KEY (address_id) REFERENCES address (id),
                                CONSTRAINT FK_accommodation_member_id FOREIGN KEY (member_id) REFERENCES member (id),
                                CONSTRAINT FK_accommodation_occupancy_policy_id FOREIGN KEY (occupancy_policy_id) REFERENCES occupancy_policy (id)

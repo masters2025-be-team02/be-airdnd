@@ -82,7 +82,7 @@ jacoco.exec
 .gradle/
 
 # Generated AsciiDoc files
-src/docs/asciidoc/generated/
+src/docs/asciidoc/
 
 # Static build output
 src/main/resources/static/

@@ -1,10 +1,13 @@
-package kr.kro.airbob.domain.accommodation;
+package kr.kro.airbob.domain.accommodation.entity;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import kr.kro.airbob.common.BaseEntity;
+import kr.kro.airbob.domain.accommodation.common.AmenityType;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,18 +19,12 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Address extends BaseEntity {
+public class Amenity extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	private String country;
-	private String city;
-	private String district;
-	private String street;
-	private String detail;
-	private Integer postalCode;
-	private Double latitude;
-	private Double longitude;
+	@Enumerated(EnumType.STRING)
+	private AmenityType name;
 }
