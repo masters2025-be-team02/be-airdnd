@@ -9,9 +9,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -21,10 +21,7 @@ public class DiscountPolicyService {
 
     @Transactional(readOnly = true)
     public List<DiscountPolicyResponseDto> findValidDiscountPolicies() {
-        return discountPolicyRepository.findAll().stream()
-                .filter(DiscountPolicy::getIsActive)
-                .map(DiscountPolicyResponseDto::of)
-                .collect(Collectors.toList());
+        return new ArrayList<>(discountPolicyRepository.findActiveDiscountPolicies());
     }
 
     @Transactional
