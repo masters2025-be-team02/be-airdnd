@@ -3,7 +3,7 @@ package kr.kro.airbob.domain.discountPolicy;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.*;
-import kr.kro.airbob.common.BaseEntity;
+import kr.kro.airbob.common.domain.BaseEntity;
 import kr.kro.airbob.domain.discountPolicy.common.DiscountType;
 import kr.kro.airbob.domain.discountPolicy.common.PromotionType;
 import kr.kro.airbob.domain.discountPolicy.dto.request.DiscountPolicyCreateDto;
