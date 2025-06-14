@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import kr.kro.airbob.cursor.exception.CursorEncodingException;
 import kr.kro.airbob.cursor.exception.CursorPageSizeException;
+import kr.kro.airbob.domain.accommodation.exception.AccommodationNotFoundException;
 import kr.kro.airbob.domain.member.exception.MemberNotFoundException;
 import kr.kro.airbob.domain.wishlist.exception.WishlistAccessDeniedException;
 import kr.kro.airbob.domain.wishlist.exception.WishlistNotFoundException;
@@ -24,16 +25,11 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GlobalExceptionHandler {
 
-	@ExceptionHandler(MethodArgumentNotValidException.class) // @Valid에서 발생하는 에러
-	public ResponseEntity<Void> handleValidationExceptions(MethodArgumentNotValidException e) {
-		String errorMessage = e.getBindingResult()
-			.getFieldErrors()
-			.stream()
-			.map(FieldError::getDefaultMessage)
-			.collect(Collectors.joining(", "));
-
-		log.error("Bean Validation error(@Valid): {}", errorMessage);
-		return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+	@ExceptionHandler(AccommodationNotFoundException.class)
+	public ResponseEntity<Void> handleAccommodationNotFoundException(AccommodationNotFoundException e) {
+		log.error("AccommodationNotFoundException: {}", e.getMessage());
+		return ResponseEntity.status(HttpStatus.NOT_FOUND)
+			.build();
 	}
 
 	@ExceptionHandler(MemberNotFoundException.class)
@@ -81,6 +77,18 @@ public class GlobalExceptionHandler {
 
 	@ExceptionHandler(CursorPageSizeException.class)
 	public ResponseEntity<Void> handleCursorPageSizeException(CursorPageSizeException e) {
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+	}
+
+	@ExceptionHandler(MethodArgumentNotValidException.class) // @Valid에서 발생하는 에러
+	public ResponseEntity<Void> handleValidationExceptions(MethodArgumentNotValidException e) {
+		String errorMessage = e.getBindingResult()
+			.getFieldErrors()
+			.stream()
+			.map(FieldError::getDefaultMessage)
+			.collect(Collectors.joining(", "));
+
+		log.error("Bean Validation error(@Valid): {}", errorMessage);
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
 	}
 

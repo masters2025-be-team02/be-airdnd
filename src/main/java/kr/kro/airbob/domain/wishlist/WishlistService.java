@@ -9,6 +9,9 @@ import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import kr.kro.airbob.domain.accommodation.entity.Accommodation;
+import kr.kro.airbob.domain.accommodation.exception.AccommodationNotFoundException;
+import kr.kro.airbob.domain.accommodation.repository.AccommodationRepository;
 import kr.kro.airbob.domain.member.exception.MemberNotFoundException;
 import kr.kro.airbob.cursor.dto.CursorRequest;
 import kr.kro.airbob.cursor.dto.CursorResponse;
@@ -32,6 +35,7 @@ public class WishlistService {
 
 	private final MemberRepository memberRepository;
 	private final WishlistRepository wishlistRepository;
+	private final AccommodationRepository accommodationRepository;
 	private final WishlistAccommodationRepository wishlistAccommodationRepository;
 
 	private final CursorPageInfoCreator cursorPageInfoCreator;
@@ -126,6 +130,24 @@ public class WishlistService {
 		return new WishlistResponse.WishlistInfos(wishlistInfos, pageInfo);
 	}
 
+	@Transactional(readOnly = true)
+	public WishlistResponse.AddAccommodationResponse addAccommodationToWishlist(Long wishlistId,
+		WishlistRequest.AddAccommodationResponse request, Long currentMemberId) {
+		Wishlist wishlist = findWishlistById(wishlistId);
+		Accommodation accommodation = findAccommodationById(request.accommodationId());
+		Member member = findMemberById(currentMemberId);
+
+		WishlistAccommodation wishlistAccommodation = WishlistAccommodation.builder()
+			.wishlist(wishlist)
+			.accommodation(accommodation)
+			.build();
+
+		WishlistAccommodation savedWishlistAccommodation
+			= wishlistAccommodationRepository.save(wishlistAccommodation);
+
+		return new WishlistResponse.AddAccommodationResponse(savedWishlistAccommodation.getId());
+	}
+
 	private Wishlist findWishlistById(Long wishlistId) {
 		return wishlistRepository.findById(wishlistId).orElseThrow(WishlistNotFoundException::new);
 	}
@@ -133,6 +155,11 @@ public class WishlistService {
 	private Member findMemberById(Long currentMemberId) {
 		return memberRepository.findById(currentMemberId).orElseThrow(MemberNotFoundException::new);
 	}
+
+	private Accommodation findAccommodationById(Long accommodationId) {
+		return accommodationRepository.findById(accommodationId).orElseThrow(AccommodationNotFoundException::new);
+	}
+
 
 	private void validateWishlistOwnership(Wishlist wishlist, Long memberId) {
 		if (!wishlist.isOwnedBy(memberId)) {
@@ -147,4 +174,5 @@ public class WishlistService {
 			throw new WishlistAccessDeniedException();
 		}
 	}
+
 }
