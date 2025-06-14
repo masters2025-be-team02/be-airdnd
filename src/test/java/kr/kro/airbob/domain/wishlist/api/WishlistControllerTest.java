@@ -10,10 +10,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
@@ -100,83 +104,20 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			verify(wishlistService).createWishlist(any(WishlistRequest.createRequest.class), eq(1L));
 		}
 
-		@Test
-		@DisplayName("시나리오: 사용자가 빈 이름으로 위시리스트 생성을 시도한다")
-		void 사용자가_빈_이름으로_위시리스트_생성을_시도한다() throws Exception {
-			// Given: 사용자가 빈 이름으로 위시리스트를 생성하려는 상황
-			WishlistRequest.createRequest invalidRequest = new WishlistRequest.createRequest("");
+		@ParameterizedTest(name = "{0}")
+		@MethodSource("invalidCreateRequestProvider")
+		@DisplayName("시나리오: 사용자가 잘못된 데이터로 위시리스트 생성을 시도한다")
+		void 사용자가_잘못된_데이터로_위시리스트_생성을_시도한다(
+			String testName,
+			String inputName,
+			JsonFieldType fieldType,
+			String description,
+			String documentId
+		) throws Exception {
+			// Given: 잘못된 데이터로 위시리스트를 생성하려는 상황
+			WishlistRequest.createRequest invalidRequest = new WishlistRequest.createRequest(inputName);
 
-			// When: 사용자가 빈 이름으로 위시리스트 생성을 시도한다
-			mockMvc.perform(post("/api/members/wishlists")
-					.contentType(MediaType.APPLICATION_JSON)
-					.content(objectMapper.writeValueAsString(invalidRequest)))
-
-				// Then: 유효성 검증 오류가 발생한다.
-				.andExpect(status().isBadRequest())
-
-				// document
-				.andDo(document("위시리스트-생성-빈이름-실패",
-					requestFields(
-						fieldWithPath("name")
-							.type(JsonFieldType.STRING)
-							.description("빈 문자열 (유효하지 않은 입력)")
-					)));
-		}
-
-		@Test
-		@DisplayName("시나리오: 사용자가 공백 문자 이름으로 위시리스트 생성을 시도한다")
-		void 사용자가_공백_문자_이름으로_위시리스트_생성을_시도한다() throws Exception {
-			// Given: 사용자가 공백 문자 이름으로 위시리스트를 생성하려는 상황
-			WishlistRequest.createRequest invalidRequest = new WishlistRequest.createRequest(" ");
-
-			// When: 사용자가 공백 문자 이름으로 위시리스트 생성을 시도한다
-			mockMvc.perform(post("/api/members/wishlists")
-					.contentType(MediaType.APPLICATION_JSON)
-					.content(objectMapper.writeValueAsString(invalidRequest)))
-
-				// Then: 유효성 검증 오류가 발생한다.
-				.andExpect(status().isBadRequest())
-
-				// document
-				.andDo(document("위시리스트-생성-빈이름-실패",
-					requestFields(
-						fieldWithPath("name")
-							.type(JsonFieldType.STRING)
-							.description("공백 문자 문자열 (유효하지 않은 입력)")
-					)));
-		}
-
-		@Test
-		@DisplayName("시나리오: 사용자가 이름을 입력하지 않고 위시리스트 생성을 시도한다")
-		void 사용자가_이름을_입력하지_않고_위시리스트_생성을_시도한다() throws Exception {
-			// Given: 사용자가 이름을 입력하지 않고 위시리스트를 생성하려는 상황 - null
-			WishlistRequest.createRequest invalidRequest = new WishlistRequest.createRequest(null);
-
-			// When: 사용자가 이름을 입력하지 않고 위시리스트를 생성을 시도한다
-			mockMvc.perform(post("/api/members/wishlists")
-					.contentType(MediaType.APPLICATION_JSON)
-					.content(objectMapper.writeValueAsString(invalidRequest)))
-
-				// Then: 유효성 검증 오류가 발생한다.
-				.andExpect(status().isBadRequest())
-
-				// document
-				.andDo(document("위시리스트-생성-이름-null-실패",
-					requestFields(
-						fieldWithPath("name")
-							.type(JsonFieldType.NULL)
-							.description("NULL (유효하지 않은 입력)")
-					)));
-		}
-
-		@Test
-		@DisplayName("시나리오: 사용자가 255자를 초과하는 이름으로 위시리스트 생성을 시도한다")
-		void 사용자가_255자_초과_이름으로_위시리스트_생성을_시도한다() throws Exception {
-			// Given: 255자를 초과하는 긴 이름으로 위시리스트를 생성하려는 상황
-			String longName = "A".repeat(256);
-			WishlistRequest.createRequest invalidRequest = new WishlistRequest.createRequest(longName);
-
-			// When: 사용자가 긴 이름으로 위시리스트 생성을 시도한다
+			// When: 사용자가 잘못된 데이터로 위시리스트 생성을 시도한다
 			mockMvc.perform(post("/api/members/wishlists")
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(objectMapper.writeValueAsString(invalidRequest)))
@@ -185,13 +126,45 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 				.andExpect(status().isBadRequest())
 
 				// document
-				.andDo(document("위시리스트-생성-길이초과-실패",
+				.andDo(document(documentId,
 					requestFields(
 						fieldWithPath("name")
-							.type(JsonFieldType.STRING)
-							.description("255자를 초과하는 이름 (유효하지 않은 입력)")
-					)
-				));
+							.type(fieldType)
+							.description(description)
+					)));
+		}
+
+		static Stream<Arguments> invalidCreateRequestProvider() {
+			return Stream.of(
+				Arguments.of(
+					"빈 문자열로 생성",
+					"",
+					JsonFieldType.STRING,
+					"빈 문자열 (유효하지 않은 입력)",
+					"위시리스트-생성-빈이름-실패"
+				),
+				Arguments.of(
+					"공백 문자로 생성",
+					"   ",
+					JsonFieldType.STRING,
+					"공백 문자열 (유효하지 않은 입력)",
+					"위시리스트-생성-공백문자-실패"
+				),
+				Arguments.of(
+					"null로 생성",
+					null,
+					JsonFieldType.NULL,
+					"NULL (유효하지 않은 입력)",
+					"위시리스트-생성-null-실패"
+				),
+				Arguments.of(
+					"255자 초과로 생성",
+					"A".repeat(256),
+					JsonFieldType.STRING,
+					"255자를 초과하는 이름 (유효하지 않은 입력)",
+					"위시리스트-생성-길이초과-실패"
+				)
+			);
 		}
 
 		@Test
@@ -320,14 +293,21 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			verify(wishlistService).updateWishlist(eq(wishlistId), any(WishlistRequest.updateRequest.class), eq(1L));
 		}
 
-		@Test
-		@DisplayName("시나리오: 사용자가 빈 이름으로 위시리스트 수정을 시도한다")
-		void 사용자가_빈_이름으로_위시리스트_수정을_시도한다() throws Exception {
-			// Given: 빈 이름으로 위시리스트를 수정하려는 상황
+		@ParameterizedTest(name = "{0}")
+		@MethodSource("invalidUpdateRequestProvider")
+		@DisplayName("시나리오: 사용자가 잘못된 데이터로 위시리스트 수정을 시도한다")
+		void 사용자가_잘못된_데이터로_위시리스트_수정을_시도한다(
+			String testName,
+			String inputName,
+			JsonFieldType fieldType,
+			String description,
+			String documentId
+		) throws Exception {
+			// Given: 잘못된 데이터로 위시리스트를 수정하려는 상황
 			Long wishlistId = 1L;
-			WishlistRequest.updateRequest invalidRequest = new WishlistRequest.updateRequest("");
+			WishlistRequest.updateRequest invalidRequest = new WishlistRequest.updateRequest(inputName);
 
-			// When: 사용자가 빈 이름으로 위시리스트 수정을 시도한다
+			// When: 사용자가 잘못된 데이터로 위시리스트 수정을 시도한다
 			mockMvc.perform(patch("/api/members/wishlists/{wishlistId}", wishlistId)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(objectMapper.writeValueAsString(invalidRequest)))
@@ -336,101 +316,49 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 				.andExpect(status().isBadRequest())
 
 				// document
-				.andDo(document("위시리스트-수정-빈이름-실패",
+				.andDo(document(documentId,
 					pathParameters(
 						parameterWithName("wishlistId")
 							.description("수정할 위시리스트의 고유 식별자")
 					),
 					requestFields(
 						fieldWithPath("name")
-							.type(JsonFieldType.STRING)
-							.description("빈 문자열 (유효하지 않은 입력)")
+							.type(fieldType)
+							.description(description)
 					)));
 		}
 
-		@Test
-		@DisplayName("시나리오: 사용자가 공백 문자 이름으로 위시리스트 수정을 시도한다")
-		void 사용자가_공백_문자_이름으로_위시리스트_수정을_시도한다() throws Exception {
-			// Given: 공백 문자 이름으로 위시리스트를 수정하려는 상황
-			Long wishlistId = 1L;
-			WishlistRequest.updateRequest invalidRequest = new WishlistRequest.updateRequest("      ");
-
-			// When: 사용자가 공백 문자 이름으로 위시리스트 수정을 시도한다
-			mockMvc.perform(patch("/api/members/wishlists/{wishlistId}", wishlistId)
-					.contentType(MediaType.APPLICATION_JSON)
-					.content(objectMapper.writeValueAsString(invalidRequest)))
-
-				// Then: 유효성 검증 오류가 발생한다
-				.andExpect(status().isBadRequest())
-
-				// document
-				.andDo(document("위시리스트-수정-공백-문자-이름-실패",
-					pathParameters(
-						parameterWithName("wishlistId")
-							.description("수정할 위시리스트의 고유 식별자")
-					),
-					requestFields(
-						fieldWithPath("name")
-							.type(JsonFieldType.STRING)
-							.description("공백 문자열 (유효하지 않은 입력)")
-					)));
-		}
-
-		@Test
-		@DisplayName("시나리오: 사용자가 이름을 입력하지 않고 위시리스트 수정을 시도한다")
-		void 사용자가_이름을_입력하지_않고_위시리스트_수정을_시도한다() throws Exception {
-			// Given: 이름을 입력하지 않고 위시리스트를 수정하려는 상황
-			Long wishlistId = 1L;
-			WishlistRequest.updateRequest invalidRequest = new WishlistRequest.updateRequest(null);
-
-			// When: 사용자가 이름을 입력하지 않고 위시리스트 수정을 시도한다
-			mockMvc.perform(patch("/api/members/wishlists/{wishlistId}", wishlistId)
-					.contentType(MediaType.APPLICATION_JSON)
-					.content(objectMapper.writeValueAsString(invalidRequest)))
-
-				// Then: 유효성 검증 오류가 발생한다
-				.andExpect(status().isBadRequest())
-
-				// document
-				.andDo(document("위시리스트-수정-이름-null-실패",
-					pathParameters(
-						parameterWithName("wishlistId")
-							.description("수정할 위시리스트의 고유 식별자")
-					),
-					requestFields(
-						fieldWithPath("name")
-							.type(JsonFieldType.NULL)
-							.description("NULL (유효하지 않은 입력)")
-					)));
-		}
-
-		@Test
-		@DisplayName("시나리오: 사용자가 255자를 초과하는 이름으로 위시리스트 수정을 시도한다")
-		void 사용자가_255자_초과_이름으로_위시리스트_수정을_시도한다() throws Exception {
-			// Given: 255자를 초과하는 긴 이름으로 위시리스트를 수정하려는 상황
-			Long wishlistId = 1L;
-			String longName = "A".repeat(256);
-			WishlistRequest.updateRequest invalidRequest = new WishlistRequest.updateRequest(longName);
-
-			// When: 사용자가 긴 이름으로 위시리스트 수정을 시도한다
-			mockMvc.perform(patch("/api/members/wishlists/{wishlistId}", wishlistId)
-					.contentType(MediaType.APPLICATION_JSON)
-					.content(objectMapper.writeValueAsString(invalidRequest)))
-
-				// Then: 유효성 검증 오류가 발생한다
-				.andExpect(status().isBadRequest())
-
-				// document
-				.andDo(document("위시리스트-수정-길이초과-실패",
-					pathParameters(
-						parameterWithName("wishlistId")
-							.description("수정할 위시리스트의 고유 식별자")
-					),
-					requestFields(
-						fieldWithPath("name")
-							.type(JsonFieldType.STRING)
-							.description("255자를 초과하는 이름 (유효하지 않은 입력)")
-					)));
+		static Stream<Arguments> invalidUpdateRequestProvider() {
+			return Stream.of(
+				Arguments.of(
+					"빈 문자열로 수정",
+					"",
+					JsonFieldType.STRING,
+					"빈 문자열 (유효하지 않은 입력)",
+					"위시리스트-수정-빈이름-실패"
+				),
+				Arguments.of(
+					"공백 문자로 수정",
+					"      ",
+					JsonFieldType.STRING,
+					"공백 문자열 (유효하지 않은 입력)",
+					"위시리스트-수정-공백문자-실패"
+				),
+				Arguments.of(
+					"null로 수정",
+					null,
+					JsonFieldType.NULL,
+					"NULL (유효하지 않은 입력)",
+					"위시리스트-수정-null-실패"
+				),
+				Arguments.of(
+					"255자 초과로 수정",
+					"A".repeat(256),
+					JsonFieldType.STRING,
+					"255자를 초과하는 이름 (유효하지 않은 입력)",
+					"위시리스트-수정-길이초과-실패"
+				)
+			);
 		}
 
 		@Test
