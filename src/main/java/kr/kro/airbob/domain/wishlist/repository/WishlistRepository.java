@@ -20,5 +20,5 @@ public interface WishlistRepository extends JpaRepository<Wishlist, Long> {
 	   OR (w.createdAt = :lastCreatedAt AND w.id < :lastId)) 
 	   ORDER BY w.createdAt DESC, w.id DESC
 """)
-	Slice<Wishlist> findByMemberIdWithCursor(Long currentMemberId, Long lastId, LocalDateTime lastCreatedAt, PageRequest of);
+	Slice<Wishlist> findByMemberIdWithCursor(Long memberId, Long lastId, LocalDateTime lastCreatedAt, PageRequest of);
 }
