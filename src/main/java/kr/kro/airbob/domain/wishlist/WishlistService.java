@@ -1,8 +1,5 @@
 package kr.kro.airbob.domain.wishlist;
 
-import static java.util.stream.Collectors.*;
-
-import java.awt.print.Pageable;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -12,7 +9,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import kr.kro.airbob.common.exception.MemberNotFoundException;
+import kr.kro.airbob.domain.member.exception.MemberNotFoundException;
 import kr.kro.airbob.cursor.dto.CursorRequest;
 import kr.kro.airbob.cursor.dto.CursorResponse;
 import kr.kro.airbob.cursor.util.CursorPageInfoCreator;

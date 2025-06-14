@@ -1,4 +1,4 @@
-package kr.kro.airbob.common.exception;
+package kr.kro.airbob.domain.member.exception;
 
 public class MemberNotFoundException extends RuntimeException{
 
