@@ -53,4 +53,15 @@ public class WishlistResponse {
 		String thumbnailImageUrl
 	) {
 	}
+
+	public record AddAccommodationResponse(
+		long id
+	) {
+		@Override
+		public String toString() {
+			return "AddAccommodationResponse{" +
+				"id=" + id +
+				'}';
+		}
+	}
 }

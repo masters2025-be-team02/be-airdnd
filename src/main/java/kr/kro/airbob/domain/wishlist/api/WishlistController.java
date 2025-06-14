@@ -22,33 +22,33 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-@RequestMapping("/api")
+@RequestMapping("/api/members/wishlists")
 public class WishlistController {
 
 	private final WishlistService wishlistService;
 	private static final Long TEMP_LOGGED_IN_MEMBER_ID = 1L;
 
-	@PostMapping("/members/wishlists")
-	public ResponseEntity<WishlistResponse.createResponse> createWishlist(
+	@PostMapping
+	public ResponseEntity<WishlistResponse.CreateResponse> createWishlist(
 		@Valid @RequestBody WishlistRequest.createRequest request) {
 		log.info(request.toString());
-		WishlistResponse.createResponse response = wishlistService.createWishlist(request, TEMP_LOGGED_IN_MEMBER_ID);
+		WishlistResponse.CreateResponse response = wishlistService.createWishlist(request, TEMP_LOGGED_IN_MEMBER_ID);
 		log.info(response.toString());
 		return ResponseEntity.ok(response);
 	}
 
-	@PatchMapping("/members/wishlists/{wishlistId}")
-	public ResponseEntity<WishlistResponse.updateResponse> updateWishlist(
+	@PatchMapping("/{wishlistId}")
+	public ResponseEntity<WishlistResponse.UpdateResponse> updateWishlist(
 		@PathVariable Long wishlistId,
 		@Valid @RequestBody WishlistRequest.updateRequest request) {
 		log.info(request.toString());
-		WishlistResponse.updateResponse response = wishlistService.updateWishlist(wishlistId, request,
+		WishlistResponse.UpdateResponse response = wishlistService.updateWishlist(wishlistId, request,
 			TEMP_LOGGED_IN_MEMBER_ID);
 		log.info(response.toString());
 		return ResponseEntity.ok(response);
 	}
 
-	@DeleteMapping("/members/wishlists/{wishlistId}")
+	@DeleteMapping("/{wishlistId}")
 	public ResponseEntity<Void> deleteWishlist(@PathVariable Long wishlistId) {
 		log.info("{} 위시리스트 삭제 요청", wishlistId);
 		wishlistService.deleteWishlist(wishlistId, TEMP_LOGGED_IN_MEMBER_ID);
@@ -56,13 +56,23 @@ public class WishlistController {
 		return ResponseEntity.noContent().build();
 	}
 
-	@GetMapping("/members/wishlists")
+	@GetMapping
 	public ResponseEntity<WishlistResponse.WishlistInfos> findWishlists(
 		@CursorParam CursorRequest.CursorPageRequest request) {
 		log.info(request.toString());
 		WishlistResponse.WishlistInfos response =
 			wishlistService.findWishlists(request, TEMP_LOGGED_IN_MEMBER_ID);
 		log.info(response.toString());
+		return ResponseEntity.ok(response);
+	}
+
+	@PostMapping("/{wishlistId}/accommodations")
+	public ResponseEntity<WishlistResponse.AddAccommodationResponse> addAccommodationToWishlist(
+		@PathVariable Long wishlistId,
+		@Valid @RequestBody WishlistRequest.AddAccommodationResponse request) {
+		log.info("{} 위시리스트에 {} 숙소 추가 요청", wishlistId, request.accommodationId());
+		WishlistResponse.AddAccommodationResponse response =
+			wishlistService.addAccommodationToWishlist(wishlistId, request, TEMP_LOGGED_IN_MEMBER_ID);
 		return ResponseEntity.ok(response);
 	}
 }

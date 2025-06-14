@@ -37,7 +37,7 @@ public class WishlistService {
 	private final CursorPageInfoCreator cursorPageInfoCreator;
 
 	@Transactional
-	public WishlistResponse.createResponse createWishlist(WishlistRequest.createRequest request, Long currentMemberId) {
+	public WishlistResponse.CreateResponse createWishlist(WishlistRequest.createRequest request, Long currentMemberId) {
 
 		Member member = findMemberById(currentMemberId);
 		log.info("{} 사용자 조회 성공", member.getId());
@@ -48,11 +48,11 @@ public class WishlistService {
 			.build();
 
 		Wishlist savedWishlist = wishlistRepository.save(wishlist);
-		return new WishlistResponse.createResponse(savedWishlist.getId());
+		return new WishlistResponse.CreateResponse(savedWishlist.getId());
 	}
 
 	@Transactional
-	public WishlistResponse.updateResponse updateWishlist(Long wishlistId, WishlistRequest.updateRequest request, Long currentMemberId) {
+	public WishlistResponse.UpdateResponse updateWishlist(Long wishlistId, WishlistRequest.updateRequest request, Long currentMemberId) {
 
 		Wishlist foundWishlist = findWishlistById(wishlistId);
 		log.info("{} 위시리스트 조회 성공", foundWishlist.getId());
@@ -62,7 +62,7 @@ public class WishlistService {
 		log.info("위시리스트 이름 {} -> {} 변경", foundWishlist.getName(), request.name());
 		foundWishlist.updateName(request.name());
 
-		return new WishlistResponse.updateResponse(foundWishlist.getId());
+		return new WishlistResponse.UpdateResponse(foundWishlist.getId());
 	}
 
 	@Transactional

@@ -123,7 +123,7 @@ class WishlistServiceTest {
 			});
 
 			// When
-			WishlistResponse.createResponse response = wishlistService.createWishlist(request, currentMemberId);
+			WishlistResponse.CreateResponse response = wishlistService.createWishlist(request, currentMemberId);
 
 			// Then
 			assertThat(response.id()).isEqualTo(1L);
@@ -177,8 +177,8 @@ class WishlistServiceTest {
 				});
 
 			// When
-			WishlistResponse.createResponse firstResponse = wishlistService.createWishlist(request, currentMemberId);
-			WishlistResponse.createResponse secondResponse = wishlistService.createWishlist(request, currentMemberId);
+			WishlistResponse.CreateResponse firstResponse = wishlistService.createWishlist(request, currentMemberId);
+			WishlistResponse.CreateResponse secondResponse = wishlistService.createWishlist(request, currentMemberId);
 
 			// Then
 			assertThat(firstResponse.id()).isEqualTo(1L);
@@ -204,7 +204,7 @@ class WishlistServiceTest {
 			given(wishlistRepository.findById(wishlistId)).willReturn(Optional.of(wishlist));
 
 			// When
-			WishlistResponse.updateResponse response = wishlistService.updateWishlist(wishlistId, request, currentMemberId);
+			WishlistResponse.UpdateResponse response = wishlistService.updateWishlist(wishlistId, request, currentMemberId);
 
 			// Then
 			assertThat(response.id()).isEqualTo(wishlistId);
@@ -261,7 +261,7 @@ class WishlistServiceTest {
 			given(wishlistRepository.findById(wishlistId)).willReturn(Optional.of(wishlist));
 
 			// When
-			WishlistResponse.updateResponse response = wishlistService.updateWishlist(wishlistId, request, currentMemberId);
+			WishlistResponse.UpdateResponse response = wishlistService.updateWishlist(wishlistId, request, currentMemberId);
 
 			// Then
 			assertThat(response.id()).isEqualTo(wishlistId);

@@ -81,7 +81,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 		void 사용자가_새로운_위시리스트를_생성한다() throws Exception {
 			// Given: 사용자가 위시리스트 생성을 위한 유효한 데이터를 입력한 상황
 			WishlistRequest.createRequest request = new WishlistRequest.createRequest("서울 여행 계획");
-			WishlistResponse.createResponse expectedResponse = new WishlistResponse.createResponse(1L);
+			WishlistResponse.CreateResponse expectedResponse = new WishlistResponse.CreateResponse(1L);
 
 			when(wishlistService.createWishlist(any(WishlistRequest.createRequest.class), eq(1L)))
 				.thenReturn(expectedResponse);
@@ -182,7 +182,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 
 			for (int i = 0; i < wishlistNames.length; i++) {
 				WishlistRequest.createRequest request = new WishlistRequest.createRequest(wishlistNames[i]);
-				WishlistResponse.createResponse expectedResponse = new WishlistResponse.createResponse((long)(i + 1));
+				WishlistResponse.CreateResponse expectedResponse = new WishlistResponse.CreateResponse((long)(i + 1));
 
 				when(wishlistService.createWishlist(any(WishlistRequest.createRequest.class), eq(1L)))
 					.thenReturn(expectedResponse);
@@ -216,8 +216,8 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 		void 동일한_이름으로_여러_위시리스트를_생성한다() throws Exception{
 			// Given: 동일한 이름으로 위시리스트를 생성하는 상황 - 중복 허용
 			WishlistRequest.createRequest request = new WishlistRequest.createRequest("초복중복말복");
-			WishlistResponse.createResponse firstResponse = new WishlistResponse.createResponse(1L);
-			WishlistResponse.createResponse secondResponse = new WishlistResponse.createResponse(2L);
+			WishlistResponse.CreateResponse firstResponse = new WishlistResponse.CreateResponse(1L);
+			WishlistResponse.CreateResponse secondResponse = new WishlistResponse.CreateResponse(2L);
 
 			// 첫 번째 생성
 			when(wishlistService.createWishlist(any(WishlistRequest.createRequest.class), eq(1L)))
@@ -266,7 +266,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			// Given: 존재하는 위시리스트의 이름을 변경하려는 상황
 			Long wishlistId = 1L;
 			WishlistRequest.updateRequest request = new WishlistRequest.updateRequest("수정된 서울 여행 계획");
-			WishlistResponse.updateResponse expectedResponse = new WishlistResponse.updateResponse(wishlistId);
+			WishlistResponse.UpdateResponse expectedResponse = new WishlistResponse.UpdateResponse(wishlistId);
 
 			when(wishlistService.updateWishlist(eq(wishlistId), any(WishlistRequest.updateRequest.class), eq(1L)))
 				.thenReturn(expectedResponse);
