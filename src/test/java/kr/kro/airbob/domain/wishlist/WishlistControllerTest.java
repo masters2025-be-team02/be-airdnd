@@ -1,4 +1,4 @@
-package kr.kro.airbob.domain.wishlist.api;
+package kr.kro.airbob.domain.wishlist;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
@@ -31,8 +31,8 @@ import kr.kro.airbob.cursor.resolver.CursorParamArgumentResolver;
 import kr.kro.airbob.cursor.util.CursorDecoder;
 import kr.kro.airbob.cursor.util.CursorEncoder;
 import kr.kro.airbob.cursor.util.CursorPageInfoCreator;
-import kr.kro.airbob.domain.common.api.BaseControllerDocumentationTest;
-import kr.kro.airbob.domain.wishlist.WishlistService;
+import kr.kro.airbob.domain.common.BaseControllerDocumentationTest;
+import kr.kro.airbob.domain.wishlist.api.WishlistController;
 import kr.kro.airbob.domain.wishlist.dto.WishlistRequest;
 import kr.kro.airbob.domain.wishlist.dto.WishlistResponse;
 import kr.kro.airbob.domain.wishlist.exception.WishlistAccessDeniedException;

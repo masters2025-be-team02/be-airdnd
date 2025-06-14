@@ -1,4 +1,4 @@
-package kr.kro.airbob.domain.common.api;
+package kr.kro.airbob.domain.common;
 
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.*;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
