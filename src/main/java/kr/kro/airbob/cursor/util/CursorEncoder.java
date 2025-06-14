@@ -9,7 +9,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import kr.kro.airbob.cursor.dto.CursorResponse;
-import kr.kro.airbob.cursor.exception.CursorException;
+import kr.kro.airbob.cursor.exception.CursorEncodingException;
 import lombok.RequiredArgsConstructor;
 
 @Component
@@ -27,7 +27,7 @@ public class CursorEncoder {
 			String json = objectMapper.writeValueAsString(cursor);
 			return Base64.getEncoder().encodeToString(json.getBytes(StandardCharsets.UTF_8));
 		} catch (JsonProcessingException e) {
-			throw new CursorException("커서 인코딩 실패: " + e.getMessage());
+			throw new CursorEncodingException("커서 인코딩 실패: " + e.getMessage());
 		}
 	}
 }

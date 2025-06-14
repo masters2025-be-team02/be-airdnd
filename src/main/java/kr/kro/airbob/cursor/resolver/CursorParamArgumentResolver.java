@@ -10,7 +10,7 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 import kr.kro.airbob.cursor.annotation.CursorParam;
 import kr.kro.airbob.cursor.dto.CursorRequest;
 import kr.kro.airbob.cursor.dto.CursorResponse;
-import kr.kro.airbob.cursor.exception.CursorException;
+import kr.kro.airbob.cursor.exception.CursorPageSizeException;
 import kr.kro.airbob.cursor.util.CursorDecoder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +39,7 @@ public class CursorParamArgumentResolver implements HandlerMethodArgumentResolve
 		int size = sizeParam != null ? Integer.parseInt(sizeParam) : annotation.defaultSize();
 
 		if (size < 1) {
-			throw new CursorException("커서 페이지 크기는 1 이상이여야 합니다.");
+			throw new CursorPageSizeException("커서 페이지 크기는 1 이상이여야 합니다.");
 		}
 
 		String cursorParam = webRequest.getParameter(annotation.cursorParam());
