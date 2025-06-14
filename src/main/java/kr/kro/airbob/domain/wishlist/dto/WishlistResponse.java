@@ -10,7 +10,7 @@ public class WishlistResponse {
 	private WishlistResponse() {
 	}
 
-	public record createResponse(
+	public record CreateResponse(
 		long id
 	) {
 		@Override
@@ -21,7 +21,7 @@ public class WishlistResponse {
 		}
 	}
 
-	public record updateResponse(
+	public record UpdateResponse(
 		long id
 	) {
 		@Override
