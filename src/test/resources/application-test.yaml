@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: airbob
+
+  flyway:
+    enabled: true               # Flyway 사용 활성화
+    locations: classpath:db/migration  # 마이그레이션 파일 위치(기본값)

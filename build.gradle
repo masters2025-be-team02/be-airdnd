@@ -1,0 +1,157 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.5.0'
+	id 'io.spring.dependency-management' version '1.1.7'
+	id 'org.asciidoctor.jvm.convert' version '3.3.2'
+}
+
+group = 'kr.kro'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+	asciidoctorExt
+}
+
+repositories {
+	mavenCentral()
+}
+
+ext {
+	snippetsDir = layout.buildDirectory.dir("generated-snippets").get().asFile
+}
+
+dependencies {
+	// Spring Web
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+
+	//Spring Validation
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+	// Spring Data JPA
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+	// Flyway
+	implementation 'org.flywaydb:flyway-core'
+	implementation 'org.flywaydb:flyway-mysql'
+
+	// Lombok
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+
+	// MySQL JDBC 드라이버
+	runtimeOnly 'com.mysql:mysql-connector-j'
+
+	// 테스트
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+	//test container
+	testImplementation("org.testcontainers:junit-jupiter")
+	testImplementation("org.testcontainers:mysql")
+}
+
+
+tasks.named('test') {
+	outputs.dir snippetsDir
+	useJUnitPlatform()
+}
+
+
+tasks.register('copyDocument', Copy) {
+	dependsOn asciidoctor
+
+	from file("build/docs/asciidoc/")
+	into file("src/main/resources/static/docs")
+}
+
+build {
+	dependsOn copyDocument
+	dependsOn asciidoctor
+}
+
+tasks.register('generateAdoc') {
+	dependsOn test
+	doLast {
+		def dir = layout.buildDirectory.dir("generated-snippets").get().asFile
+		def adocDir = file("src/docs/asciidoc/generated")
+
+		if (!adocDir.exists()) {
+			adocDir.mkdirs()
+		}
+
+		def indexFile = file("src/docs/asciidoc/index.adoc")
+		def content = new StringBuilder()
+
+		content << "= Airbob REST API 문서\n"
+		content << ":doctype: book\n"
+		content << ":toc: left\n"
+		content << ":toclevels: 2\n"
+		content << ":sectnums:\n"
+		content << ":icons: font\n"
+		content << ":source-highlighter: highlightjs\n"
+		content << ":highlightjs-theme: github\n"
+		content << ":docinfo1:\n\n"
+		content << "== API 문서 목록\n\n"
+
+		dir.listFiles()?.each { snippetDir ->
+			def snippetName = snippetDir.name
+			def adocFile = new File(adocDir, "${snippetName}.adoc")
+
+			def includes = new StringBuilder()
+			includes << "=== ${snippetName}\n\n"
+
+			def descriptions = [
+					"http-request": "요청 예시",
+					"http-response": "응답 예시",
+					"request-fields": "요청 필드 설명",
+					"response-fields": "응답 필드 설명",
+					"path-parameters": "경로 변수 설명",
+					"request-parameters": "요청 파라미터 설명",
+					"response-headers": "응답 헤더 설명"
+			]
+
+			descriptions.each { part, desc ->
+				includes << "==== ${desc}\n"
+				def fileToInclude = new File(snippetDir, "${part}.adoc")
+				if (fileToInclude.exists()) {
+					includes << "include::{snippets}/${snippetName}/${part}.adoc[]\n\n"
+				} else {
+					includes << "_해당 정보가 없습니다._\n\n"
+				}
+			}
+
+			adocFile.text = includes.toString()
+
+			// index.adoc에 포함되도록 추가
+			content << "include::{generated}/${snippetName}.adoc[]\n\n"
+		}
+
+		indexFile.text = content.toString()
+	}
+}
+
+
+asciidoctor {
+	dependsOn generateAdoc
+	sourceDir = file('src/docs/asciidoc')
+	sources {
+		include 'index.adoc'
+	}
+	outputDir = layout.buildDirectory.dir("docs/asciidoc").get().asFile
+	attributes(
+			'snippets': snippetsDir,
+			'generated': file('src/docs/asciidoc/generated')
+	)
+}
+
+
