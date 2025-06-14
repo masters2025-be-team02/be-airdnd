@@ -11,6 +11,8 @@ import kr.kro.airbob.domain.wishlist.dto.WishlistRequest;
 import kr.kro.airbob.domain.wishlist.dto.WishlistResponse;
 import kr.kro.airbob.domain.wishlist.exception.WishlistAccessDeniedException;
 import kr.kro.airbob.domain.wishlist.exception.WishlistNotFoundException;
+import kr.kro.airbob.domain.wishlist.repository.WishlistAccommodationRepository;
+import kr.kro.airbob.domain.wishlist.repository.WishlistRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -19,8 +21,9 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class WishlistService {
 
-	private final WishlistRepository wishlistRepository;
 	private final MemberRepository memberRepository;
+	private final WishlistRepository wishlistRepository;
+	private final WishlistAccommodationRepository wishlistAccommodationRepository;
 
 	@Transactional
 	public WishlistResponse.createResponse createWishlist(WishlistRequest.createRequest request, Long currentMemberId) {
@@ -61,6 +64,8 @@ public class WishlistService {
 
 		validateWishlistOwnershipOrAdmin(foundWishlist, currentMember);
 
+		// 위시리스트에 속한 숙소 삭제
+		wishlistAccommodationRepository.deleteAllByWishlistId(foundWishlist.getId());
 		wishlistRepository.delete(foundWishlist);
 	}
 

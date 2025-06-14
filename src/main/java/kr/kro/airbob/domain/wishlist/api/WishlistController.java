@@ -2,6 +2,7 @@ package kr.kro.airbob.domain.wishlist.api;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -10,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
+import kr.kro.airbob.common.annotation.CursorParam;
+import kr.kro.airbob.common.dto.CursorRequest;
 import kr.kro.airbob.domain.wishlist.WishlistService;
 import kr.kro.airbob.domain.wishlist.dto.WishlistRequest;
 import kr.kro.airbob.domain.wishlist.dto.WishlistResponse;
@@ -52,4 +55,5 @@ public class WishlistController {
 		log.info("{} 위시리스트 삭제 요청 완료", wishlistId);
 		return ResponseEntity.noContent().build();
 	}
+	
 }

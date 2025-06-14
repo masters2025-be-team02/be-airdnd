@@ -1,4 +1,4 @@
-package kr.kro.airbob.common;
+package kr.kro.airbob.common.domain;
 
 import java.time.LocalDateTime;
 
