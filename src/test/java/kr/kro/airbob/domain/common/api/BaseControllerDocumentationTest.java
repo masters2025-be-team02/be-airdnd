@@ -13,6 +13,8 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import kr.kro.airbob.common.exception.GlobalExceptionHandler;
+
 @ExtendWith(RestDocumentationExtension.class)
 public abstract class BaseControllerDocumentationTest {
 
@@ -25,6 +27,7 @@ public abstract class BaseControllerDocumentationTest {
 	void setUp(RestDocumentationContextProvider restDocumentation) {
 		this.mockMvc = MockMvcBuilders
 			.standaloneSetup(getController())  // standaloneSetup 사용
+			.setControllerAdvice(new GlobalExceptionHandler())
 			.apply(documentationConfiguration(restDocumentation)
 				.operationPreprocessors()
 				.withRequestDefaults(prettyPrint())
