@@ -4,10 +4,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
-import kr.kro.airbob.common.BaseEntity;
-import lombok.AccessLevel;
+import kr.kro.airbob.common.domain.BaseEntity;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 @Getter
 @MappedSuperclass
