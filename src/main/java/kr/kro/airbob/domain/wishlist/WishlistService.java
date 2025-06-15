@@ -22,6 +22,8 @@ import kr.kro.airbob.domain.member.common.MemberRole;
 import kr.kro.airbob.domain.wishlist.dto.WishlistRequest;
 import kr.kro.airbob.domain.wishlist.dto.WishlistResponse;
 import kr.kro.airbob.domain.wishlist.exception.WishlistAccessDeniedException;
+import kr.kro.airbob.domain.wishlist.exception.WishlistAccommodationAccessDeniedException;
+import kr.kro.airbob.domain.wishlist.exception.WishlistAccommodationNotFoundException;
 import kr.kro.airbob.domain.wishlist.exception.WishlistNotFoundException;
 import kr.kro.airbob.domain.wishlist.repository.WishlistAccommodationRepository;
 import kr.kro.airbob.domain.wishlist.repository.WishlistRepository;
@@ -148,6 +150,23 @@ public class WishlistService {
 		return new WishlistResponse.AddAccommodationResponse(savedWishlistAccommodation.getId());
 	}
 
+	public WishlistResponse.UpdateWishlistAccommodationResponse updateWishlistAccommodation(Long wishlistId,
+		Long wishlistAccommodationId, WishlistRequest.UpdateWishlistAccommodationRequest request,
+		Long currentMemberId) {
+
+		Wishlist wishlist = findWishlistById(wishlistId);
+		WishlistAccommodation wishlistAccommodation = findWishlistAccommodation(wishlistAccommodationId);
+
+		Member member = findMemberById(currentMemberId);
+
+		validateWishlistOwnership(wishlist, member.getId());
+		validateWishlistAccommodationOwnership(wishlistAccommodation, wishlistId);
+
+		wishlistAccommodation.updateMemo(request.memo());
+
+		return new WishlistResponse.UpdateWishlistAccommodationResponse(wishlistAccommodation.getId());
+	}
+
 	private Wishlist findWishlistById(Long wishlistId) {
 		return wishlistRepository.findById(wishlistId).orElseThrow(WishlistNotFoundException::new);
 	}
@@ -160,6 +179,10 @@ public class WishlistService {
 		return accommodationRepository.findById(accommodationId).orElseThrow(AccommodationNotFoundException::new);
 	}
 
+	private WishlistAccommodation findWishlistAccommodation(Long wishlistAccommodationId){
+		return wishlistAccommodationRepository.findById(wishlistAccommodationId)
+			.orElseThrow(WishlistAccommodationNotFoundException::new);
+	}
 
 	private void validateWishlistOwnership(Wishlist wishlist, Long memberId) {
 		if (!wishlist.isOwnedBy(memberId)) {
@@ -175,4 +198,10 @@ public class WishlistService {
 		}
 	}
 
+	private void validateWishlistAccommodationOwnership(WishlistAccommodation wishlistAccommodation, Long wishlistId) {
+		if (!wishlistAccommodation.isOwnedBy(wishlistId)) {
+			log.error("위시리스트: {}, 항목이 속한 위시리스트: {}", wishlistId, wishlistAccommodation.getAccommodation().getId());
+			throw new WishlistAccommodationAccessDeniedException();
+		}
+	}
 }
