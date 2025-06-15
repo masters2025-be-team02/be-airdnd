@@ -7,5 +7,5 @@ CREATE TABLE reserved_dates (
                                 CONSTRAINT FK_reserved_date_accommodation_id FOREIGN KEY (accommodation_id) REFERENCES accommodation (id)
 );
 
-CREATE INDEX idx_reserved_dates_reserved_at_accommodation
-    ON reserved_dates (reserved_at, accommodation_id);
+CREATE INDEX idx_reserved_dates_accommodation_reserved_at
+    ON reserved_dates (accommodation_id, reserved_at);

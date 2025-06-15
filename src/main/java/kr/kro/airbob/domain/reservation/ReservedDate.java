@@ -25,7 +25,7 @@ public class ReservedDate extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private LocalDate reservedDate;
+    private LocalDate reservedAt;
 
     @ManyToOne
     @JoinColumn(name = "accommodation_id")
