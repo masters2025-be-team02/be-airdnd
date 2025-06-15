@@ -150,6 +150,7 @@ public class WishlistService {
 		return new WishlistResponse.CreateWishlistAccommodationResponse(savedWishlistAccommodation.getId());
 	}
 
+	@Transactional
 	public WishlistResponse.UpdateWishlistAccommodationResponse updateWishlistAccommodation(Long wishlistId,
 		Long wishlistAccommodationId, WishlistRequest.UpdateWishlistAccommodationRequest request,
 		Long currentMemberId) {
@@ -165,6 +166,20 @@ public class WishlistService {
 		wishlistAccommodation.updateMemo(request.memo());
 
 		return new WishlistResponse.UpdateWishlistAccommodationResponse(wishlistAccommodation.getId());
+	}
+
+	@Transactional
+	public void deleteWishlistAccommodation(Long wishlistId, Long wishlistAccommodationId, Long currentMemberId) {
+
+		Wishlist wishlist = findWishlistById(wishlistId);
+		WishlistAccommodation wishlistAccommodation = findWishlistAccommodation(wishlistAccommodationId);
+
+		Member member = findMemberById(currentMemberId);
+
+		validateWishlistOwnership(wishlist, member.getId());
+		validateWishlistAccommodationOwnership(wishlistAccommodation, wishlistId);
+
+		wishlistAccommodationRepository.delete(wishlistAccommodation);
 	}
 
 	private Wishlist findWishlistById(Long wishlistId) {
