@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
@@ -68,12 +67,12 @@ public class WishlistController {
 	}
 
 	@PostMapping("/{wishlistId}/accommodations")
-	public ResponseEntity<WishlistResponse.AddAccommodationResponse> addAccommodationToWishlist(
+	public ResponseEntity<WishlistResponse.CreateWishlistAccommodationResponse> createWishlistAccommodation(
 		@PathVariable Long wishlistId,
-		@Valid @RequestBody WishlistRequest.AddAccommodationResponse request) {
+		@Valid @RequestBody WishlistRequest.CreateWishlistAccommodationRequest request) {
 		log.info("{} 위시리스트에 {} 숙소 추가 요청", wishlistId, request.accommodationId());
-		WishlistResponse.AddAccommodationResponse response =
-			wishlistService.addAccommodationToWishlist(wishlistId, request, TEMP_LOGGED_IN_MEMBER_ID);
+		WishlistResponse.CreateWishlistAccommodationResponse response =
+			wishlistService.createWishlistAccommodation(wishlistId, request, TEMP_LOGGED_IN_MEMBER_ID);
 		return ResponseEntity.ok(response);
 	}
 

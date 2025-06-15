@@ -133,8 +133,8 @@ public class WishlistService {
 	}
 
 	@Transactional(readOnly = true)
-	public WishlistResponse.AddAccommodationResponse addAccommodationToWishlist(Long wishlistId,
-		WishlistRequest.AddAccommodationResponse request, Long currentMemberId) {
+	public WishlistResponse.CreateWishlistAccommodationResponse createWishlistAccommodation(Long wishlistId,
+		WishlistRequest.CreateWishlistAccommodationRequest request, Long currentMemberId) {
 		Wishlist wishlist = findWishlistById(wishlistId);
 		Accommodation accommodation = findAccommodationById(request.accommodationId());
 		Member member = findMemberById(currentMemberId);
@@ -147,7 +147,7 @@ public class WishlistService {
 		WishlistAccommodation savedWishlistAccommodation
 			= wishlistAccommodationRepository.save(wishlistAccommodation);
 
-		return new WishlistResponse.AddAccommodationResponse(savedWishlistAccommodation.getId());
+		return new WishlistResponse.CreateWishlistAccommodationResponse(savedWishlistAccommodation.getId());
 	}
 
 	public WishlistResponse.UpdateWishlistAccommodationResponse updateWishlistAccommodation(Long wishlistId,

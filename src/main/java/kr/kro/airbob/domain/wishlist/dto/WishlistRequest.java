@@ -36,7 +36,7 @@ public class WishlistRequest {
 		}
 	}
 
-	public record AddAccommodationResponse(
+	public record CreateWishlistAccommodationRequest(
 		@Positive(message = "숙소 ID는 양수여야 합니다.")
 		@NotNull(message = "숙소 ID는 필수입니다.")
 		Long accommodationId
