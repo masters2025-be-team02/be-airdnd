@@ -1,17 +1,17 @@
 package kr.kro.airbob.domain.accommodation;
 
-import static com.fasterxml.jackson.databind.jsonFormatVisitors.JsonValueFormat.DATE;
 import static com.fasterxml.jackson.databind.node.JsonNodeType.ARRAY;
 import static com.fasterxml.jackson.databind.node.JsonNodeType.NUMBER;
 import static com.fasterxml.jackson.databind.node.JsonNodeType.OBJECT;
 import static com.fasterxml.jackson.databind.node.JsonNodeType.STRING;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.mock;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.documentationConfiguration;
-import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
-import static org.springframework.restdocs.payload.PayloadDocumentation.*;
+import static org.springframework.restdocs.operation.preprocess.Preprocessors.prettyPrint;
+import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
+import static org.springframework.restdocs.payload.PayloadDocumentation.requestFields;
+import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
 import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
 import static org.springframework.restdocs.request.RequestDocumentation.queryParameters;
@@ -22,24 +22,28 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.time.LocalDate;
 import java.util.List;
-import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest.*;
+import kr.kro.airbob.cursor.util.CursorDecoder;
+import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest.AddressInfo;
+import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest.AmenityInfo;
+import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest.CreateAccommodationDto;
+import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest.OccupancyPolicyInfo;
+import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest.UpdateAccommodationDto;
 import kr.kro.airbob.domain.accommodation.dto.AccommodationResponse.AccommodationSearchResponseDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.restdocs.RestDocumentationContextProvider;
+import org.springframework.restdocs.RestDocumentationExtension;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.restdocs.RestDocumentationExtension;
 
 @ExtendWith(RestDocumentationExtension.class)
 @AutoConfigureRestDocs
@@ -48,6 +52,8 @@ class AccommodationControllerTest {
 
     @MockitoBean
     private AccommodationService accommodationService;
+    @MockitoBean
+    private CursorDecoder cursorDecoder;
 
     @Autowired
     private MockMvc mockMvc;
@@ -232,18 +238,23 @@ class AccommodationControllerTest {
     @Test
     @DisplayName("숙소를 필터링 조건으로 검색한다")
     void searchAccommodationsByConditionTest() throws Exception {
+        // given
         AccommodationSearchResponseDto dummyResponse = AccommodationSearchResponseDto.builder()
                 .name("테스트 숙소")
                 .thumbnailUrl("http://example.com/image.jpg")
                 .pricePerNight(100000)
                 .averageRating(4.5)
                 .maxOccupancy(4)
-                .amenityInfos(List.of(new AmenityInfo("WIFI", 1), new AmenityInfo("TV", 1)))
+                .amenityInfos(List.of(
+                        new AmenityInfo("WIFI", 1),
+                        new AmenityInfo("TV", 1)
+                ))
                 .reviewCount(18)
                 .build();
 
-        given(accommodationService.searchAccommodations(any())).willReturn(dummyResponse);
+        given(accommodationService.searchAccommodations(any(), any())).willReturn(List.of(dummyResponse));
 
+        // when & then
         mockMvc.perform(get("/api/accommodations")
                         .param("checkIn", "2025-07-01")
                         .param("checkOut", "2025-07-05")
@@ -252,7 +263,9 @@ class AccommodationControllerTest {
                         .param("maxPrice", "300000")
                         .param("guestCount", "2")
                         .param("amenityTypes", "WIFI", "PARKING")
-                        .param("accommodationTypes", "HOTEL", "VILLA"))
+                        .param("accommodationTypes", "HOTEL", "VILLA")
+                        .param("page", "0")
+                        .param("size", "10"))
                 .andExpect(status().isOk())
                 .andDo(document("숙소 조건 검색",
                         queryParameters(
@@ -263,18 +276,20 @@ class AccommodationControllerTest {
                                 parameterWithName("maxPrice").description("최대 가격").optional(),
                                 parameterWithName("guestCount").description("게스트 수").optional(),
                                 parameterWithName("amenityTypes").description("어메니티 필터 (예: WIFI, PARKING)").optional(),
-                                parameterWithName("accommodationTypes").description("숙소 유형 필터 (예: HOTEL, VILLA)").optional()
+                                parameterWithName("accommodationTypes").description("숙소 유형 필터 (예: HOTEL, VILLA)").optional(),
+                                parameterWithName("page").description("페이지 번호").optional(),
+                                parameterWithName("size").description("페이지 크기").optional()
                         ),
                         responseFields(
-                                fieldWithPath("name").type(STRING).description("숙소 이름"),
-                                fieldWithPath("thumbnailUrl").type(STRING).description("썸네일 URL"),
-                                fieldWithPath("pricePerNight").type(NUMBER).description("1박당 가격"),
-                                fieldWithPath("maxOccupancy").type(NUMBER).description("최대 수용 인원"),
-                                fieldWithPath("amenityInfos").type(ARRAY).description("편의 시설 목록"),
-                                fieldWithPath("amenityInfos[].name").type(STRING).description("편의 시설 이름"),
-                                fieldWithPath("amenityInfos[].count").type(NUMBER).description("편의 시설 개수"),
-                                fieldWithPath("averageRating").type(NUMBER).description("평균 평점"),
-                                fieldWithPath("reviewCount").type(NUMBER).description("리뷰 개수")
+                                fieldWithPath("[].name").type(STRING).description("숙소 이름"),
+                                fieldWithPath("[].thumbnailUrl").type(STRING).description("썸네일 URL"),
+                                fieldWithPath("[].pricePerNight").type(NUMBER).description("1박당 가격"),
+                                fieldWithPath("[].maxOccupancy").type(NUMBER).description("최대 수용 인원"),
+                                fieldWithPath("[].amenityInfos").type(ARRAY).description("편의 시설 목록"),
+                                fieldWithPath("[].amenityInfos[].name").type(STRING).description("편의 시설 이름"),
+                                fieldWithPath("[].amenityInfos[].count").type(NUMBER).description("편의 시설 개수"),
+                                fieldWithPath("[].averageRating").type(NUMBER).description("평균 평점"),
+                                fieldWithPath("[].reviewCount").type(NUMBER).description("리뷰 개수")
                         )
                 ));
     }
