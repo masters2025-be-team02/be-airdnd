@@ -6,8 +6,10 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import kr.kro.airbob.domain.accommodation.common.AmenityType;
 import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest;
+import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest.AccommodationSearchConditionDto;
 import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest.AmenityInfo;
 import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest.CreateAccommodationDto;
+import kr.kro.airbob.domain.accommodation.dto.AccommodationResponse.AccommodationSearchResponseDto;
 import kr.kro.airbob.domain.accommodation.entity.Accommodation;
 import kr.kro.airbob.domain.accommodation.entity.AccommodationAmenity;
 import kr.kro.airbob.domain.accommodation.entity.Address;
@@ -21,6 +23,7 @@ import kr.kro.airbob.domain.accommodation.repository.OccupancyPolicyRepository;
 import kr.kro.airbob.domain.member.Member;
 import kr.kro.airbob.domain.member.MemberRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -129,5 +132,9 @@ public class AccommodationService {
 
         accommodationAmenityRepository.deleteByAccommodationId(accommodationId);
         accommodationRepository.delete(accommodation);
+    }
+
+    public List<AccommodationSearchResponseDto> searchAccommodations(AccommodationSearchConditionDto request, Pageable pageable) {
+        return accommodationRepository.searchByFilter(request, pageable);
     }
 }
