@@ -3,6 +3,7 @@ package kr.kro.airbob.domain.wishlist.dto;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import jakarta.validation.constraints.NotBlank;
 import kr.kro.airbob.cursor.dto.CursorResponse;
 
 public class WishlistResponse {
@@ -63,5 +64,10 @@ public class WishlistResponse {
 				"id=" + id +
 				'}';
 		}
+	}
+
+	public record UpdateWishlistAccommodationResponse(
+		long id
+	) {
 	}
 }

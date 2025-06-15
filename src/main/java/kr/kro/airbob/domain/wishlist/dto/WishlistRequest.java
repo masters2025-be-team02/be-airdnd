@@ -42,4 +42,17 @@ public class WishlistRequest {
 		Long accommodationId
 	) {
 	}
+
+	public record UpdateWishlistAccommodationRequest(
+		@NotBlank(message = "메모는 공백일 수 없습니다.")
+		@Size(max = 255)
+		String memo
+	) {
+		@Override
+		public String toString() {
+			return "UpdateWishlistAccommodationRequest{" +
+				"memo='" + memo + '\'' +
+				'}';
+		}
+	}
 }
