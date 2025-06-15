@@ -91,4 +91,16 @@ public class WishlistController {
 
 		return ResponseEntity.ok(response);
 	}
+
+	@DeleteMapping("/{wishlistId}/accommodations/{wishlistAccommodationId}")
+	public ResponseEntity<Void> deleteWishlistAccommodation(
+		@PathVariable Long wishlistId,
+		@PathVariable Long wishlistAccommodationId) {
+
+		log.info("위시리스트 {} 안의 항목 {} 삭제 요청", wishlistId, wishlistAccommodationId);
+
+		wishlistService.deleteWishlistAccommodation(wishlistId, wishlistAccommodationId, TEMP_LOGGED_IN_MEMBER_ID);
+
+		return ResponseEntity.noContent().build();
+	}
 }
