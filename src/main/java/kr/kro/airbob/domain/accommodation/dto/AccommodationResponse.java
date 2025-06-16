@@ -36,7 +36,7 @@ public class AccommodationResponse {
 		private String thumbnailUrl;
 		private Integer pricePerNight;
 		private Integer maxOccupancy;
-		private List<AmenityInfo> amenityInfos;
+		private List<AccommodationRequest.AmenityInfo> amenityInfos;
 		private Double averageRating;
 		private Integer reviewCount;
 	}
