@@ -2,36 +2,47 @@ package kr.kro.airbob.domain.wishlist;
 
 import static org.assertj.core.api.Assertions.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
-import kr.kro.airbob.config.QueryDslConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
-import org.springframework.context.annotation.Import;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Slice;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import kr.kro.airbob.cursor.dto.CursorRequest;
+import kr.kro.airbob.domain.accommodation.entity.Accommodation;
+import kr.kro.airbob.domain.accommodation.entity.Address;
+import kr.kro.airbob.domain.accommodation.exception.AccommodationNotFoundException;
+import kr.kro.airbob.domain.accommodation.repository.AccommodationRepository;
+import kr.kro.airbob.domain.accommodation.repository.AddressRepository;
 import kr.kro.airbob.domain.member.Member;
+import kr.kro.airbob.domain.member.MemberRepository;
 import kr.kro.airbob.domain.member.common.MemberRole;
-import kr.kro.airbob.domain.wishlist.Wishlist;
+import kr.kro.airbob.domain.member.exception.MemberNotFoundException;
+import kr.kro.airbob.domain.wishlist.dto.WishlistRequest;
+import kr.kro.airbob.domain.wishlist.dto.WishlistResponse;
+import kr.kro.airbob.domain.wishlist.exception.WishlistAccessDeniedException;
+import kr.kro.airbob.domain.wishlist.exception.WishlistAccommodationDuplicateException;
+import kr.kro.airbob.domain.wishlist.exception.WishlistNotFoundException;
+import kr.kro.airbob.domain.wishlist.repository.WishlistAccommodationRepository;
 import kr.kro.airbob.domain.wishlist.repository.WishlistRepository;
 
-@DataJpaTest
+@SpringBootTest
+@Transactional
 @Testcontainers
-@Import(QueryDslConfig.class)
+@ActiveProfiles("test")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@DisplayName("위시리스트 레포지토리 테스트")
+@DisplayName("위시리스트 Service-Repository 통합 테스트")
 class WishlistIntegrationTest {
 
 	@Container
@@ -53,10 +64,22 @@ class WishlistIntegrationTest {
 	}
 
 	@Autowired
-	private TestEntityManager entityManager;
+	private WishlistService wishlistService;
 
 	@Autowired
 	private WishlistRepository wishlistRepository;
+
+	@Autowired
+	private WishlistAccommodationRepository wishlistAccommodationRepository;
+
+	@Autowired
+	private MemberRepository memberRepository;
+
+	@Autowired
+	private AccommodationRepository accommodationRepository;
+
+	@Autowired
+	private AddressRepository addressRepository;
 
 	private Member member1;
 	private Member member2;
@@ -83,281 +106,380 @@ class WishlistIntegrationTest {
 			.role(MemberRole.MEMBER)
 			.build();
 
-		entityManager.persistAndFlush(member1);
-		entityManager.persistAndFlush(member2);
+		member1 = memberRepository.save(member1);
+		member2 = memberRepository.save(member2);
 
-		// 위시리스트 데이터 생성 (생성 시간을 다르게 설정)
-		LocalDateTime baseTime = LocalDateTime.of(2024, 1, 1, 10, 0, 0);
-
-		// Member1의 위시리스트들 (최신순으로 정렬됨)
-		wishlist1 = createAndPersistWishlist("서울 여행", member1, baseTime.plusDays(4)); // 가장 최신
-		wishlist2 = createAndPersistWishlist("부산 여행", member1, baseTime.plusDays(3));
-		wishlist3 = createAndPersistWishlist("제주 여행", member1, baseTime.plusDays(2));
-		wishlist4 = createAndPersistWishlist("대구 여행", member1, baseTime.plusDays(1));
+		// 위시리스트 데이터 생성
+		wishlist1 = createAndSaveWishlist("서울 여행", member1);
+		wishlist2 = createAndSaveWishlist("부산 여행", member1);
+		wishlist3 = createAndSaveWishlist("제주 여행", member1);
+		wishlist4 = createAndSaveWishlist("대구 여행", member1);
 
 		// Member2의 위시리스트
-		wishlist5 = createAndPersistWishlist("광주 여행", member2, baseTime.plusDays(5));
-
-		entityManager.flush();
-		entityManager.clear();
+		wishlist5 = createAndSaveWishlist("광주 여행", member2);
 	}
 
-	@Test
-	@DisplayName("회원별 위시리스트를 생성시간 내림차순으로 조회한다")
-	void findByMemberIdWithCursor_OrderByCreatedAtDesc() {
-		// Given
-		Long memberId = member1.getId();
-		PageRequest pageRequest = PageRequest.of(0, 10);
-
-		// When
-		Slice<Wishlist> result = wishlistRepository.findByMemberIdWithCursor(
-			memberId, null, null, pageRequest);
-
-		// Then
-		assertThat(result.getContent()).hasSize(4);
-		assertThat(result.hasNext()).isFalse();
-
-		// 생성 시간 내림차순 확인
-		List<Wishlist> wishlists = result.getContent();
-		assertThat(wishlists.get(0).getName()).isEqualTo("서울 여행"); // 가장 최신
-		assertThat(wishlists.get(1).getName()).isEqualTo("부산 여행");
-		assertThat(wishlists.get(2).getName()).isEqualTo("제주 여행");
-		assertThat(wishlists.get(3).getName()).isEqualTo("대구 여행"); // 가장 오래된
-	}
-
-	@Test
-	@DisplayName("회원별로 위시리스트가 분리되어 조회된다")
-	void findByMemberIdWithCursor_FilterByMember() {
-		// Given
-		Long member1Id = member1.getId();
-		Long member2Id = member2.getId();
-		PageRequest pageRequest = PageRequest.of(0, 10);
-
-		// When
-		Slice<Wishlist> member1Result = wishlistRepository.findByMemberIdWithCursor(
-			member1Id, null, null, pageRequest);
-		Slice<Wishlist> member2Result = wishlistRepository.findByMemberIdWithCursor(
-			member2Id, null, null, pageRequest);
-
-		// Then
-		assertThat(member1Result.getContent()).hasSize(4);
-		assertThat(member2Result.getContent()).hasSize(1);
-
-		// Member1의 위시리스트만 조회되는지 확인
-		member1Result.getContent().forEach(wishlist ->
-			assertThat(wishlist.getMember().getId()).isEqualTo(member1Id));
-
-		// Member2의 위시리스트만 조회되는지 확인
-		member2Result.getContent().forEach(wishlist ->
-			assertThat(wishlist.getMember().getId()).isEqualTo(member2Id));
-	}
-
-	@Test
-	@DisplayName("커서 기반 페이징이 정상적으로 동작한다 - lastCreatedAt만 사용")
-	void findByMemberIdWithCursor_WithLastCreatedAt() {
-		// Given
-		Long memberId = member1.getId();
-		PageRequest pageRequest = PageRequest.of(0, 2);
-
-		// 첫 번째 페이지 조회
-		Slice<Wishlist> firstPage = wishlistRepository.findByMemberIdWithCursor(
-			memberId, null, null, pageRequest);
-
-		// When - 두 번째 페이지 조회 (lastCreatedAt만 사용)
-		Wishlist lastWishlistOfFirstPage = firstPage.getContent().getLast();
-		Slice<Wishlist> secondPage = wishlistRepository.findByMemberIdWithCursor(
-			memberId, null, lastWishlistOfFirstPage.getCreatedAt(), pageRequest);
-
-		// Then
-		assertThat(firstPage.getContent()).hasSize(2);
-		assertThat(firstPage.hasNext()).isTrue();
-		assertThat(firstPage.getContent().get(0).getName()).isEqualTo("서울 여행");
-		assertThat(firstPage.getContent().get(1).getName()).isEqualTo("부산 여행");
-
-		assertThat(secondPage.getContent()).hasSize(2);
-		assertThat(secondPage.hasNext()).isFalse();
-		assertThat(secondPage.getContent().get(0).getName()).isEqualTo("제주 여행");
-		assertThat(secondPage.getContent().get(1).getName()).isEqualTo("대구 여행");
-	}
-
-	@Test
-	@DisplayName("커서 기반 페이징이 정상적으로 동작한다 - lastId와 lastCreatedAt 모두 사용")
-	void findByMemberIdWithCursor_WithLastIdAndCreatedAt() {
-		// Given
-		Long memberId = member1.getId();
-		PageRequest pageRequest = PageRequest.of(0, 2);
-
-		// 첫 번째 페이지 조회
-		Slice<Wishlist> firstPage = wishlistRepository.findByMemberIdWithCursor(
-			memberId, null, null, pageRequest);
-
-		// When - 두 번째 페이지 조회 (lastId와 lastCreatedAt 모두 사용)
-		Wishlist lastWishlistOfFirstPage = firstPage.getContent().get(firstPage.getContent().size() - 1);
-		Slice<Wishlist> secondPage = wishlistRepository.findByMemberIdWithCursor(
-			memberId,
-			lastWishlistOfFirstPage.getId(),
-			lastWishlistOfFirstPage.getCreatedAt(),
-			pageRequest);
-
-		// Then
-		assertThat(firstPage.getContent()).hasSize(2);
-		assertThat(firstPage.hasNext()).isTrue();
-
-		assertThat(secondPage.getContent()).hasSize(2);
-		assertThat(secondPage.hasNext()).isFalse();
-
-		// 중복 조회 방지 확인 (lastId 이후의 데이터만 조회)
-		assertThat(secondPage.getContent())
-			.noneMatch(wishlist -> wishlist.getId().equals(lastWishlistOfFirstPage.getId()));
-	}
-
-	@Test
-	@DisplayName("동일한 생성시간을 가진 위시리스트도 정확히 페이징된다")
-	void findByMemberIdWithCursor_WithSameCreatedAt() {
-		// Given - 동일한 생성시간을 가진 위시리스트 추가 생성
-		LocalDateTime sameTime = LocalDateTime.of(2024, 6, 1, 12, 0, 0);
-
-		Wishlist sameTime1 = createAndPersistWishlist("동시간1", member1, sameTime);
-		Wishlist sameTime2 = createAndPersistWishlist("동시간2", member1, sameTime);
-		Wishlist sameTime3 = createAndPersistWishlist("동시간3", member1, sameTime);
-
-		entityManager.flush();
-		entityManager.clear();
-
-		// When
-		Long memberId = member1.getId();
-		PageRequest pageRequest = PageRequest.of(0, 2);
-
-		// 첫 번째 페이지 조회 (동일한 시간의 위시리스트들이 포함됨)
-		Slice<Wishlist> firstPage = wishlistRepository.findByMemberIdWithCursor(
-			memberId, null, null, pageRequest);
-
-		// Then
-		assertThat(firstPage.getContent()).hasSize(2);
-		assertThat(firstPage.hasNext()).isTrue();
-
-		// 동일한 시간의 위시리스트들이 ID 순서로 정렬되는지 확인
-		List<Wishlist> sameTimeWishlists = firstPage.getContent().stream()
-			.filter(w -> w.getCreatedAt().equals(sameTime))
-			.toList();
-
-		if (sameTimeWishlists.size() > 1) {
-			for (int i = 0; i < sameTimeWishlists.size() - 1; i++) {
-				assertThat(sameTimeWishlists.get(i).getId())
-					.isGreaterThan(sameTimeWishlists.get(i + 1).getId());
-			}
-		}
-	}
-
-	@Test
-	@DisplayName("존재하지 않는 회원 ID로 조회 시 빈 결과를 반환한다")
-	void findByMemberIdWithCursor_NonExistentMember() {
-		// Given
-		Long nonExistentMemberId = 999L;
-		PageRequest pageRequest = PageRequest.of(0, 10);
-
-		// When
-		Slice<Wishlist> result = wishlistRepository.findByMemberIdWithCursor(
-			nonExistentMemberId, null, null, pageRequest);
-
-		// Then
-		assertThat(result.getContent()).isEmpty();
-		assertThat(result.hasNext()).isFalse();
-	}
-
-	@Test
-	@DisplayName("페이지 크기가 1일 때 정상 동작한다")
-	void findByMemberIdWithCursor_SmallPageSize() {
-		// Given
-		Long memberId = member1.getId();
-		PageRequest pageRequest = PageRequest.of(0, 1);
-
-		// When
-		Slice<Wishlist> result = wishlistRepository.findByMemberIdWithCursor(
-			memberId, null, null, pageRequest);
-
-		// Then
-		assertThat(result.getContent()).hasSize(1);
-		assertThat(result.hasNext()).isTrue(); // 데이터가 더 있으므로 다음 페이지 존재
-		assertThat(result.getContent().get(0).getName()).isEqualTo("서울 여행"); // 가장 최신
-	}
-
-	@Test
-	@DisplayName("매우 큰 페이지 크기로 조회해도 정상 동작한다")
-	void findByMemberIdWithCursor_LargePageSize() {
-		// Given
-		Long memberId = member1.getId();
-		PageRequest pageRequest = PageRequest.of(0, 1000);
-
-		// When
-		Slice<Wishlist> result = wishlistRepository.findByMemberIdWithCursor(
-			memberId, null, null, pageRequest);
-
-		// Then
-		assertThat(result.getContent()).hasSize(4); // member1의 위시리스트 4개
-		assertThat(result.hasNext()).isFalse();
-	}
-
-	@Test
-	@DisplayName("위시리스트가 없는 회원의 경우 빈 결과를 반환한다")
-	void findByMemberIdWithCursor_MemberWithNoWishlists() {
-		// Given - 위시리스트가 없는 새 회원 생성
-		Member newMember = Member.builder()
-			.email("newmember@example.com")
-			.password("password123")
-			.nickname("신규회원")
-			.role(MemberRole.MEMBER)
-			.build();
-
-		entityManager.persistAndFlush(newMember);
-
-		PageRequest pageRequest = PageRequest.of(0, 10);
-
-		// When
-		Slice<Wishlist> result = wishlistRepository.findByMemberIdWithCursor(
-			newMember.getId(), null, null, pageRequest);
-
-		// Then
-		assertThat(result.getContent()).isEmpty();
-		assertThat(result.hasNext()).isFalse();
-	}
-
-	@Test
-	@DisplayName("잘못된 커서 정보로 조회 시에도 안전하게 처리된다")
-	void findByMemberIdWithCursor_InvalidCursor() {
-		// Given
-		Long memberId = member1.getId();
-		Long invalidLastId = 999999L; // 존재하지 않는 ID
-		LocalDateTime futureTime = LocalDateTime.of(2030, 1, 1, 0, 0, 0); // 미래 시간
-		PageRequest pageRequest = PageRequest.of(0, 10);
-
-		// When
-		Slice<Wishlist> result = wishlistRepository.findByMemberIdWithCursor(
-			memberId, invalidLastId, futureTime, pageRequest);
-
-		// Then
-		assertThat(result.getContent()).hasSize(4); // 모든 위시리스트가 조회됨
-		assertThat(result.hasNext()).isFalse();
-	}
-
-	// 헬퍼 메서드
-	private Wishlist createAndPersistWishlist(String name, Member member, LocalDateTime createdAt) {
+	private Wishlist createAndSaveWishlist(String name, Member member) {
 		Wishlist wishlist = Wishlist.builder()
 			.name(name)
 			.member(member)
 			.build();
+		return wishlistRepository.save(wishlist);
+	}
 
-		entityManager.persist(wishlist);
+	private Address createAndSaveAddress(String city) {
+		Address address = Address.builder()
+			.postalCode(12345)
+			.city(city)
+			.country("KR")
+			.district("District")
+			.street("Street")
+			.detail("Detail")
+			.build();
+		return addressRepository.save(address);
+	}
 
-		// createdAt을 수동으로 설정하기 위해 직접 SQL 실행
-		entityManager.flush();
-		entityManager.getEntityManager()
-			.createNativeQuery("UPDATE wishlist SET created_at = ? WHERE id = ?")
-			.setParameter(1, createdAt)
-			.setParameter(2, wishlist.getId())
-			.executeUpdate();
+	private Accommodation createAndSaveAccommodation(String name, Address address) {
+		Accommodation accommodation = Accommodation.builder()
+			.name(name)
+			.address(address)
+			.thumbnailUrl("https://example.com/test.jpg")
+			.build();
+		return accommodationRepository.save(accommodation);
+	}
 
-		entityManager.refresh(wishlist);
-		return wishlist;
+	@Nested
+	@DisplayName("위시리스트 생성 테스트")
+	class CreateWishlistTest {
+
+		@Test
+		@DisplayName("정상적으로 위시리스트를 생성한다")
+		void createWishlist_Success() {
+			// Given
+			WishlistRequest.createRequest request = new WishlistRequest.createRequest("새로운 여행 계획");
+			Long memberId = member1.getId();
+
+			// When
+			WishlistResponse.CreateResponse response = wishlistService.createWishlist(request, memberId);
+
+			// Then
+			assertThat(response).isNotNull();
+			assertThat(response.id()).isNotNull();
+
+			// 데이터베이스에서 실제로 저장되었는지 확인
+			Wishlist savedWishlist = wishlistRepository.findById(response.id()).orElse(null);
+			assertThat(savedWishlist).isNotNull();
+			assertThat(savedWishlist.getName()).isEqualTo("새로운 여행 계획");
+			assertThat(savedWishlist.getMember().getId()).isEqualTo(memberId);
+		}
+
+		@Test
+		@DisplayName("존재하지 않는 회원으로 위시리스트 생성 시 예외 발생")
+		void createWishlist_MemberNotFound() {
+			// Given
+			WishlistRequest.createRequest request = new WishlistRequest.createRequest("테스트 위시리스트");
+			Long nonExistentMemberId = 999L;
+
+			// When & Then
+			assertThatThrownBy(() -> wishlistService.createWishlist(request, nonExistentMemberId))
+				.isInstanceOf(MemberNotFoundException.class)
+				.hasMessage("존재하지 않는 사용자입니다.");
+		}
+
+		@Test
+		@DisplayName("같은 이름의 위시리스트를 여러 개 생성할 수 있다")
+		void createWishlist_DuplicateNameAllowed() {
+			// Given
+			WishlistRequest.createRequest request = new WishlistRequest.createRequest("중복 이름");
+			Long memberId = member1.getId();
+
+			// When
+			WishlistResponse.CreateResponse firstResponse = wishlistService.createWishlist(request, memberId);
+			WishlistResponse.CreateResponse secondResponse = wishlistService.createWishlist(request, memberId);
+
+			// Then
+			assertThat(firstResponse.id()).isNotEqualTo(secondResponse.id());
+
+			Wishlist firstWishlist = wishlistRepository.findById(firstResponse.id()).orElse(null);
+			Wishlist secondWishlist = wishlistRepository.findById(secondResponse.id()).orElse(null);
+
+			assertThat(firstWishlist).isNotNull();
+			assertThat(secondWishlist).isNotNull();
+			assertThat(firstWishlist.getName()).isEqualTo("중복 이름");
+			assertThat(secondWishlist.getName()).isEqualTo("중복 이름");
+		}
+	}
+
+	@Nested
+	@DisplayName("위시리스트 수정 테스트")
+	class UpdateWishlistTest {
+
+		@Test
+		@DisplayName("정상적으로 위시리스트를 수정한다")
+		void updateWishlist_Success() {
+			// Given
+			WishlistRequest.updateRequest request = new WishlistRequest.updateRequest("수정된 서울 여행");
+			Long wishlistId = wishlist1.getId();
+			Long memberId = member1.getId();
+
+			// When
+			WishlistResponse.UpdateResponse response = wishlistService.updateWishlist(wishlistId, request, memberId);
+
+			// Then
+			assertThat(response.id()).isEqualTo(wishlistId);
+
+			Wishlist updatedWishlist = wishlistRepository.findById(wishlistId).orElse(null);
+			assertThat(updatedWishlist).isNotNull();
+			assertThat(updatedWishlist.getName()).isEqualTo("수정된 서울 여행");
+		}
+
+		@Test
+		@DisplayName("존재하지 않는 위시리스트 수정 시 예외 발생")
+		void updateWishlist_WishlistNotFound() {
+			// Given
+			WishlistRequest.updateRequest request = new WishlistRequest.updateRequest("수정된 이름");
+			Long nonExistentWishlistId = 999L;
+			Long memberId = member1.getId();
+
+			// When & Then
+			assertThatThrownBy(() -> wishlistService.updateWishlist(nonExistentWishlistId, request, memberId))
+				.isInstanceOf(WishlistNotFoundException.class)
+				.hasMessage("존재하지 않는 위시리스트입니다.");
+		}
+
+		@Test
+		@DisplayName("다른 사용자의 위시리스트 수정 시 예외 발생")
+		void updateWishlist_AccessDenied() {
+			// Given
+			WishlistRequest.updateRequest request = new WishlistRequest.updateRequest("수정된 이름");
+			Long wishlistId = wishlist1.getId(); // member1의 위시리스트
+			Long otherMemberId = member2.getId(); // 다른 회원
+
+			// When & Then
+			assertThatThrownBy(() -> wishlistService.updateWishlist(wishlistId, request, otherMemberId))
+				.isInstanceOf(WishlistAccessDeniedException.class)
+				.hasMessage("위시리스트에 대한 접근 권한이 없습니다.");
+		}
+	}
+
+	@Nested
+	@DisplayName("위시리스트 삭제 테스트")
+	class DeleteWishlistTest {
+
+		@Test
+		@DisplayName("정상적으로 위시리스트를 삭제한다")
+		void deleteWishlist_Success() {
+			// Given
+			Long wishlistId = wishlist1.getId();
+			Long memberId = member1.getId();
+
+			// When
+			assertThatCode(() -> wishlistService.deleteWishlist(wishlistId, memberId))
+				.doesNotThrowAnyException();
+
+			// Then
+			assertThat(wishlistRepository.findById(wishlistId)).isEmpty();
+		}
+
+		@Test
+		@DisplayName("존재하지 않는 위시리스트 삭제 시 예외 발생")
+		void deleteWishlist_WishlistNotFound() {
+			// Given
+			Long nonExistentWishlistId = 999L;
+			Long memberId = member1.getId();
+
+			// When & Then
+			assertThatThrownBy(() -> wishlistService.deleteWishlist(nonExistentWishlistId, memberId))
+				.isInstanceOf(WishlistNotFoundException.class)
+				.hasMessage("존재하지 않는 위시리스트입니다.");
+		}
+
+		@Test
+		@DisplayName("다른 사용자의 위시리스트 삭제 시 예외 발생")
+		void deleteWishlist_AccessDenied() {
+			// Given
+			Long wishlistId = wishlist1.getId(); // member1의 위시리스트
+			Long otherMemberId = member2.getId(); // 다른 회원
+
+			// When & Then
+			assertThatThrownBy(() -> wishlistService.deleteWishlist(wishlistId, otherMemberId))
+				.isInstanceOf(WishlistAccessDeniedException.class)
+				.hasMessage("위시리스트에 대한 접근 권한이 없습니다.");
+		}
+	}
+
+	@Nested
+	@DisplayName("위시리스트 목록 조회 테스트")
+	class FindWishlistsTest {
+
+		@Test
+		@DisplayName("회원별 위시리스트를 조회한다")
+		void findWishlists_Success() {
+			// Given
+			Long memberId = member1.getId();
+			CursorRequest.CursorPageRequest request = CursorRequest.CursorPageRequest.builder()
+				.size(10)
+				.lastId(null)
+				.lastCreatedAt(null)
+				.build();
+
+			// When
+			WishlistResponse.WishlistInfos response = wishlistService.findWishlists(request, memberId);
+
+			// Then
+			assertThat(response.wishlists()).hasSize(4);
+
+			List<WishlistResponse.WishlistInfo> wishlists = response.wishlists();
+			List<String> wishlistNames = wishlists.stream()
+				.map(WishlistResponse.WishlistInfo::name)
+				.toList();
+
+			assertThat(wishlistNames).containsExactlyInAnyOrder("서울 여행", "부산 여행", "제주 여행", "대구 여행");
+		}
+
+		@Test
+		@DisplayName("회원별로 위시리스트가 분리되어 조회된다")
+		void findWishlists_FilterByMember() {
+			// Given
+			Long member1Id = member1.getId();
+			Long member2Id = member2.getId();
+			CursorRequest.CursorPageRequest request = CursorRequest.CursorPageRequest.builder()
+				.size(10)
+				.lastId(null)
+				.lastCreatedAt(null)
+				.build();
+
+			// When
+			WishlistResponse.WishlistInfos member1Result = wishlistService.findWishlists(request, member1Id);
+			WishlistResponse.WishlistInfos member2Result = wishlistService.findWishlists(request, member2Id);
+
+			// Then
+			assertThat(member1Result.wishlists()).hasSize(4);
+			assertThat(member2Result.wishlists()).hasSize(1);
+			assertThat(member2Result.wishlists().get(0).name()).isEqualTo("광주 여행");
+		}
+
+		@Test
+		@DisplayName("존재하지 않는 회원으로 위시리스트 조회 시 예외 발생")
+		void findWishlists_MemberNotFound() {
+			// Given
+			Long nonExistentMemberId = 999L;
+			CursorRequest.CursorPageRequest request = CursorRequest.CursorPageRequest.builder()
+				.size(10)
+				.lastId(null)
+				.lastCreatedAt(null)
+				.build();
+
+			// When & Then
+			assertThatThrownBy(() -> wishlistService.findWishlists(request, nonExistentMemberId))
+				.isInstanceOf(MemberNotFoundException.class)
+				.hasMessage("존재하지 않는 사용자입니다.");
+		}
+	}
+
+	@Nested
+	@DisplayName("위시리스트 숙소 추가 테스트")
+	class CreateWishlistAccommodationTest {
+
+		@Test
+		@DisplayName("위시리스트에 숙소를 성공적으로 추가한다")
+		void createWishlistAccommodation_Success() {
+			// Given
+			Address address = createAndSaveAddress("청주");
+			Accommodation accommodation = createAndSaveAccommodation("제주도 해변 리조트", address);
+
+			WishlistRequest.CreateWishlistAccommodationRequest request =
+				new WishlistRequest.CreateWishlistAccommodationRequest(accommodation.getId());
+
+			// When
+			WishlistResponse.CreateWishlistAccommodationResponse response =
+				wishlistService.createWishlistAccommodation(wishlist1.getId(), request, member1.getId());
+
+			// Then
+			assertThat(response).isNotNull();
+			assertThat(response.id()).isNotNull();
+
+			// 데이터베이스에서 실제로 저장되었는지 확인
+			WishlistAccommodation savedWishlistAccommodation =
+				wishlistAccommodationRepository.findById(response.id()).orElse(null);
+
+			assertThat(savedWishlistAccommodation).isNotNull();
+			assertThat(savedWishlistAccommodation.getWishlist().getId()).isEqualTo(wishlist1.getId());
+			assertThat(savedWishlistAccommodation.getAccommodation().getId()).isEqualTo(accommodation.getId());
+		}
+
+		@Test
+		@DisplayName("존재하지 않는 위시리스트에 숙소 추가 시 예외가 발생한다")
+		void createWishlistAccommodation_WishlistNotFound() {
+			// Given
+			Long nonExistentWishlistId = 999L;
+			Address address = createAndSaveAddress("청주");
+			Accommodation accommodation = createAndSaveAccommodation("테스트 숙소", address);
+
+			WishlistRequest.CreateWishlistAccommodationRequest request =
+				new WishlistRequest.CreateWishlistAccommodationRequest(accommodation.getId());
+
+			// When & Then
+			assertThatThrownBy(() ->
+				wishlistService.createWishlistAccommodation(nonExistentWishlistId, request, member1.getId()))
+				.isInstanceOf(WishlistNotFoundException.class)
+				.hasMessage("존재하지 않는 위시리스트입니다.");
+		}
+
+		@Test
+		@DisplayName("다른 사용자의 위시리스트에 숙소 추가 시 예외가 발생한다")
+		void createWishlistAccommodation_AccessDenied() {
+			// Given
+			Address address = createAndSaveAddress("청주");
+			Accommodation accommodation = createAndSaveAccommodation("테스트 숙소", address);
+
+			WishlistRequest.CreateWishlistAccommodationRequest request =
+				new WishlistRequest.CreateWishlistAccommodationRequest(accommodation.getId());
+
+			// When & Then - member2가 member1의 위시리스트에 접근 시도
+			assertThatThrownBy(() ->
+				wishlistService.createWishlistAccommodation(wishlist1.getId(), request, member2.getId()))
+				.isInstanceOf(WishlistAccessDeniedException.class)
+				.hasMessage("위시리스트에 대한 접근 권한이 없습니다.");
+		}
+
+		@Test
+		@DisplayName("존재하지 않는 숙소를 위시리스트에 추가 시 예외가 발생한다")
+		void createWishlistAccommodation_AccommodationNotFound() {
+			// Given
+			Long nonExistentAccommodationId = 999L;
+
+			WishlistRequest.CreateWishlistAccommodationRequest request =
+				new WishlistRequest.CreateWishlistAccommodationRequest(nonExistentAccommodationId);
+
+			// When & Then
+			assertThatThrownBy(() ->
+				wishlistService.createWishlistAccommodation(wishlist1.getId(), request, member1.getId()))
+				.isInstanceOf(AccommodationNotFoundException.class)
+				.hasMessage("존재하지 않는 숙소입니다.");
+		}
+
+		@Test
+		@DisplayName("같은 숙소를 같은 위시리스트에 중복 추가 시 예외가 발생한다")
+		void createWishlistAccommodation_DuplicateAccommodation() {
+			// Given
+			Address address = createAndSaveAddress("청주");
+			Accommodation accommodation = createAndSaveAccommodation("중복 테스트 숙소", address);
+
+			WishlistRequest.CreateWishlistAccommodationRequest request =
+				new WishlistRequest.CreateWishlistAccommodationRequest(accommodation.getId());
+
+			// When - 첫 번째 추가는 성공
+			WishlistResponse.CreateWishlistAccommodationResponse firstResponse =
+				wishlistService.createWishlistAccommodation(wishlist1.getId(), request, member1.getId());
+
+			assertThat(firstResponse).isNotNull();
+
+			// Then - 두 번째 추가는 실패
+			assertThatThrownBy(() ->
+				wishlistService.createWishlistAccommodation(wishlist1.getId(), request, member1.getId()))
+				.isInstanceOf(WishlistAccommodationDuplicateException.class)
+				.hasMessage("이미 위시리스트에 추가된 숙소입니다.");
+		}
 	}
 }

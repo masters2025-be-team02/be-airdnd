@@ -104,7 +104,7 @@ public class WishlistController {
 		return ResponseEntity.noContent().build();
 	}
 
-	// todo: 추후 필터링 적용(날짜, 게스트 인원
+	// todo: 추후 필터링 적용(날짜, 게스트 인원)
 	@GetMapping("/{wishlistId}/accommodations")
 	public ResponseEntity<WishlistResponse.WishlistAccommodationInfos> findWishlistAccommodations(
 		@CursorParam CursorRequest.CursorPageRequest request,
@@ -118,6 +118,4 @@ public class WishlistController {
 
 		return ResponseEntity.ok(response);
 	}
-
-
 }

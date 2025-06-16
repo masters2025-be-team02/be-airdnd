@@ -28,6 +28,7 @@ import kr.kro.airbob.domain.wishlist.dto.projection.WishlistImageProjection;
 import kr.kro.airbob.domain.wishlist.dto.projection.WishlistRatingProjection;
 import kr.kro.airbob.domain.wishlist.exception.WishlistAccessDeniedException;
 import kr.kro.airbob.domain.wishlist.exception.WishlistAccommodationAccessDeniedException;
+import kr.kro.airbob.domain.wishlist.exception.WishlistAccommodationDuplicateException;
 import kr.kro.airbob.domain.wishlist.exception.WishlistAccommodationNotFoundException;
 import kr.kro.airbob.domain.wishlist.exception.WishlistNotFoundException;
 import kr.kro.airbob.domain.wishlist.repository.WishlistAccommodationRepository;
@@ -351,7 +352,7 @@ public class WishlistService {
 
 	private void validateWishlistAccommodationDuplicate(Long wishlistId, Long accommodationId) {
 		if (wishlistAccommodationRepository.existsByWishlistIdAndAccommodationId(wishlistId, accommodationId)) {
-			throw new WishlistAccessDeniedException();
+			throw new WishlistAccommodationDuplicateException();
 		}
 	}
 }

@@ -388,6 +388,8 @@ public class AccommodationIntegrationTest {
         assertThat(accommodationRepository.existsById(id)).isFalse();
     }
 
+
+
     private Address createAddress(String city) {
         return Address.builder()
                 .postalCode(12345)
