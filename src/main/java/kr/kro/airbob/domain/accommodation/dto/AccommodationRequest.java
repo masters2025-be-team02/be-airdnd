@@ -1,6 +1,8 @@
 package kr.kro.airbob.domain.accommodation.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -13,9 +15,11 @@ public class AccommodationRequest {
     @Builder
     @AllArgsConstructor
     public static class CreateAccommodationDto{
-        @NotNull
+        @NotBlank
+        @Size(min = 1, max = 50, message = "이름은 1 ~ 50자 이여야 합니다!")
         private String name;
-        @NotNull
+        @NotBlank
+        @Size(min = 1, max = 500, message = "설명은 1 ~ 500자 이여야 합니다!")
         private String description;
         @NotNull
         private int basePrice;
@@ -24,8 +28,10 @@ public class AccommodationRequest {
         @NotNull
         private AddressInfo addressInfo;
         private List<AmenityInfo> amenityInfos;
+        @NotNull
         private OccupancyPolicyInfo occupancyPolicyInfo;
         private String thumbnail_url;
+        @NotBlank
         private String type;
 
     }
@@ -34,11 +40,16 @@ public class AccommodationRequest {
     @Builder
     @AllArgsConstructor
     public static class AddressInfo{
+        @NotNull
         private Integer postalCode;
+        @NotBlank
         private String city;
+        @NotBlank
         private String country;
         private String detail;
+        @NotBlank
         private String district;
+        @NotBlank
         private String street;
     }
 
@@ -46,7 +57,9 @@ public class AccommodationRequest {
     @Builder
     @AllArgsConstructor
     public static class AmenityInfo {
+        @NotBlank
         private String name;
+        @NotNull
         private Integer count;
     }
 
@@ -54,6 +67,7 @@ public class AccommodationRequest {
     @Builder
     @AllArgsConstructor
     public static class OccupancyPolicyInfo {
+        @NotNull
         private Integer maxOccupancy;
         private Integer adultOccupancy;
         private Integer childOccupancy;
