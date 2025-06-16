@@ -18,6 +18,8 @@ import kr.kro.airbob.cursor.exception.CursorPageSizeException;
 import kr.kro.airbob.domain.accommodation.exception.AccommodationNotFoundException;
 import kr.kro.airbob.domain.member.exception.MemberNotFoundException;
 import kr.kro.airbob.domain.wishlist.exception.WishlistAccessDeniedException;
+import kr.kro.airbob.domain.wishlist.exception.WishlistAccommodationAccessDeniedException;
+import kr.kro.airbob.domain.wishlist.exception.WishlistAccommodationNotFoundException;
 import kr.kro.airbob.domain.wishlist.exception.WishlistNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 
@@ -78,6 +80,18 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(CursorPageSizeException.class)
 	public ResponseEntity<Void> handleCursorPageSizeException(CursorPageSizeException e) {
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+	}
+
+	@ExceptionHandler(WishlistAccommodationAccessDeniedException.class)
+	public ResponseEntity<Void> handleWishlistAccommodationAccessDeniedException(
+		WishlistAccommodationAccessDeniedException e) {
+		return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+	}
+
+	@ExceptionHandler(WishlistAccommodationNotFoundException.class)
+	public ResponseEntity<Void> handleWishlistAccommodationNotFoundException(
+		WishlistAccommodationNotFoundException e) {
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 	}
 
 	@ExceptionHandler(MethodArgumentNotValidException.class) // @Valid에서 발생하는 에러

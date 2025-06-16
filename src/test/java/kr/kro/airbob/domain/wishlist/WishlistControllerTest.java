@@ -39,6 +39,8 @@ import kr.kro.airbob.domain.wishlist.api.WishlistController;
 import kr.kro.airbob.domain.wishlist.dto.WishlistRequest;
 import kr.kro.airbob.domain.wishlist.dto.WishlistResponse;
 import kr.kro.airbob.domain.wishlist.exception.WishlistAccessDeniedException;
+import kr.kro.airbob.domain.wishlist.exception.WishlistAccommodationAccessDeniedException;
+import kr.kro.airbob.domain.wishlist.exception.WishlistAccommodationNotFoundException;
 import kr.kro.airbob.domain.wishlist.exception.WishlistNotFoundException;
 
 @WebMvcTest(WishlistController.class)
@@ -1151,6 +1153,450 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 					)));
 
 			verify(wishlistService).createWishlistAccommodation(eq(wishlistId), any(WishlistRequest.CreateWishlistAccommodationRequest.class), eq(1L));
+		}
+	}
+
+	@Nested
+	@DisplayName("위시리스트 숙소 메모 수정:")
+	class UpdateWishlistAccommodationTests {
+
+		@Test
+		@DisplayName("시나리오: 사용자가 위시리스트 숙소의 메모를 성공적으로 수정한다")
+		void 사용자가_위시리스트_숙소의_메모를_성공적으로_수정한다() throws Exception {
+			// Given: 존재하는 위시리스트 항목의 메모를 수정하는 상황
+			Long wishlistId = 1L;
+			Long wishlistAccommodationId = 10L;
+			String updatedMemo = "여기는 정말 좋은 곳이었어요! 다음에도 꼭 가고 싶습니다.";
+			WishlistRequest.UpdateWishlistAccommodationRequest request =
+				new WishlistRequest.UpdateWishlistAccommodationRequest(updatedMemo);
+			WishlistResponse.UpdateWishlistAccommodationResponse expectedResponse =
+				new WishlistResponse.UpdateWishlistAccommodationResponse(wishlistAccommodationId);
+
+			when(wishlistService.updateWishlistAccommodation(eq(wishlistId), eq(wishlistAccommodationId),
+				any(WishlistRequest.UpdateWishlistAccommodationRequest.class), eq(1L)))
+				.thenReturn(expectedResponse);
+
+			// When: 사용자가 위시리스트 숙소 메모 수정 API를 호출한다
+			mockMvc.perform(patch("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
+					wishlistId, wishlistAccommodationId)
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(objectMapper.writeValueAsString(request)))
+
+				// Then: 메모가 성공적으로 수정된다
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.id").value(wishlistAccommodationId))
+
+				// document
+				.andDo(document("위시리스트-숙소메모수정-성공",
+					pathParameters(
+						parameterWithName("wishlistId")
+							.description("위시리스트의 고유 식별자"),
+						parameterWithName("wishlistAccommodationId")
+							.description("수정할 위시리스트 항목의 고유 식별자")
+					),
+					requestFields(
+						fieldWithPath("memo")
+							.type(JsonFieldType.STRING)
+							.description("수정할 메모 내용")
+					),
+					responseFields(
+						fieldWithPath("id")
+							.type(JsonFieldType.NUMBER)
+							.description("수정된 위시리스트 항목의 고유 식별자")
+					)));
+
+			verify(wishlistService).updateWishlistAccommodation(eq(wishlistId), eq(wishlistAccommodationId),
+				any(WishlistRequest.UpdateWishlistAccommodationRequest.class), eq(1L));
+		}
+
+		@Test
+		@DisplayName("시나리오: 존재하지 않는 위시리스트의 숙소 메모 수정을 시도한다")
+		void 존재하지_않는_위시리스트의_숙소_메모_수정을_시도한다() throws Exception {
+			// Given: 존재하지 않는 위시리스트 ID로 메모를 수정하려는 상황
+			Long nonExistentWishlistId = 999L;
+			Long wishlistAccommodationId = 10L;
+			String memo = "수정할 메모";
+			WishlistRequest.UpdateWishlistAccommodationRequest request =
+				new WishlistRequest.UpdateWishlistAccommodationRequest(memo);
+
+			when(wishlistService.updateWishlistAccommodation(eq(nonExistentWishlistId), eq(wishlistAccommodationId),
+				any(WishlistRequest.UpdateWishlistAccommodationRequest.class), eq(1L)))
+				.thenThrow(new WishlistNotFoundException());
+
+			// When: 존재하지 않는 위시리스트의 숙소 메모 수정을 시도한다
+			mockMvc.perform(patch("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
+					nonExistentWishlistId, wishlistAccommodationId)
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(objectMapper.writeValueAsString(request)))
+
+				// Then: 404 Not Found 오류가 발생한다
+				.andExpect(status().isNotFound())
+
+				// document
+				.andDo(document("위시리스트-숙소메모수정-위시리스트없음-실패",
+					pathParameters(
+						parameterWithName("wishlistId")
+							.description("존재하지 않는 위시리스트 ID"),
+						parameterWithName("wishlistAccommodationId")
+							.description("위시리스트 항목 ID")
+					),
+					requestFields(
+						fieldWithPath("memo")
+							.type(JsonFieldType.STRING)
+							.description("수정하려는 메모 내용")
+					)));
+
+			verify(wishlistService).updateWishlistAccommodation(eq(nonExistentWishlistId), eq(wishlistAccommodationId),
+				any(WishlistRequest.UpdateWishlistAccommodationRequest.class), eq(1L));
+		}
+
+		@Test
+		@DisplayName("시나리오: 존재하지 않는 위시리스트 항목의 메모 수정을 시도한다")
+		void 존재하지_않는_위시리스트_항목의_메모_수정을_시도한다() throws Exception {
+			// Given: 존재하지 않는 위시리스트 항목 ID로 메모를 수정하려는 상황
+			Long wishlistId = 1L;
+			Long nonExistentWishlistAccommodationId = 999L;
+			String memo = "수정할 메모";
+			WishlistRequest.UpdateWishlistAccommodationRequest request =
+				new WishlistRequest.UpdateWishlistAccommodationRequest(memo);
+
+			when(wishlistService.updateWishlistAccommodation(eq(wishlistId), eq(nonExistentWishlistAccommodationId),
+				any(WishlistRequest.UpdateWishlistAccommodationRequest.class), eq(1L)))
+				.thenThrow(new WishlistAccommodationNotFoundException());
+
+			// When: 존재하지 않는 위시리스트 항목의 메모 수정을 시도한다
+			mockMvc.perform(patch("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
+					wishlistId, nonExistentWishlistAccommodationId)
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(objectMapper.writeValueAsString(request)))
+
+				// Then: 404 Not Found 오류가 발생한다
+				.andExpect(status().isNotFound())
+
+				// document
+				.andDo(document("위시리스트-숙소메모수정-항목없음-실패",
+					pathParameters(
+						parameterWithName("wishlistId")
+							.description("위시리스트 ID"),
+						parameterWithName("wishlistAccommodationId")
+							.description("존재하지 않는 위시리스트 항목 ID")
+					),
+					requestFields(
+						fieldWithPath("memo")
+							.type(JsonFieldType.STRING)
+							.description("수정하려는 메모 내용")
+					)));
+
+			verify(wishlistService).updateWishlistAccommodation(eq(wishlistId), eq(nonExistentWishlistAccommodationId),
+				any(WishlistRequest.UpdateWishlistAccommodationRequest.class), eq(1L));
+		}
+
+		@Test
+		@DisplayName("시나리오: 다른 사용자의 위시리스트 숙소 메모 수정을 시도한다")
+		void 다른_사용자의_위시리스트_숙소_메모_수정을_시도한다() throws Exception {
+			// Given: 다른 사용자 소유의 위시리스트 숙소 메모를 수정하려는 상황
+			Long otherUserWishlistId = 1L;
+			Long wishlistAccommodationId = 10L;
+			String memo = "수정할 메모";
+			WishlistRequest.UpdateWishlistAccommodationRequest request =
+				new WishlistRequest.UpdateWishlistAccommodationRequest(memo);
+
+			when(wishlistService.updateWishlistAccommodation(eq(otherUserWishlistId), eq(wishlistAccommodationId),
+				any(WishlistRequest.UpdateWishlistAccommodationRequest.class), eq(1L)))
+				.thenThrow(new WishlistAccessDeniedException());
+
+			// When: 다른 사용자의 위시리스트 숙소 메모 수정을 시도한다
+			mockMvc.perform(patch("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
+					otherUserWishlistId, wishlistAccommodationId)
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(objectMapper.writeValueAsString(request)))
+
+				// Then: 403 Forbidden 오류가 발생한다
+				.andExpect(status().isForbidden())
+
+				// document
+				.andDo(document("위시리스트-숙소메모수정-권한없음-실패",
+					pathParameters(
+						parameterWithName("wishlistId")
+							.description("다른 사용자 소유의 위시리스트 ID"),
+						parameterWithName("wishlistAccommodationId")
+							.description("위시리스트 항목 ID")
+					),
+					requestFields(
+						fieldWithPath("memo")
+							.type(JsonFieldType.STRING)
+							.description("수정하려는 메모 내용")
+					)));
+
+			verify(wishlistService).updateWishlistAccommodation(eq(otherUserWishlistId), eq(wishlistAccommodationId),
+				any(WishlistRequest.UpdateWishlistAccommodationRequest.class), eq(1L));
+		}
+
+		@Test
+		@DisplayName("시나리오: 다른 위시리스트에 속한 항목의 메모 수정을 시도한다")
+		void 다른_위시리스트에_속한_항목의_메모_수정을_시도한다() throws Exception {
+			// Given: 다른 위시리스트에 속한 항목의 메모를 수정하려는 상황
+			Long wishlistId = 1L;
+			Long otherWishlistAccommodationId = 20L; // 다른 위시리스트에 속한 항목
+			String memo = "수정할 메모";
+			WishlistRequest.UpdateWishlistAccommodationRequest request =
+				new WishlistRequest.UpdateWishlistAccommodationRequest(memo);
+
+			when(wishlistService.updateWishlistAccommodation(eq(wishlistId), eq(otherWishlistAccommodationId),
+				any(WishlistRequest.UpdateWishlistAccommodationRequest.class), eq(1L)))
+				.thenThrow(new WishlistAccommodationAccessDeniedException());
+
+			// When: 다른 위시리스트에 속한 항목의 메모 수정을 시도한다
+			mockMvc.perform(patch("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
+					wishlistId, otherWishlistAccommodationId)
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(objectMapper.writeValueAsString(request)))
+
+				// Then: 403 Forbidden 오류가 발생한다
+				.andExpect(status().isForbidden())
+
+				// document
+				.andDo(document("위시리스트-숙소메모수정-항목불일치-실패",
+					pathParameters(
+						parameterWithName("wishlistId")
+							.description("위시리스트 ID"),
+						parameterWithName("wishlistAccommodationId")
+							.description("다른 위시리스트에 속한 항목 ID")
+					),
+					requestFields(
+						fieldWithPath("memo")
+							.type(JsonFieldType.STRING)
+							.description("수정하려는 메모 내용")
+					)));
+
+			verify(wishlistService).updateWishlistAccommodation(eq(wishlistId), eq(otherWishlistAccommodationId),
+				any(WishlistRequest.UpdateWishlistAccommodationRequest.class), eq(1L));
+		}
+
+		@ParameterizedTest(name = "{0}")
+		@MethodSource("invalidMemoProvider")
+		@DisplayName("시나리오: 잘못된 메모로 위시리스트 숙소 메모 수정을 시도한다")
+		void 잘못된_메모로_위시리스트_숙소_메모_수정을_시도한다(
+			String testName,
+			String invalidMemo,
+			JsonFieldType fieldType,
+			String description,
+			String documentId
+		) throws Exception {
+			// Given: 잘못된 메모로 수정을 시도하는 상황
+			Long wishlistId = 1L;
+			Long wishlistAccommodationId = 10L;
+			WishlistRequest.UpdateWishlistAccommodationRequest invalidRequest =
+				new WishlistRequest.UpdateWishlistAccommodationRequest(invalidMemo);
+
+			// When: 잘못된 메모로 수정을 시도한다
+			mockMvc.perform(patch("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
+					wishlistId, wishlistAccommodationId)
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(objectMapper.writeValueAsString(invalidRequest)))
+
+				// Then: 400 Bad Request 오류가 발생한다
+				.andExpect(status().isBadRequest())
+
+				// document
+				.andDo(document(documentId,
+					pathParameters(
+						parameterWithName("wishlistId")
+							.description("위시리스트 ID"),
+						parameterWithName("wishlistAccommodationId")
+							.description("위시리스트 항목 ID")
+					),
+					requestFields(
+						fieldWithPath("memo")
+							.type(fieldType)
+							.description(description)
+					)));
+		}
+
+		static Stream<Arguments> invalidMemoProvider() {
+			return Stream.of(
+				Arguments.of(
+					"빈 문자열로 수정",
+					"",
+					JsonFieldType.STRING,
+					"빈 메모 (유효하지 않은 입력)",
+					"위시리스트-숙소메모수정-빈메모-실패"
+				),
+				Arguments.of(
+					"공백 문자로 수정",
+					"   ",
+					JsonFieldType.STRING,
+					"공백 메모 (유효하지 않은 입력)",
+					"위시리스트-숙소메모수정-공백메모-실패"
+				),
+				Arguments.of(
+					"null로 수정",
+					null,
+					JsonFieldType.NULL,
+					"NULL 메모 (유효하지 않은 입력)",
+					"위시리스트-숙소메모수정-null메모-실패"
+				),
+				Arguments.of(
+					"1024자 초과로 수정",
+					"A".repeat(1025),
+					JsonFieldType.STRING,
+					"1024자를 초과하는 메모 (유효하지 않은 입력)",
+					"위시리스트-숙소메모수정-길이초과-실패"
+				)
+			);
+		}
+
+		@Test
+		@DisplayName("시나리오: 여러 위시리스트 숙소의 메모를 연속으로 수정한다")
+		void 여러_위시리스트_숙소의_메모를_연속으로_수정한다() throws Exception {
+			// Given: 여러 위시리스트 항목의 메모를 수정하는 상황
+			Long wishlistId = 1L;
+			Long[] wishlistAccommodationIds = {10L, 20L, 30L, 40L, 50L};
+			String[] memos = {
+				"첫 번째 숙소 메모",
+				"두 번째 숙소 메모",
+				"세 번째 숙소 메모",
+				"네 번째 숙소 메모",
+				"다섯 번째 숙소 메모"
+			};
+
+			for (int i = 0; i < wishlistAccommodationIds.length; i++) {
+				WishlistRequest.UpdateWishlistAccommodationRequest request =
+					new WishlistRequest.UpdateWishlistAccommodationRequest(memos[i]);
+				WishlistResponse.UpdateWishlistAccommodationResponse expectedResponse =
+					new WishlistResponse.UpdateWishlistAccommodationResponse(wishlistAccommodationIds[i]);
+
+				when(wishlistService.updateWishlistAccommodation(eq(wishlistId), eq(wishlistAccommodationIds[i]),
+					any(WishlistRequest.UpdateWishlistAccommodationRequest.class), eq(1L)))
+					.thenReturn(expectedResponse);
+
+				// When: 각각의 위시리스트 항목 메모를 수정한다
+				mockMvc.perform(patch("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
+						wishlistId, wishlistAccommodationIds[i])
+						.contentType(MediaType.APPLICATION_JSON)
+						.content(objectMapper.writeValueAsString(request)))
+
+					// Then: 모든 메모가 성공적으로 수정된다
+					.andExpect(status().isOk())
+					.andExpect(jsonPath("$.id").value(wishlistAccommodationIds[i]))
+
+					// document
+					.andDo(document("위시리스트-숙소메모수정-연속수정-" + (i + 1),
+						pathParameters(
+							parameterWithName("wishlistId")
+								.description("위시리스트 ID"),
+							parameterWithName("wishlistAccommodationId")
+								.description("위시리스트 항목 ID: " + wishlistAccommodationIds[i])
+						),
+						requestFields(
+							fieldWithPath("memo")
+								.type(JsonFieldType.STRING)
+								.description("메모 내용: " + memos[i])
+						),
+						responseFields(
+							fieldWithPath("id")
+								.type(JsonFieldType.NUMBER)
+								.description("수정된 위시리스트 항목 ID")
+						)));
+			}
+		}
+
+		@Test
+		@DisplayName("시나리오: 최대 길이의 메모로 위시리스트 숙소 메모를 수정한다")
+		void 최대_길이의_메모로_위시리스트_숙소_메모를_수정한다() throws Exception {
+			// Given: 최대 길이(1024자)의 메모로 수정하는 상황
+			Long wishlistId = 1L;
+			Long wishlistAccommodationId = 10L;
+			String maxLengthMemo = "A".repeat(1024);
+			WishlistRequest.UpdateWishlistAccommodationRequest request =
+				new WishlistRequest.UpdateWishlistAccommodationRequest(maxLengthMemo);
+			WishlistResponse.UpdateWishlistAccommodationResponse expectedResponse =
+				new WishlistResponse.UpdateWishlistAccommodationResponse(wishlistAccommodationId);
+
+			when(wishlistService.updateWishlistAccommodation(eq(wishlistId), eq(wishlistAccommodationId),
+				any(WishlistRequest.UpdateWishlistAccommodationRequest.class), eq(1L)))
+				.thenReturn(expectedResponse);
+
+			// When: 최대 길이의 메모로 수정을 시도한다
+			mockMvc.perform(patch("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
+					wishlistId, wishlistAccommodationId)
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(objectMapper.writeValueAsString(request)))
+
+				// Then: 메모가 성공적으로 수정된다
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.id").value(wishlistAccommodationId))
+
+				// document
+				.andDo(document("위시리스트-숙소메모수정-최대길이-성공",
+					pathParameters(
+						parameterWithName("wishlistId")
+							.description("위시리스트 ID"),
+						parameterWithName("wishlistAccommodationId")
+							.description("위시리스트 항목 ID")
+					),
+					requestFields(
+						fieldWithPath("memo")
+							.type(JsonFieldType.STRING)
+							.description("최대 길이(1024자)의 메모 내용")
+					),
+					responseFields(
+						fieldWithPath("id")
+							.type(JsonFieldType.NUMBER)
+							.description("수정된 위시리스트 항목 ID")
+					)));
+
+			verify(wishlistService).updateWishlistAccommodation(eq(wishlistId), eq(wishlistAccommodationId),
+				any(WishlistRequest.UpdateWishlistAccommodationRequest.class), eq(1L));
+		}
+
+		@Test
+		@DisplayName("시나리오: 특수 문자가 포함된 메모로 위시리스트 숙소 메모를 수정한다")
+		void 특수_문자가_포함된_메모로_위시리스트_숙소_메모를_수정한다() throws Exception {
+			// Given: 특수 문자가 포함된 메모로 수정하는 상황
+			Long wishlistId = 1L;
+			Long wishlistAccommodationId = 10L;
+			String specialCharacterMemo = "정말 좋은 곳이에요! 🏨✨ 가격도 합리적이고 (★★★★★) 직원분들도 친절해요 😊 다음에도 올게요~ #추천 @여행";
+			WishlistRequest.UpdateWishlistAccommodationRequest request =
+				new WishlistRequest.UpdateWishlistAccommodationRequest(specialCharacterMemo);
+			WishlistResponse.UpdateWishlistAccommodationResponse expectedResponse =
+				new WishlistResponse.UpdateWishlistAccommodationResponse(wishlistAccommodationId);
+
+			when(wishlistService.updateWishlistAccommodation(eq(wishlistId), eq(wishlistAccommodationId),
+				any(WishlistRequest.UpdateWishlistAccommodationRequest.class), eq(1L)))
+				.thenReturn(expectedResponse);
+
+			// When: 특수 문자가 포함된 메모로 수정을 시도한다
+			mockMvc.perform(patch("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
+					wishlistId, wishlistAccommodationId)
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(objectMapper.writeValueAsString(request)))
+
+				// Then: 메모가 성공적으로 수정된다
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.id").value(wishlistAccommodationId))
+
+				// document
+				.andDo(document("위시리스트-숙소메모수정-특수문자-성공",
+					pathParameters(
+						parameterWithName("wishlistId")
+							.description("위시리스트 ID"),
+						parameterWithName("wishlistAccommodationId")
+							.description("위시리스트 항목 ID")
+					),
+					requestFields(
+						fieldWithPath("memo")
+							.type(JsonFieldType.STRING)
+							.description("특수 문자가 포함된 메모 내용")
+					),
+					responseFields(
+						fieldWithPath("id")
+							.type(JsonFieldType.NUMBER)
+							.description("수정된 위시리스트 항목 ID")
+					)));
+
+			verify(wishlistService).updateWishlistAccommodation(eq(wishlistId), eq(wishlistAccommodationId),
+				any(WishlistRequest.UpdateWishlistAccommodationRequest.class), eq(1L));
 		}
 	}
 }
