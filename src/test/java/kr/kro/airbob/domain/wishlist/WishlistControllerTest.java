@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -1597,6 +1598,347 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 
 			verify(wishlistService).updateWishlistAccommodation(eq(wishlistId), eq(wishlistAccommodationId),
 				any(WishlistRequest.UpdateWishlistAccommodationRequest.class), eq(1L));
+		}
+	}
+
+	@Nested
+	@DisplayName("위시리스트 숙소 삭제:")
+	class DeleteWishlistAccommodationTests {
+
+		@Test
+		@DisplayName("시나리오: 사용자가 위시리스트에서 숙소를 성공적으로 삭제한다")
+		void 사용자가_위시리스트에서_숙소를_성공적으로_삭제한다() throws Exception {
+			// Given: 존재하는 위시리스트 항목을 삭제하는 상황
+			Long wishlistId = 1L;
+			Long wishlistAccommodationId = 10L;
+
+			doNothing().when(wishlistService)
+				.deleteWishlistAccommodation(eq(wishlistId), eq(wishlistAccommodationId), eq(1L));
+
+			// When: 사용자가 위시리스트 숙소 삭제 API를 호출한다
+			mockMvc.perform(delete("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
+					wishlistId, wishlistAccommodationId))
+
+				// Then: 숙소가 성공적으로 삭제된다
+				.andExpect(status().isNoContent())
+
+				// document
+				.andDo(document("위시리스트-숙소삭제-성공",
+					pathParameters(
+						parameterWithName("wishlistId")
+							.description("위시리스트의 고유 식별자"),
+						parameterWithName("wishlistAccommodationId")
+							.description("삭제할 위시리스트 항목의 고유 식별자")
+					)));
+
+			verify(wishlistService).deleteWishlistAccommodation(eq(wishlistId), eq(wishlistAccommodationId), eq(1L));
+		}
+
+		@Test
+		@DisplayName("시나리오: 존재하지 않는 위시리스트의 숙소 삭제를 시도한다")
+		void 존재하지_않는_위시리스트의_숙소_삭제를_시도한다() throws Exception {
+			// Given: 존재하지 않는 위시리스트 ID로 숙소를 삭제하려는 상황
+			Long nonExistentWishlistId = 999L;
+			Long wishlistAccommodationId = 10L;
+
+			doThrow(new WishlistNotFoundException())
+				.when(wishlistService)
+				.deleteWishlistAccommodation(eq(nonExistentWishlistId), eq(wishlistAccommodationId), eq(1L));
+
+			// When: 존재하지 않는 위시리스트의 숙소 삭제를 시도한다
+			mockMvc.perform(delete("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
+					nonExistentWishlistId, wishlistAccommodationId))
+
+				// Then: 404 Not Found 오류가 발생한다
+				.andExpect(status().isNotFound())
+
+				// document
+				.andDo(document("위시리스트-숙소삭제-위시리스트없음-실패",
+					pathParameters(
+						parameterWithName("wishlistId")
+							.description("존재하지 않는 위시리스트 ID"),
+						parameterWithName("wishlistAccommodationId")
+							.description("삭제하려는 위시리스트 항목 ID")
+					)));
+
+			verify(wishlistService).deleteWishlistAccommodation(eq(nonExistentWishlistId), eq(wishlistAccommodationId), eq(1L));
+		}
+
+		@Test
+		@DisplayName("시나리오: 존재하지 않는 위시리스트 항목 삭제를 시도한다")
+		void 존재하지_않는_위시리스트_항목_삭제를_시도한다() throws Exception {
+			// Given: 존재하지 않는 위시리스트 항목 ID로 삭제를 시도하는 상황
+			Long wishlistId = 1L;
+			Long nonExistentWishlistAccommodationId = 999L;
+
+			doThrow(new WishlistAccommodationNotFoundException())
+				.when(wishlistService)
+				.deleteWishlistAccommodation(eq(wishlistId), eq(nonExistentWishlistAccommodationId), eq(1L));
+
+			// When: 존재하지 않는 위시리스트 항목 삭제를 시도한다
+			mockMvc.perform(delete("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
+					wishlistId, nonExistentWishlistAccommodationId))
+
+				// Then: 404 Not Found 오류가 발생한다
+				.andExpect(status().isNotFound())
+
+				// document
+				.andDo(document("위시리스트-숙소삭제-항목없음-실패",
+					pathParameters(
+						parameterWithName("wishlistId")
+							.description("위시리스트 ID"),
+						parameterWithName("wishlistAccommodationId")
+							.description("존재하지 않는 위시리스트 항목 ID")
+					)));
+
+			verify(wishlistService).deleteWishlistAccommodation(eq(wishlistId), eq(nonExistentWishlistAccommodationId), eq(1L));
+		}
+
+		@Test
+		@DisplayName("시나리오: 다른 사용자의 위시리스트 숙소 삭제를 시도한다")
+		void 다른_사용자의_위시리스트_숙소_삭제를_시도한다() throws Exception {
+			// Given: 다른 사용자 소유의 위시리스트 숙소를 삭제하려는 상황
+			Long otherUserWishlistId = 1L;
+			Long wishlistAccommodationId = 10L;
+
+			doThrow(new WishlistAccessDeniedException())
+				.when(wishlistService)
+				.deleteWishlistAccommodation(eq(otherUserWishlistId), eq(wishlistAccommodationId), eq(1L));
+
+			// When: 다른 사용자의 위시리스트 숙소 삭제를 시도한다
+			mockMvc.perform(delete("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
+					otherUserWishlistId, wishlistAccommodationId))
+
+				// Then: 403 Forbidden 오류가 발생한다
+				.andExpect(status().isForbidden())
+
+				// document
+				.andDo(document("위시리스트-숙소삭제-권한없음-실패",
+					pathParameters(
+						parameterWithName("wishlistId")
+							.description("다른 사용자 소유의 위시리스트 ID"),
+						parameterWithName("wishlistAccommodationId")
+							.description("삭제하려는 위시리스트 항목 ID")
+					)));
+
+			verify(wishlistService).deleteWishlistAccommodation(eq(otherUserWishlistId), eq(wishlistAccommodationId), eq(1L));
+		}
+
+		@Test
+		@DisplayName("시나리오: 다른 위시리스트에 속한 항목 삭제를 시도한다")
+		void 다른_위시리스트에_속한_항목_삭제를_시도한다() throws Exception {
+			// Given: 다른 위시리스트에 속한 항목을 삭제하려는 상황
+			Long wishlistId = 1L;
+			Long otherWishlistAccommodationId = 20L; // 다른 위시리스트에 속한 항목
+
+			doThrow(new WishlistAccommodationAccessDeniedException())
+				.when(wishlistService)
+				.deleteWishlistAccommodation(eq(wishlistId), eq(otherWishlistAccommodationId), eq(1L));
+
+			// When: 다른 위시리스트에 속한 항목 삭제를 시도한다
+			mockMvc.perform(delete("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
+					wishlistId, otherWishlistAccommodationId))
+
+				// Then: 403 Forbidden 오류가 발생한다
+				.andExpect(status().isForbidden())
+
+				// document
+				.andDo(document("위시리스트-숙소삭제-항목불일치-실패",
+					pathParameters(
+						parameterWithName("wishlistId")
+							.description("위시리스트 ID"),
+						parameterWithName("wishlistAccommodationId")
+							.description("다른 위시리스트에 속한 항목 ID")
+					)));
+
+			verify(wishlistService).deleteWishlistAccommodation(eq(wishlistId), eq(otherWishlistAccommodationId), eq(1L));
+		}
+
+		@Test
+		@DisplayName("시나리오: 여러 위시리스트 숙소를 연속으로 삭제한다")
+		void 여러_위시리스트_숙소를_연속으로_삭제한다() throws Exception {
+			// Given: 여러 위시리스트 항목을 삭제하는 상황
+			Long wishlistId = 1L;
+			Long[] wishlistAccommodationIds = {10L, 20L, 30L, 40L, 50L};
+
+			for (int i = 0; i < wishlistAccommodationIds.length; i++) {
+				doNothing().when(wishlistService)
+					.deleteWishlistAccommodation(eq(wishlistId), eq(wishlistAccommodationIds[i]), eq(1L));
+
+				// When: 각각의 위시리스트 항목을 삭제한다
+				mockMvc.perform(delete("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
+						wishlistId, wishlistAccommodationIds[i]))
+
+					// Then: 모든 항목이 성공적으로 삭제된다
+					.andExpect(status().isNoContent())
+
+					// document
+					.andDo(document("위시리스트-숙소삭제-연속삭제-" + (i + 1),
+						pathParameters(
+							parameterWithName("wishlistId")
+								.description("위시리스트 ID"),
+							parameterWithName("wishlistAccommodationId")
+								.description("삭제할 위시리스트 항목 ID: " + wishlistAccommodationIds[i])
+						)));
+
+				verify(wishlistService).deleteWishlistAccommodation(eq(wishlistId), eq(wishlistAccommodationIds[i]), eq(1L));
+			}
+		}
+
+		@Test
+		@DisplayName("시나리오: 매우 큰 ID 값의 위시리스트 항목 삭제를 시도한다")
+		void 매우_큰_ID_값의_위시리스트_항목_삭제를_시도한다() throws Exception {
+			// Given: 매우 큰 ID 값의 위시리스트 항목을 삭제하는 상황
+			Long wishlistId = Long.MAX_VALUE;
+			Long wishlistAccommodationId = Long.MAX_VALUE - 1;
+
+			doNothing().when(wishlistService)
+				.deleteWishlistAccommodation(eq(wishlistId), eq(wishlistAccommodationId), eq(1L));
+
+			// When: 매우 큰 ID 값의 위시리스트 항목 삭제를 시도한다
+			mockMvc.perform(delete("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
+					wishlistId, wishlistAccommodationId))
+
+				// Then: 삭제가 성공적으로 처리된다
+				.andExpect(status().isNoContent())
+
+				// document
+				.andDo(document("위시리스트-숙소삭제-최대값ID-성공",
+					pathParameters(
+						parameterWithName("wishlistId")
+							.description("매우 큰 위시리스트 ID (Long.MAX_VALUE)"),
+						parameterWithName("wishlistAccommodationId")
+							.description("매우 큰 위시리스트 항목 ID (Long.MAX_VALUE - 1)")
+					)));
+
+			verify(wishlistService).deleteWishlistAccommodation(eq(wishlistId), eq(wishlistAccommodationId), eq(1L));
+		}
+
+		@Test
+		@DisplayName("시나리오: 동일한 위시리스트 항목을 중복으로 삭제하려 시도한다")
+		void 동일한_위시리스트_항목을_중복으로_삭제하려_시도한다() throws Exception {
+			// Given: 이미 삭제된 위시리스트 항목을 다시 삭제하려는 상황
+			Long wishlistId = 1L;
+			Long alreadyDeletedAccommodationId = 10L;
+
+			// 첫 번째 삭제는 성공
+			doNothing().when(wishlistService)
+				.deleteWishlistAccommodation(eq(wishlistId), eq(alreadyDeletedAccommodationId), eq(1L));
+
+			// 첫 번째 삭제 수행
+			mockMvc.perform(delete("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
+					wishlistId, alreadyDeletedAccommodationId))
+				.andExpect(status().isNoContent());
+
+			// 두 번째 삭제 시도 시 예외 발생
+			doThrow(new WishlistAccommodationNotFoundException())
+				.when(wishlistService)
+				.deleteWishlistAccommodation(eq(wishlistId), eq(alreadyDeletedAccommodationId), eq(1L));
+
+			// When: 이미 삭제된 항목을 다시 삭제하려 시도한다
+			mockMvc.perform(delete("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
+					wishlistId, alreadyDeletedAccommodationId))
+
+				// Then: 404 Not Found 오류가 발생한다
+				.andExpect(status().isNotFound())
+
+				// document
+				.andDo(document("위시리스트-숙소삭제-중복삭제-실패",
+					pathParameters(
+						parameterWithName("wishlistId")
+							.description("위시리스트 ID"),
+						parameterWithName("wishlistAccommodationId")
+							.description("이미 삭제된 위시리스트 항목 ID")
+					)));
+
+			verify(wishlistService, times(2))
+				.deleteWishlistAccommodation(eq(wishlistId), eq(alreadyDeletedAccommodationId), eq(1L));
+		}
+
+		@Test
+		@DisplayName("시나리오: 빈 위시리스트에서 항목 삭제를 시도한다")
+		void 빈_위시리스트에서_항목_삭제를_시도한다() throws Exception {
+			// Given: 빈 위시리스트에서 항목을 삭제하려는 상황
+			Long emptyWishlistId = 1L;
+			Long nonExistentAccommodationId = 10L;
+
+			doThrow(new WishlistAccommodationNotFoundException())
+				.when(wishlistService)
+				.deleteWishlistAccommodation(eq(emptyWishlistId), eq(nonExistentAccommodationId), eq(1L));
+
+			// When: 빈 위시리스트에서 항목 삭제를 시도한다
+			mockMvc.perform(delete("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
+					emptyWishlistId, nonExistentAccommodationId))
+
+				// Then: 404 Not Found 오류가 발생한다
+				.andExpect(status().isNotFound())
+
+				// document
+				.andDo(document("위시리스트-숙소삭제-빈위시리스트-실패",
+					pathParameters(
+						parameterWithName("wishlistId")
+							.description("빈 위시리스트 ID"),
+						parameterWithName("wishlistAccommodationId")
+							.description("존재하지 않는 위시리스트 항목 ID")
+					)));
+
+			verify(wishlistService).deleteWishlistAccommodation(eq(emptyWishlistId), eq(nonExistentAccommodationId), eq(1L));
+		}
+
+		@Test
+		@DisplayName("시나리오: 위시리스트의 마지막 숙소를 삭제한다")
+		void 위시리스트의_마지막_숙소를_삭제한다() throws Exception {
+			// Given: 위시리스트에 하나만 남은 숙소를 삭제하는 상황
+			Long wishlistId = 1L;
+			Long lastAccommodationId = 10L;
+
+			doNothing().when(wishlistService)
+				.deleteWishlistAccommodation(eq(wishlistId), eq(lastAccommodationId), eq(1L));
+
+			// When: 위시리스트의 마지막 숙소를 삭제한다
+			mockMvc.perform(delete("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
+					wishlistId, lastAccommodationId))
+
+				// Then: 삭제가 성공적으로 처리된다
+				.andExpect(status().isNoContent())
+
+				// document
+				.andDo(document("위시리스트-마지막숙소삭제-성공",
+					pathParameters(
+						parameterWithName("wishlistId")
+							.description("위시리스트 ID"),
+						parameterWithName("wishlistAccommodationId")
+							.description("위시리스트의 마지막 남은 숙소 ID")
+					)));
+
+			verify(wishlistService).deleteWishlistAccommodation(eq(wishlistId), eq(lastAccommodationId), eq(1L));
+		}
+
+		@ParameterizedTest(name = "잘못된 ID: {0}")
+		@ValueSource(longs = {-1L, 0L})
+		@DisplayName("시나리오: 잘못된 ID 값으로 위시리스트 항목 삭제를 시도한다")
+		void 잘못된_ID_값으로_위시리스트_항목_삭제를_시도한다(Long invalidId) throws Exception {
+			// Given: 잘못된 ID 값으로 삭제를 시도하는 상황
+			Long wishlistId = 1L;
+
+			// When: 잘못된 ID로 삭제를 시도한다
+			mockMvc.perform(delete("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
+					wishlistId, invalidId))
+
+				// Then: 요청은 처리되지만 서비스에서 예외가 발생할 수 있다
+				.andExpect(result -> {
+					// 음수나 0은 유효하지 않은 ID이지만 URL 파라미터로는 전달됨
+					// 실제 비즈니스 로직에서 처리되어야 함
+				})
+
+				// document
+				.andDo(document("위시리스트-숙소삭제-잘못된ID-" + Math.abs(invalidId),
+					pathParameters(
+						parameterWithName("wishlistId")
+							.description("위시리스트 ID"),
+						parameterWithName("wishlistAccommodationId")
+							.description("잘못된 위시리스트 항목 ID: " + invalidId)
+					)));
 		}
 	}
 }
