@@ -2,6 +2,7 @@ package kr.kro.airbob.domain.discountPolicy.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
+import kr.kro.airbob.cursor.util.CursorDecoder;
 import kr.kro.airbob.domain.discountPolicy.DiscountPolicy;
 import kr.kro.airbob.domain.discountPolicy.common.DiscountType;
 import kr.kro.airbob.domain.discountPolicy.common.PromotionType;
@@ -36,6 +37,8 @@ public class DiscountPolicyControllerTest {
 
     @MockitoBean
     private DiscountPolicyService discountPolicyService;
+    @MockitoBean
+    private CursorDecoder cursorDecoder;
 
     @Autowired
     private MockMvc mockMvc;

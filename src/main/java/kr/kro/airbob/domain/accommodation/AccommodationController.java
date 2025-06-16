@@ -1,12 +1,18 @@
 package kr.kro.airbob.domain.accommodation;
 
 import jakarta.validation.Valid;
+import java.util.List;
 import java.util.Map;
 import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest;
+import kr.kro.airbob.domain.accommodation.dto.AccommodationResponse;
+import kr.kro.airbob.domain.accommodation.dto.AccommodationResponse.AccommodationSearchResponseDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -40,6 +46,13 @@ public class AccommodationController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteAccommodation(@PathVariable Long accommodationId) {
         accommodationService.deleteAccommodation(accommodationId);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<AccommodationResponse.AccommodationSearchResponseDto>> searchAccommodationsByCondition(
+            @ModelAttribute AccommodationRequest.AccommodationSearchConditionDto request, Pageable pageable) {
+        List<AccommodationSearchResponseDto> result = accommodationService.searchAccommodations(request, pageable);
+        return ResponseEntity.ok(result);
     }
 }
 

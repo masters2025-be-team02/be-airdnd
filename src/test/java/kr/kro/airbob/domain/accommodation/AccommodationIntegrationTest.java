@@ -8,14 +8,22 @@ import static kr.kro.airbob.domain.accommodation.common.AmenityType.TV;
 import static kr.kro.airbob.domain.accommodation.common.AmenityType.WIFI;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
 
 import jakarta.transaction.Transactional;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Stream;
 import kr.kro.airbob.domain.accommodation.common.AccommodationType;
+import kr.kro.airbob.domain.accommodation.common.AmenityType;
 import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest;
+import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest.AccommodationSearchConditionDto;
+import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest.AddressInfo;
 import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest.AmenityInfo;
 import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest.CreateAccommodationDto;
+import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest.OccupancyPolicyInfo;
 import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest.UpdateAccommodationDto;
+import kr.kro.airbob.domain.accommodation.dto.AccommodationResponse.AccommodationSearchResponseDto;
 import kr.kro.airbob.domain.accommodation.entity.Accommodation;
 import kr.kro.airbob.domain.accommodation.entity.AccommodationAmenity;
 import kr.kro.airbob.domain.accommodation.entity.Address;
@@ -28,12 +36,18 @@ import kr.kro.airbob.domain.accommodation.repository.AmenityRepository;
 import kr.kro.airbob.domain.accommodation.repository.OccupancyPolicyRepository;
 import kr.kro.airbob.domain.member.Member;
 import kr.kro.airbob.domain.member.MemberRepository;
+import kr.kro.airbob.domain.reservation.ReservedDate;
+import kr.kro.airbob.domain.reservation.ReservedDateRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -63,6 +77,8 @@ public class AccommodationIntegrationTest {
     private OccupancyPolicyRepository occupancyPolicyRepository;
     @Autowired
     private AddressRepository addressRepository;
+    @Autowired
+    private ReservedDateRepository reservedDateRepository;
 
     private Member testMember;
 
@@ -92,6 +108,7 @@ public class AccommodationIntegrationTest {
         testMember = memberRepository.save(member);
 
         amenityRepository.save(Amenity.builder().name(WIFI).build());
+        amenityRepository.save(Amenity.builder().name(TV).build());
         amenityRepository.save(Amenity.builder().name(PARKING).build());
         amenityRepository.save(Amenity.builder().name(IRON).build());
     }
@@ -105,6 +122,10 @@ public class AccommodationIntegrationTest {
                 new AmenityInfo("wifi", 2)
         );
 
+        OccupancyPolicyInfo policyInfo = OccupancyPolicyInfo.builder()
+                .maxOccupancy(6)
+                .build();
+
         CreateAccommodationDto request = CreateAccommodationDto.builder()
                 .name("테스트 숙소")
                 .description("설명")
@@ -112,13 +133,16 @@ public class AccommodationIntegrationTest {
                 .hostId(testMember.getId())
                 .type("HOSTEL")
                 .amenityInfos(amenities)
+                .addressInfo(mock(AddressInfo.class))
+                .occupancyPolicyInfo(policyInfo)
                 .build();
 
         // when
         Long accommodationId = accommodationService.createAccommodation(request);
 
         // then
-        List<AccommodationAmenity> savedAmenities = accommodationAmenityRepository.findAllByAccommodationId(accommodationId);
+        List<AccommodationAmenity> savedAmenities = accommodationAmenityRepository.findAllByAccommodationId(
+                accommodationId);
 
         assertThat(savedAmenities).hasSize(1);
 
@@ -133,7 +157,8 @@ public class AccommodationIntegrationTest {
         // given - 기존 엔티티 저장
         Address originalAddress = addressRepository.save(createAddress("Seoul"));
         OccupancyPolicy originalPolicy = occupancyPolicyRepository.save(createPolicy());
-        Accommodation accommodation = accommodationRepository.save(createAccommodation(originalAddress, originalPolicy));
+        Accommodation accommodation = accommodationRepository.save(
+                createAccommodation(originalAddress, originalPolicy));
 
         Amenity wifi = Amenity.builder().name(WIFI).build();
         Amenity tv = Amenity.builder().name(TV).build();
@@ -202,7 +227,8 @@ public class AccommodationIntegrationTest {
         assertThat(policy.getInfantOccupancy()).isEqualTo(1);
 
         // 어메니티 정보 확인
-        List<AccommodationAmenity> accommodationAmenityList = accommodationAmenityRepository.findAllByAccommodationId(accommodationId);
+        List<AccommodationAmenity> accommodationAmenityList = accommodationAmenityRepository.findAllByAccommodationId(
+                accommodationId);
         assertThat(accommodationAmenityList).hasSize(2);
         assertThat(accommodationAmenityList).extracting("amenity")
                 .extracting("name").containsExactlyInAnyOrder(SHAMPOO, MICROWAVE);
@@ -282,7 +308,8 @@ public class AccommodationIntegrationTest {
         accommodationService.updateAccommodation(accommodationId, updateRequest);
 
         // then
-        List<AccommodationAmenity> accommodationAmenityList = accommodationAmenityRepository.findAllByAccommodationId(accommodationId);
+        List<AccommodationAmenity> accommodationAmenityList = accommodationAmenityRepository.findAllByAccommodationId(
+                accommodationId);
         assertThat(accommodationAmenityList).hasSize(2);
         assertThat(accommodationAmenityList).extracting("amenity")
                 .extracting("name").containsExactlyInAnyOrder(WIFI, TV);
@@ -297,6 +324,10 @@ public class AccommodationIntegrationTest {
                 new AmenityInfo("wifi", 2)
         );
 
+        OccupancyPolicyInfo policyInfo = OccupancyPolicyInfo.builder()
+                .maxOccupancy(6)
+                .build();
+
         CreateAccommodationDto request = CreateAccommodationDto.builder()
                 .name("테스트 숙소")
                 .description("설명")
@@ -304,7 +335,10 @@ public class AccommodationIntegrationTest {
                 .hostId(testMember.getId())
                 .type("HOSTEL")
                 .amenityInfos(amenities)
+                .occupancyPolicyInfo(policyInfo)
+                .addressInfo(mock(AddressInfo.class))
                 .build();
+
         Long id = accommodationService.createAccommodation(request);
 
         // when
@@ -331,6 +365,10 @@ public class AccommodationIntegrationTest {
     @DisplayName("어메니티가 없는 숙소는 숙소만 삭제된다")
     void deleteAccommodationSucceedsEvenIfNoAmenities() {
         // given
+        OccupancyPolicyInfo policyInfo = OccupancyPolicyInfo.builder()
+                .maxOccupancy(6)
+                .build();
+
         CreateAccommodationDto request = CreateAccommodationDto.builder()
                 .name("테스트 숙소")
                 .description("설명")
@@ -338,6 +376,8 @@ public class AccommodationIntegrationTest {
                 .hostId(testMember.getId())
                 .type("HOSTEL")
                 .amenityInfos(null)
+                .addressInfo(mock(AddressInfo.class))
+                .occupancyPolicyInfo(policyInfo)
                 .build();
         Long id = accommodationService.createAccommodation(request);
 
@@ -368,6 +408,7 @@ public class AccommodationIntegrationTest {
                 .petOccupancy(0)
                 .build();
     }
+
     private Accommodation createAccommodation(Address address, OccupancyPolicy policy) {
         return Accommodation.builder()
                 .name("Test House")
@@ -380,5 +421,158 @@ public class AccommodationIntegrationTest {
                 .member(null)
                 .build();
     }
-}
 
+    @ParameterizedTest
+    @MethodSource("provideSearchConditions")
+    @DisplayName("여러 필터 조합으로 숙소를 검색할 수 있다")
+    void searchByFilterWithVariousConditions(AccommodationSearchConditionDto condition, int expectedSize, List<String> expectedNames) {
+        //given
+        Accommodation acc1 = saveAccommodation("숙소1", "서울", 100000, "HOUSE", 4, List.of("WIFI", "TV"));
+        Accommodation acc2 = saveAccommodation("숙소2", "서울", 80000, "APARTMENT", 2, List.of("WIFI"));
+        Accommodation acc3 = saveAccommodation("숙소3", "부산", 150000, "VILLA", 6, List.of("PARKING"));
+        Accommodation acc4 = saveAccommodation("숙소4", "대전", 120000, "HOUSE", 5, List.of());
+        Accommodation acc5 = saveAccommodation("숙소5", "제주", 90000, "HOUSE", 3, List.of("TV"));
+
+        saveReservedDates(acc2, LocalDate.of(2025, 7, 10), LocalDate.of(2025, 7, 12));
+
+        // when
+        List<AccommodationSearchResponseDto> results = accommodationRepository.searchByFilter(condition,
+                PageRequest.of(0, 10));
+
+        // then
+        assertThat(results).hasSize(expectedSize);
+        assertThat(results).extracting("name").containsExactlyInAnyOrderElementsOf(expectedNames);
+    }
+
+    private Accommodation saveAccommodation(String name, String city, int price, String type, int maxOccupancy, List<String> amenityNames) {
+        Address address = addressRepository.save(Address.builder()
+                .city(city)
+                .country("KR")
+                .street("테스트로")
+                .build());
+
+        OccupancyPolicy policy = occupancyPolicyRepository.save(OccupancyPolicy.builder()
+                .maxOccupancy(maxOccupancy)
+                .adultOccupancy(maxOccupancy)
+                .childOccupancy(0)
+                .infantOccupancy(0)
+                .petOccupancy(0)
+                .build());
+
+        Accommodation acc = accommodationRepository.save(Accommodation.builder()
+                .name(name)
+                .basePrice(price)
+                .type(AccommodationType.valueOf(type))
+                .address(address)
+                .occupancyPolicy(policy)
+                .build());
+
+        for (String nameStr : amenityNames) {
+            Amenity amenity = amenityRepository.findByName(AmenityType.valueOf(nameStr)).get();
+            accommodationAmenityRepository.save(
+                    AccommodationAmenity.createAccommodationAmenity(acc, amenity, 1)
+            );
+        }
+
+        return acc;
+    }
+
+    private void saveReservedDates(Accommodation accommodation, LocalDate start, LocalDate end) {
+        for (LocalDate date = start; !date.isAfter(end); date = date.plusDays(1)) {
+            reservedDateRepository.save(ReservedDate.builder()
+                    .accommodation(accommodation)
+                    .reservedAt(date)
+                    .build());
+        }
+    }
+
+    static Stream<Arguments> provideSearchConditions() {
+        return Stream.of(
+                // 1. 도시만 검색
+                Arguments.of(
+                        createCondition("서울", null, null, null, null,
+                                null, null, null),
+                        2,
+                        List.of("숙소1", "숙소2")
+                ),
+
+                // 2. 최소/최대 가격만 지정
+                Arguments.of(
+                        createCondition(null, 50000, 100000, null, null,
+                                null, null, null),
+                        3,
+                        List.of("숙소1", "숙소2", "숙소5")
+                ),
+
+                // 3. 도시 + 타입
+                Arguments.of(
+                        createCondition("부산", null, null, null, null,
+                                null, null, List.of("VILLA")),
+                        1,
+                        List.of("숙소3")
+                ),
+
+                // 4. 어메니티 필터만 적용
+                Arguments.of(
+                        createCondition(null, null, null, null, null,
+                                null, List.of("WIFI"), null),
+                        2,
+                        List.of("숙소1", "숙소2")
+                ),
+
+                // 5. 도시 + 날짜 필터
+                Arguments.of(
+                        createCondition("제주", null, null, LocalDate.of(2025, 7, 1),
+                                LocalDate.of(2025, 7, 3), null, null, null),
+                        1,
+                        List.of("숙소5")
+                ),
+
+                // 6. 날짜 필터 (예약된 숙소 제외)
+                Arguments.of(
+                        createCondition(null, null, null, LocalDate.of(2025, 7, 10),
+                                LocalDate.of(2025, 7, 12), null, null, null),
+                        4,
+                        List.of("숙소1", "숙소3", "숙소4", "숙소5") // 숙소2 제외
+                ),
+
+                // 7. 인원 수 제한
+                Arguments.of(
+                        createCondition(null, null, null, null, null,
+                                5, null, null),
+                        2,
+                        List.of("숙소3", "숙소4")
+                ),
+
+                // 8. 전체 조건 조합
+                Arguments.of(
+                        createCondition("서울", 50000, 200000, LocalDate.of(2025, 8, 1),
+                                LocalDate.of(2025, 8, 3), 4, List.of("WIFI", "TV"), List.of("HOUSE")),
+                        1,
+                        List.of("숙소1")
+                )
+        );
+    }
+
+    private static AccommodationSearchConditionDto createCondition(
+            String city,
+            Integer minPrice,
+            Integer maxPrice,
+            LocalDate checkIn,
+            LocalDate checkOut,
+            Integer guestCount,
+            List<String> amenityTypes,
+            List<String> accommodationTypes
+    ) {
+        return AccommodationSearchConditionDto.builder()
+                .city(city)
+                .minPrice(minPrice)
+                .maxPrice(maxPrice)
+                .checkIn(checkIn)
+                .checkOut(checkOut)
+                .guestCount(guestCount)
+                .amenityTypes(amenityTypes)
+                .accommodationTypes(accommodationTypes)
+                .build();
+    }
+}

@@ -1,5 +1,8 @@
 package kr.kro.airbob.domain.accommodation.common;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 public enum AmenityType {
     WIFI,               // 무선 인터넷
     AIR_CONDITIONER,    // 에어컨
@@ -33,10 +36,18 @@ public enum AmenityType {
     BALCONY,             // 발코니
     UNKNOWN;
 
+    public static List<AmenityType> valuesOf(List<String> types) {
+        return types.stream()
+                .map(String::toUpperCase)
+                .filter(AmenityType::isValid)
+                .map(AmenityType::valueOf)
+                .collect(Collectors.toList());
+    }
+
     public static boolean isValid(String name) {
         if (name == null) return false;
         try {
-            AmenityType.valueOf(name.toUpperCase());
+            AmenityType.valueOf(name.toUpperCase().trim());
             return true;
         } catch (IllegalArgumentException e) {
             return false;
