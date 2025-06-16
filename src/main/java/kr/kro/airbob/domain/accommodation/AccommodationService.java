@@ -44,17 +44,11 @@ public class AccommodationService {
         Member member = memberRepository.findById(request.getHostId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
 
-        OccupancyPolicy occupancyPolicy = null;
-        if (request.getOccupancyPolicyInfo() != null) {
-            occupancyPolicy = OccupancyPolicy.createOccupancyPolicy(request.getOccupancyPolicyInfo());
+        OccupancyPolicy occupancyPolicy = OccupancyPolicy.createOccupancyPolicy(request.getOccupancyPolicyInfo());
             occupancyPolicyRepository.save(occupancyPolicy);
-        }
 
-        Address address = null;
-        if (request.getAddressInfo() != null) {
-            address = Address.createAddress(request.getAddressInfo());
+        Address address = Address.createAddress(request.getAddressInfo());
             addressRepository.save(address);
-        }
 
         Accommodation accommodation = Accommodation.createAccommodation(request, address, occupancyPolicy, member);
         Accommodation savedAccommodation = accommodationRepository.save(accommodation);

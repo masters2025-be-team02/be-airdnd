@@ -8,6 +8,7 @@ import static kr.kro.airbob.domain.accommodation.common.AmenityType.TV;
 import static kr.kro.airbob.domain.accommodation.common.AmenityType.WIFI;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
 
 import jakarta.transaction.Transactional;
 import java.time.LocalDate;
@@ -17,8 +18,10 @@ import kr.kro.airbob.domain.accommodation.common.AccommodationType;
 import kr.kro.airbob.domain.accommodation.common.AmenityType;
 import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest;
 import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest.AccommodationSearchConditionDto;
+import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest.AddressInfo;
 import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest.AmenityInfo;
 import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest.CreateAccommodationDto;
+import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest.OccupancyPolicyInfo;
 import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest.UpdateAccommodationDto;
 import kr.kro.airbob.domain.accommodation.dto.AccommodationResponse.AccommodationSearchResponseDto;
 import kr.kro.airbob.domain.accommodation.entity.Accommodation;
@@ -119,6 +122,10 @@ public class AccommodationIntegrationTest {
                 new AmenityInfo("wifi", 2)
         );
 
+        OccupancyPolicyInfo policyInfo = OccupancyPolicyInfo.builder()
+                .maxOccupancy(6)
+                .build();
+
         CreateAccommodationDto request = CreateAccommodationDto.builder()
                 .name("테스트 숙소")
                 .description("설명")
@@ -126,6 +133,8 @@ public class AccommodationIntegrationTest {
                 .hostId(testMember.getId())
                 .type("HOSTEL")
                 .amenityInfos(amenities)
+                .addressInfo(mock(AddressInfo.class))
+                .occupancyPolicyInfo(policyInfo)
                 .build();
 
         // when
@@ -315,6 +324,10 @@ public class AccommodationIntegrationTest {
                 new AmenityInfo("wifi", 2)
         );
 
+        OccupancyPolicyInfo policyInfo = OccupancyPolicyInfo.builder()
+                .maxOccupancy(6)
+                .build();
+
         CreateAccommodationDto request = CreateAccommodationDto.builder()
                 .name("테스트 숙소")
                 .description("설명")
@@ -322,7 +335,10 @@ public class AccommodationIntegrationTest {
                 .hostId(testMember.getId())
                 .type("HOSTEL")
                 .amenityInfos(amenities)
+                .occupancyPolicyInfo(policyInfo)
+                .addressInfo(mock(AddressInfo.class))
                 .build();
+
         Long id = accommodationService.createAccommodation(request);
 
         // when
@@ -349,6 +365,10 @@ public class AccommodationIntegrationTest {
     @DisplayName("어메니티가 없는 숙소는 숙소만 삭제된다")
     void deleteAccommodationSucceedsEvenIfNoAmenities() {
         // given
+        OccupancyPolicyInfo policyInfo = OccupancyPolicyInfo.builder()
+                .maxOccupancy(6)
+                .build();
+
         CreateAccommodationDto request = CreateAccommodationDto.builder()
                 .name("테스트 숙소")
                 .description("설명")
@@ -356,6 +376,8 @@ public class AccommodationIntegrationTest {
                 .hostId(testMember.getId())
                 .type("HOSTEL")
                 .amenityInfos(null)
+                .addressInfo(mock(AddressInfo.class))
+                .occupancyPolicyInfo(policyInfo)
                 .build();
         Long id = accommodationService.createAccommodation(request);
 
