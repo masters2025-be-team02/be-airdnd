@@ -15,6 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -25,6 +26,9 @@ import org.springframework.data.domain.SliceImpl;
 import kr.kro.airbob.cursor.dto.CursorRequest;
 import kr.kro.airbob.cursor.dto.CursorResponse;
 import kr.kro.airbob.cursor.util.CursorPageInfoCreator;
+import kr.kro.airbob.domain.accommodation.entity.Accommodation;
+import kr.kro.airbob.domain.accommodation.exception.AccommodationNotFoundException;
+import kr.kro.airbob.domain.accommodation.repository.AccommodationRepository;
 import kr.kro.airbob.domain.member.Member;
 import kr.kro.airbob.domain.member.MemberRepository;
 import kr.kro.airbob.domain.member.common.MemberRole;
@@ -51,6 +55,9 @@ class WishlistServiceTest {
 
 	@Mock
 	private CursorPageInfoCreator cursorPageInfoCreator;
+
+	@Mock
+	private AccommodationRepository accommodationRepository;
 
 	@InjectMocks
 	private WishlistService wishlistService;
@@ -641,5 +648,347 @@ class WishlistServiceTest {
 			.name(name)
 			.member(member)
 			.build();
+	}
+
+	@Nested
+	@DisplayName("위시리스트 숙소 추가 테스트")
+	class CreateWishlistAccommodationTest {
+
+		private Accommodation accommodation;
+
+		@BeforeEach
+		void setUpAccommodation() {
+			accommodation = Accommodation.builder()
+				.id(100L)
+				.name("신라호텔")
+				.build();
+		}
+
+		@Test
+		@DisplayName("정상적으로 위시리스트에 숙소를 추가한다")
+		void createWishlistAccommodation_Success() {
+			// Given
+			Long wishlistId = 1L;
+			Long accommodationId = 100L;
+			Long currentMemberId = 1L;
+			WishlistRequest.CreateWishlistAccommodationRequest request =
+				new WishlistRequest.CreateWishlistAccommodationRequest(accommodationId);
+
+			// Mock 설정
+			given(wishlistRepository.findById(wishlistId)).willReturn(Optional.of(wishlist));
+			given(accommodationRepository.findById(accommodationId)).willReturn(Optional.of(accommodation));
+			given(memberRepository.findById(currentMemberId)).willReturn(Optional.of(member));
+			given(wishlistAccommodationRepository.existsByWishlistIdAndAccommodationId(wishlistId, accommodationId))
+				.willReturn(false);
+
+			WishlistAccommodation savedWishlistAccommodation = WishlistAccommodation.builder()
+				.id(10L)
+				.wishlist(wishlist)
+				.accommodation(accommodation)
+				.build();
+
+			given(wishlistAccommodationRepository.save(any(WishlistAccommodation.class)))
+				.willReturn(savedWishlistAccommodation);
+
+			// When
+			WishlistResponse.CreateWishlistAccommodationResponse response =
+				wishlistService.createWishlistAccommodation(wishlistId, request, currentMemberId);
+
+			// Then
+			assertThat(response.id()).isEqualTo(10L);
+
+			verify(wishlistRepository).findById(wishlistId);
+			verify(accommodationRepository).findById(accommodationId);
+			verify(memberRepository).findById(currentMemberId);
+			verify(wishlistAccommodationRepository).existsByWishlistIdAndAccommodationId(wishlistId, accommodationId);
+			verify(wishlistAccommodationRepository).save(any(WishlistAccommodation.class));
+		}
+
+		@Test
+		@DisplayName("존재하지 않는 위시리스트에 숙소 추가 시 예외 발생")
+		void createWishlistAccommodation_WishlistNotFound() {
+			// Given
+			Long nonExistentWishlistId = 999L;
+			Long accommodationId = 100L;
+			Long currentMemberId = 1L;
+			WishlistRequest.CreateWishlistAccommodationRequest request =
+				new WishlistRequest.CreateWishlistAccommodationRequest(accommodationId);
+
+			given(wishlistRepository.findById(nonExistentWishlistId)).willReturn(Optional.empty());
+
+			// When & Then
+			assertThatThrownBy(() -> wishlistService.createWishlistAccommodation(nonExistentWishlistId, request, currentMemberId))
+				.isInstanceOf(WishlistNotFoundException.class)
+				.hasMessage("존재하지 않는 위시리스트입니다.");
+
+			verify(wishlistRepository).findById(nonExistentWishlistId);
+			verify(accommodationRepository, never()).findById(any());
+			verify(memberRepository, never()).findById(any());
+			verify(wishlistAccommodationRepository, never()).save(any());
+		}
+
+		@Test
+		@DisplayName("존재하지 않는 숙소를 위시리스트에 추가 시 예외 발생")
+		void createWishlistAccommodation_AccommodationNotFound() {
+			// Given
+			Long wishlistId = 1L;
+			Long nonExistentAccommodationId = 999L;
+			Long currentMemberId = 1L;
+			WishlistRequest.CreateWishlistAccommodationRequest request =
+				new WishlistRequest.CreateWishlistAccommodationRequest(nonExistentAccommodationId);
+
+			given(wishlistRepository.findById(wishlistId)).willReturn(Optional.of(wishlist));
+			given(accommodationRepository.findById(nonExistentAccommodationId)).willReturn(Optional.empty());
+
+			// When & Then
+			assertThatThrownBy(() -> wishlistService.createWishlistAccommodation(wishlistId, request, currentMemberId))
+				.isInstanceOf(AccommodationNotFoundException.class)
+				.hasMessage("존재하지 않는 숙소입니다.");
+
+			verify(wishlistRepository).findById(wishlistId);
+			verify(accommodationRepository).findById(nonExistentAccommodationId);
+			verify(memberRepository, never()).findById(any());
+			verify(wishlistAccommodationRepository, never()).save(any());
+		}
+
+		@Test
+		@DisplayName("존재하지 않는 사용자로 숙소 추가 시 예외 발생")
+		void createWishlistAccommodation_MemberNotFound() {
+			// Given
+			Long wishlistId = 1L;
+			Long accommodationId = 100L;
+			Long nonExistentMemberId = 999L;
+			WishlistRequest.CreateWishlistAccommodationRequest request =
+				new WishlistRequest.CreateWishlistAccommodationRequest(accommodationId);
+
+			given(wishlistRepository.findById(wishlistId)).willReturn(Optional.of(wishlist));
+			given(accommodationRepository.findById(accommodationId)).willReturn(Optional.of(accommodation));
+			given(memberRepository.findById(nonExistentMemberId)).willReturn(Optional.empty());
+
+			// When & Then
+			assertThatThrownBy(() -> wishlistService.createWishlistAccommodation(wishlistId, request, nonExistentMemberId))
+				.isInstanceOf(MemberNotFoundException.class)
+				.hasMessage("존재하지 않는 사용자입니다.");
+
+			verify(wishlistRepository).findById(wishlistId);
+			verify(accommodationRepository).findById(accommodationId);
+			verify(memberRepository).findById(nonExistentMemberId);
+			verify(wishlistAccommodationRepository, never()).save(any());
+		}
+
+		@Test
+		@DisplayName("다른 사용자의 위시리스트에 숙소 추가 시 예외 발생")
+		void createWishlistAccommodation_AccessDenied() {
+			// Given
+			Long otherWishlistId = 2L;
+			Long accommodationId = 100L;
+			Long currentMemberId = 1L; // 다른 사용자 ID
+			WishlistRequest.CreateWishlistAccommodationRequest request =
+				new WishlistRequest.CreateWishlistAccommodationRequest(accommodationId);
+
+			given(wishlistRepository.findById(otherWishlistId)).willReturn(Optional.of(otherWishlist));
+			given(accommodationRepository.findById(accommodationId)).willReturn(Optional.of(accommodation));
+			given(memberRepository.findById(currentMemberId)).willReturn(Optional.of(member));
+
+			// When & Then
+			assertThatThrownBy(() -> wishlistService.createWishlistAccommodation(otherWishlistId, request, currentMemberId))
+				.isInstanceOf(WishlistAccessDeniedException.class)
+				.hasMessage("위시리스트에 대한 접근 권한이 없습니다.");
+
+			verify(wishlistRepository).findById(otherWishlistId);
+			verify(accommodationRepository).findById(accommodationId);
+			verify(memberRepository).findById(currentMemberId);
+			verify(wishlistAccommodationRepository, never()).save(any());
+		}
+
+		@Test
+		@DisplayName("이미 위시리스트에 있는 숙소를 중복 추가 시 예외 발생")
+		void createWishlistAccommodation_DuplicateAccommodation() {
+			// Given
+			Long wishlistId = 1L;
+			Long accommodationId = 100L;
+			Long currentMemberId = 1L;
+			WishlistRequest.CreateWishlistAccommodationRequest request =
+				new WishlistRequest.CreateWishlistAccommodationRequest(accommodationId);
+
+			given(wishlistRepository.findById(wishlistId)).willReturn(Optional.of(wishlist));
+			given(accommodationRepository.findById(accommodationId)).willReturn(Optional.of(accommodation));
+			given(memberRepository.findById(currentMemberId)).willReturn(Optional.of(member));
+			given(wishlistAccommodationRepository.existsByWishlistIdAndAccommodationId(wishlistId, accommodationId))
+				.willReturn(true); // 이미 존재함
+
+			// When & Then
+			assertThatThrownBy(() -> wishlistService.createWishlistAccommodation(wishlistId, request, currentMemberId))
+				.isInstanceOf(WishlistAccessDeniedException.class)
+				.hasMessage("위시리스트에 대한 접근 권한이 없습니다.");
+
+			verify(wishlistRepository).findById(wishlistId);
+			verify(accommodationRepository).findById(accommodationId);
+			verify(memberRepository).findById(currentMemberId);
+			verify(wishlistAccommodationRepository).existsByWishlistIdAndAccommodationId(wishlistId, accommodationId);
+			verify(wishlistAccommodationRepository, never()).save(any());
+		}
+
+		@Test
+		@DisplayName("같은 숙소를 여러 위시리스트에 추가할 수 있다")
+		void createWishlistAccommodation_SameAccommodationDifferentWishlists() {
+			// Given
+			Long accommodationId = 100L;
+			Long currentMemberId = 1L;
+			WishlistRequest.CreateWishlistAccommodationRequest request =
+				new WishlistRequest.CreateWishlistAccommodationRequest(accommodationId);
+
+			// 첫 번째 위시리스트에 추가
+			Long firstWishlistId = 1L;
+			Wishlist firstWishlist = Wishlist.builder()
+				.id(firstWishlistId)
+				.name("첫 번째 위시리스트")
+				.member(member)
+				.build();
+
+			// 두 번째 위시리스트에 추가
+			Long secondWishlistId = 2L;
+			Wishlist secondWishlist = Wishlist.builder()
+				.id(secondWishlistId)
+				.name("두 번째 위시리스트")
+				.member(member)
+				.build();
+
+			// 첫 번째 위시리스트 추가
+			given(wishlistRepository.findById(firstWishlistId)).willReturn(Optional.of(firstWishlist));
+			given(accommodationRepository.findById(accommodationId)).willReturn(Optional.of(accommodation));
+			given(memberRepository.findById(currentMemberId)).willReturn(Optional.of(member));
+			given(wishlistAccommodationRepository.existsByWishlistIdAndAccommodationId(firstWishlistId, accommodationId))
+				.willReturn(false);
+
+			WishlistAccommodation firstSavedWishlistAccommodation = WishlistAccommodation.builder()
+				.id(10L)
+				.wishlist(firstWishlist)
+				.accommodation(accommodation)
+				.build();
+
+			given(wishlistAccommodationRepository.save(any(WishlistAccommodation.class)))
+				.willReturn(firstSavedWishlistAccommodation);
+
+			// When
+			WishlistResponse.CreateWishlistAccommodationResponse firstResponse =
+				wishlistService.createWishlistAccommodation(firstWishlistId, request, currentMemberId);
+
+			// 두 번째 위시리스트 추가
+			given(wishlistRepository.findById(secondWishlistId)).willReturn(Optional.of(secondWishlist));
+			given(wishlistAccommodationRepository.existsByWishlistIdAndAccommodationId(secondWishlistId, accommodationId))
+				.willReturn(false);
+
+			WishlistAccommodation secondSavedWishlistAccommodation = WishlistAccommodation.builder()
+				.id(20L)
+				.wishlist(secondWishlist)
+				.accommodation(accommodation)
+				.build();
+
+			given(wishlistAccommodationRepository.save(any(WishlistAccommodation.class)))
+				.willReturn(secondSavedWishlistAccommodation);
+
+			WishlistResponse.CreateWishlistAccommodationResponse secondResponse =
+				wishlistService.createWishlistAccommodation(secondWishlistId, request, currentMemberId);
+
+			// Then
+			assertThat(firstResponse.id()).isEqualTo(10L);
+			assertThat(secondResponse.id()).isEqualTo(20L);
+
+			verify(wishlistRepository).findById(firstWishlistId);
+			verify(wishlistRepository).findById(secondWishlistId);
+			verify(accommodationRepository, times(2)).findById(accommodationId);
+			verify(memberRepository, times(2)).findById(currentMemberId);
+			verify(wishlistAccommodationRepository).existsByWishlistIdAndAccommodationId(firstWishlistId, accommodationId);
+			verify(wishlistAccommodationRepository).existsByWishlistIdAndAccommodationId(secondWishlistId, accommodationId);
+			verify(wishlistAccommodationRepository, times(2)).save(any(WishlistAccommodation.class));
+		}
+
+		@Test
+		@DisplayName("여러 숙소를 같은 위시리스트에 순차적으로 추가할 수 있다")
+		void createWishlistAccommodation_MultipleAccommodationsToSameWishlist() {
+			// Given
+			Long wishlistId = 1L;
+			Long currentMemberId = 1L;
+			Long[] accommodationIds = {100L, 200L, 300L};
+
+			for (int i = 0; i < accommodationIds.length; i++) {
+				Long accommodationId = accommodationIds[i];
+				WishlistRequest.CreateWishlistAccommodationRequest request =
+					new WishlistRequest.CreateWishlistAccommodationRequest(accommodationId);
+
+				Accommodation accommodation = Accommodation.builder()
+					.id(accommodationId)
+					.name("숙소 " + (i + 1))
+					.build();
+
+				given(wishlistRepository.findById(wishlistId)).willReturn(Optional.of(wishlist));
+				given(accommodationRepository.findById(accommodationId)).willReturn(Optional.of(accommodation));
+				given(memberRepository.findById(currentMemberId)).willReturn(Optional.of(member));
+				given(wishlistAccommodationRepository.existsByWishlistIdAndAccommodationId(wishlistId, accommodationId))
+					.willReturn(false);
+
+				WishlistAccommodation savedWishlistAccommodation = WishlistAccommodation.builder()
+					.id((long) (i + 10))
+					.wishlist(wishlist)
+					.accommodation(accommodation)
+					.build();
+
+				given(wishlistAccommodationRepository.save(any(WishlistAccommodation.class)))
+					.willReturn(savedWishlistAccommodation);
+
+				// When
+				WishlistResponse.CreateWishlistAccommodationResponse response =
+					wishlistService.createWishlistAccommodation(wishlistId, request, currentMemberId);
+
+				// Then
+				assertThat(response.id()).isEqualTo(i + 10);
+			}
+
+			verify(wishlistRepository, times(3)).findById(wishlistId);
+			verify(accommodationRepository).findById(100L);
+			verify(accommodationRepository).findById(200L);
+			verify(accommodationRepository).findById(300L);
+			verify(memberRepository, times(3)).findById(currentMemberId);
+			verify(wishlistAccommodationRepository, times(3)).save(any(WishlistAccommodation.class));
+		}
+
+		@Test
+		@DisplayName("위시리스트 항목 저장 시 올바른 데이터로 생성된다")
+		void createWishlistAccommodation_CorrectDataSaved() {
+			// Given
+			Long wishlistId = 1L;
+			Long accommodationId = 100L;
+			Long currentMemberId = 1L;
+			WishlistRequest.CreateWishlistAccommodationRequest request =
+				new WishlistRequest.CreateWishlistAccommodationRequest(accommodationId);
+
+			given(wishlistRepository.findById(wishlistId)).willReturn(Optional.of(wishlist));
+			given(accommodationRepository.findById(accommodationId)).willReturn(Optional.of(accommodation));
+			given(memberRepository.findById(currentMemberId)).willReturn(Optional.of(member));
+			given(wishlistAccommodationRepository.existsByWishlistIdAndAccommodationId(wishlistId, accommodationId))
+				.willReturn(false);
+
+			WishlistAccommodation savedWishlistAccommodation = WishlistAccommodation.builder()
+				.id(10L)
+				.wishlist(wishlist)
+				.accommodation(accommodation)
+				.build();
+
+			given(wishlistAccommodationRepository.save(any(WishlistAccommodation.class)))
+				.willReturn(savedWishlistAccommodation);
+
+			// When
+			wishlistService.createWishlistAccommodation(wishlistId, request, currentMemberId);
+
+			// Then - ArgumentCaptor를 사용하여 저장된 데이터 검증
+			ArgumentCaptor<WishlistAccommodation> captor = ArgumentCaptor.forClass(WishlistAccommodation.class);
+			verify(wishlistAccommodationRepository).save(captor.capture());
+
+			WishlistAccommodation capturedWishlistAccommodation = captor.getValue();
+			assertThat(capturedWishlistAccommodation.getWishlist()).isEqualTo(wishlist);
+			assertThat(capturedWishlistAccommodation.getAccommodation()).isEqualTo(accommodation);
+			assertThat(capturedWishlistAccommodation.getMemo()).isNull(); // 기본값은 null
+		}
 	}
 }
