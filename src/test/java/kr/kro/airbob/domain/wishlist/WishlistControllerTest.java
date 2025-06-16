@@ -33,6 +33,7 @@ import kr.kro.airbob.cursor.resolver.CursorParamArgumentResolver;
 import kr.kro.airbob.cursor.util.CursorDecoder;
 import kr.kro.airbob.cursor.util.CursorEncoder;
 import kr.kro.airbob.cursor.util.CursorPageInfoCreator;
+import kr.kro.airbob.domain.accommodation.exception.AccommodationNotFoundException;
 import kr.kro.airbob.domain.common.BaseControllerDocumentationTest;
 import kr.kro.airbob.domain.wishlist.api.WishlistController;
 import kr.kro.airbob.domain.wishlist.dto.WishlistRequest;
@@ -813,6 +814,343 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 							.type(JsonFieldType.NUMBER)
 							.description("현재 페이지의 아이템 수")
 					)));
+		}
+	}
+
+	@Nested
+	@DisplayName("위시리스트 숙소 추가:")
+	class CreateWishlistAccommodationTests {
+
+		@Test
+		@DisplayName("시나리오: 사용자가 위시리스트에 숙소를 성공적으로 추가한다")
+		void 사용자가_위시리스트에_숙소를_성공적으로_추가한다() throws Exception {
+			// Given: 존재하는 위시리스트와 숙소로 위시리스트 항목을 추가하는 상황
+			Long wishlistId = 1L;
+			Long accommodationId = 100L;
+			WishlistRequest.CreateWishlistAccommodationRequest request =
+				new WishlistRequest.CreateWishlistAccommodationRequest(accommodationId);
+			WishlistResponse.CreateWishlistAccommodationResponse expectedResponse =
+				new WishlistResponse.CreateWishlistAccommodationResponse(1L);
+
+			when(wishlistService.createWishlistAccommodation(eq(wishlistId), any(WishlistRequest.CreateWishlistAccommodationRequest.class), eq(1L)))
+				.thenReturn(expectedResponse);
+
+			// When: 사용자가 위시리스트에 숙소 추가 API를 호출한다
+			mockMvc.perform(post("/api/members/wishlists/{wishlistId}/accommodations", wishlistId)
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(objectMapper.writeValueAsString(request)))
+
+				// Then: 숙소가 성공적으로 위시리스트에 추가된다
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.id").value(1L))
+
+				// document
+				.andDo(document("위시리스트-숙소추가-성공",
+					pathParameters(
+						parameterWithName("wishlistId")
+							.description("숙소를 추가할 위시리스트의 고유 식별자")
+					),
+					requestFields(
+						fieldWithPath("accommodationId")
+							.type(JsonFieldType.NUMBER)
+							.description("위시리스트에 추가할 숙소의 고유 식별자")
+					),
+					responseFields(
+						fieldWithPath("id")
+							.type(JsonFieldType.NUMBER)
+							.description("생성된 위시리스트 항목의 고유 식별자")
+					)));
+
+			verify(wishlistService).createWishlistAccommodation(eq(wishlistId), any(WishlistRequest.CreateWishlistAccommodationRequest.class), eq(1L));
+		}
+
+		@Test
+		@DisplayName("시나리오: 존재하지 않는 위시리스트에 숙소 추가를 시도한다")
+		void 존재하지_않는_위시리스트에_숙소_추가를_시도한다() throws Exception {
+			// Given: 존재하지 않는 위시리스트 ID로 숙소를 추가하려는 상황
+			Long nonExistentWishlistId = 999L;
+			Long accommodationId = 100L;
+			WishlistRequest.CreateWishlistAccommodationRequest request =
+				new WishlistRequest.CreateWishlistAccommodationRequest(accommodationId);
+
+			when(wishlistService.createWishlistAccommodation(eq(nonExistentWishlistId), any(WishlistRequest.CreateWishlistAccommodationRequest.class), eq(1L)))
+				.thenThrow(new WishlistNotFoundException());
+
+			// When: 존재하지 않는 위시리스트에 숙소 추가를 시도한다
+			mockMvc.perform(post("/api/members/wishlists/{wishlistId}/accommodations", nonExistentWishlistId)
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(objectMapper.writeValueAsString(request)))
+
+				// Then: 404 Not Found 오류가 발생한다
+				.andExpect(status().isNotFound())
+
+				// document
+				.andDo(document("위시리스트-숙소추가-위시리스트없음-실패",
+					pathParameters(
+						parameterWithName("wishlistId")
+							.description("존재하지 않는 위시리스트 ID")
+					),
+					requestFields(
+						fieldWithPath("accommodationId")
+							.type(JsonFieldType.NUMBER)
+							.description("추가하려는 숙소 ID")
+					)));
+
+			verify(wishlistService).createWishlistAccommodation(eq(nonExistentWishlistId), any(WishlistRequest.CreateWishlistAccommodationRequest.class), eq(1L));
+		}
+
+		@Test
+		@DisplayName("시나리오: 존재하지 않는 숙소를 위시리스트에 추가하려 시도한다")
+		void 존재하지_않는_숙소를_위시리스트에_추가하려_시도한다() throws Exception {
+			// Given: 유효한 위시리스트에 존재하지 않는 숙소를 추가하려는 상황
+			Long wishlistId = 1L;
+			Long nonExistentAccommodationId = 999L;
+			WishlistRequest.CreateWishlistAccommodationRequest request =
+				new WishlistRequest.CreateWishlistAccommodationRequest(nonExistentAccommodationId);
+
+			when(wishlistService.createWishlistAccommodation(eq(wishlistId), any(WishlistRequest.CreateWishlistAccommodationRequest.class), eq(1L)))
+				.thenThrow(new AccommodationNotFoundException());
+
+			// When: 존재하지 않는 숙소를 위시리스트에 추가를 시도한다
+			mockMvc.perform(post("/api/members/wishlists/{wishlistId}/accommodations", wishlistId)
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(objectMapper.writeValueAsString(request)))
+
+				// Then: 404 Not Found 오류가 발생한다
+				.andExpect(status().isNotFound())
+
+				// document
+				.andDo(document("위시리스트-숙소추가-숙소없음-실패",
+					pathParameters(
+						parameterWithName("wishlistId")
+							.description("위시리스트 ID")
+					),
+					requestFields(
+						fieldWithPath("accommodationId")
+							.type(JsonFieldType.NUMBER)
+							.description("존재하지 않는 숙소 ID")
+					)));
+
+			verify(wishlistService).createWishlistAccommodation(eq(wishlistId), any(WishlistRequest.CreateWishlistAccommodationRequest.class), eq(1L));
+		}
+
+		@Test
+		@DisplayName("시나리오: 다른 사용자의 위시리스트에 숙소 추가를 시도한다")
+		void 다른_사용자의_위시리스트에_숙소_추가를_시도한다() throws Exception {
+			// Given: 다른 사용자 소유의 위시리스트에 숙소를 추가하려는 상황
+			Long otherUserWishlistId = 1L;
+			Long accommodationId = 100L;
+			WishlistRequest.CreateWishlistAccommodationRequest request =
+				new WishlistRequest.CreateWishlistAccommodationRequest(accommodationId);
+
+			when(wishlistService.createWishlistAccommodation(eq(otherUserWishlistId), any(WishlistRequest.CreateWishlistAccommodationRequest.class), eq(1L)))
+				.thenThrow(new WishlistAccessDeniedException());
+
+			// When: 다른 사용자의 위시리스트에 숙소 추가를 시도한다
+			mockMvc.perform(post("/api/members/wishlists/{wishlistId}/accommodations", otherUserWishlistId)
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(objectMapper.writeValueAsString(request)))
+
+				// Then: 403 Forbidden 오류가 발생한다
+				.andExpect(status().isForbidden())
+
+				// document
+				.andDo(document("위시리스트-숙소추가-권한없음-실패",
+					pathParameters(
+						parameterWithName("wishlistId")
+							.description("다른 사용자 소유의 위시리스트 ID")
+					),
+					requestFields(
+						fieldWithPath("accommodationId")
+							.type(JsonFieldType.NUMBER)
+							.description("추가하려는 숙소 ID")
+					)));
+
+			verify(wishlistService).createWishlistAccommodation(eq(otherUserWishlistId), any(WishlistRequest.CreateWishlistAccommodationRequest.class), eq(1L));
+		}
+
+		@Test
+		@DisplayName("시나리오: 이미 위시리스트에 추가된 숙소를 중복으로 추가하려 시도한다")
+		void 이미_위시리스트에_추가된_숙소를_중복으로_추가하려_시도한다() throws Exception {
+			// Given: 이미 위시리스트에 있는 숙소를 다시 추가하려는 상황
+			Long wishlistId = 1L;
+			Long duplicateAccommodationId = 100L;
+			WishlistRequest.CreateWishlistAccommodationRequest request =
+				new WishlistRequest.CreateWishlistAccommodationRequest(duplicateAccommodationId);
+
+			when(wishlistService.createWishlistAccommodation(eq(wishlistId), any(WishlistRequest.CreateWishlistAccommodationRequest.class), eq(1L)))
+				.thenThrow(new WishlistAccessDeniedException()); // 중복 체크에서 WishlistAccessDeniedException이 발생
+
+			// When: 중복된 숙소를 위시리스트에 추가를 시도한다
+			mockMvc.perform(post("/api/members/wishlists/{wishlistId}/accommodations", wishlistId)
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(objectMapper.writeValueAsString(request)))
+
+				// Then: 403 Forbidden 오류가 발생한다
+				.andExpect(status().isForbidden())
+
+				// document
+				.andDo(document("위시리스트-숙소추가-중복-실패",
+					pathParameters(
+						parameterWithName("wishlistId")
+							.description("위시리스트 ID")
+					),
+					requestFields(
+						fieldWithPath("accommodationId")
+							.type(JsonFieldType.NUMBER)
+							.description("이미 위시리스트에 존재하는 숙소 ID")
+					)));
+
+			verify(wishlistService).createWishlistAccommodation(eq(wishlistId), any(WishlistRequest.CreateWishlistAccommodationRequest.class), eq(1L));
+		}
+
+		@ParameterizedTest(name = "{0}")
+		@MethodSource("invalidAccommodationIdProvider")
+		@DisplayName("시나리오: 잘못된 숙소 ID로 위시리스트에 추가를 시도한다")
+		void 잘못된_숙소_ID로_위시리스트에_추가를_시도한다(
+			String testName,
+			Long invalidAccommodationId,
+			JsonFieldType fieldType,
+			String description,
+			String documentId
+		) throws Exception {
+			// Given: 잘못된 숙소 ID로 위시리스트에 추가하려는 상황
+			Long wishlistId = 1L;
+			WishlistRequest.CreateWishlistAccommodationRequest invalidRequest =
+				new WishlistRequest.CreateWishlistAccommodationRequest(invalidAccommodationId);
+
+			// When: 잘못된 숙소 ID로 위시리스트에 추가를 시도한다
+			mockMvc.perform(post("/api/members/wishlists/{wishlistId}/accommodations", wishlistId)
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(objectMapper.writeValueAsString(invalidRequest)))
+
+				// Then: 400 Bad Request 오류가 발생한다
+				.andExpect(status().isBadRequest())
+
+				// document
+				.andDo(document(documentId,
+					pathParameters(
+						parameterWithName("wishlistId")
+							.description("위시리스트 ID")
+					),
+					requestFields(
+						fieldWithPath("accommodationId")
+							.type(fieldType)
+							.description(description)
+					)));
+		}
+
+		static Stream<Arguments> invalidAccommodationIdProvider() {
+			return Stream.of(
+				Arguments.of(
+					"음수 숙소 ID로 추가",
+					-1L,
+					JsonFieldType.NUMBER,
+					"음수 숙소 ID (유효하지 않은 입력)",
+					"위시리스트-숙소추가-음수ID-실패"
+				),
+				Arguments.of(
+					"0인 숙소 ID로 추가",
+					0L,
+					JsonFieldType.NUMBER,
+					"0인 숙소 ID (유효하지 않은 입력)",
+					"위시리스트-숙소추가-0ID-실패"
+				),
+				Arguments.of(
+					"null 숙소 ID로 추가",
+					null,
+					JsonFieldType.NULL,
+					"NULL 숙소 ID (유효하지 않은 입력)",
+					"위시리스트-숙소추가-nullID-실패"
+				)
+			);
+		}
+
+		@Test
+		@DisplayName("시나리오: 여러 개의 서로 다른 숙소를 연속으로 위시리스트에 추가한다")
+		void 여러_개의_서로_다른_숙소를_연속으로_위시리스트에_추가한다() throws Exception {
+			// Given: 여러 개의 서로 다른 숙소 ID들
+			Long wishlistId = 1L;
+			Long[] accommodationIds = {100L, 200L, 300L, 400L, 500L};
+
+			for (int i = 0; i < accommodationIds.length; i++) {
+				WishlistRequest.CreateWishlistAccommodationRequest request =
+					new WishlistRequest.CreateWishlistAccommodationRequest(accommodationIds[i]);
+				WishlistResponse.CreateWishlistAccommodationResponse expectedResponse =
+					new WishlistResponse.CreateWishlistAccommodationResponse((long)(i + 1));
+
+				when(wishlistService.createWishlistAccommodation(eq(wishlistId), any(WishlistRequest.CreateWishlistAccommodationRequest.class), eq(1L)))
+					.thenReturn(expectedResponse);
+
+				// When: 각각의 숙소를 위시리스트에 추가한다
+				mockMvc.perform(post("/api/members/wishlists/{wishlistId}/accommodations", wishlistId)
+						.contentType(MediaType.APPLICATION_JSON)
+						.content(objectMapper.writeValueAsString(request)))
+
+					// Then: 모든 숙소가 성공적으로 추가된다
+					.andExpect(status().isOk())
+					.andExpect(jsonPath("$.id").value(i + 1))
+
+					// document
+					.andDo(document("위시리스트-숙소추가-연속생성-" + (i + 1),
+						pathParameters(
+							parameterWithName("wishlistId")
+								.description("위시리스트 ID")
+						),
+						requestFields(
+							fieldWithPath("accommodationId")
+								.type(JsonFieldType.NUMBER)
+								.description("숙소 ID: " + accommodationIds[i])
+						),
+						responseFields(
+							fieldWithPath("id")
+								.type(JsonFieldType.NUMBER)
+								.description("생성된 위시리스트 항목 ID")
+						)));
+			}
+		}
+
+		@Test
+		@DisplayName("시나리오: 숙소 ID가 매우 큰 값일 때 위시리스트에 추가한다")
+		void 숙소_ID가_매우_큰_값일_때_위시리스트에_추가한다() throws Exception {
+			// Given: 매우 큰 숙소 ID로 위시리스트에 추가하는 상황
+			Long wishlistId = 1L;
+			Long largeAccommodationId = Long.MAX_VALUE;
+			WishlistRequest.CreateWishlistAccommodationRequest request =
+				new WishlistRequest.CreateWishlistAccommodationRequest(largeAccommodationId);
+			WishlistResponse.CreateWishlistAccommodationResponse expectedResponse =
+				new WishlistResponse.CreateWishlistAccommodationResponse(1L);
+
+			when(wishlistService.createWishlistAccommodation(eq(wishlistId), any(WishlistRequest.CreateWishlistAccommodationRequest.class), eq(1L)))
+				.thenReturn(expectedResponse);
+
+			// When: 매우 큰 숙소 ID로 위시리스트에 추가를 시도한다
+			mockMvc.perform(post("/api/members/wishlists/{wishlistId}/accommodations", wishlistId)
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(objectMapper.writeValueAsString(request)))
+
+				// Then: 요청이 성공적으로 처리된다
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.id").value(1L))
+
+				// document
+				.andDo(document("위시리스트-숙소추가-최대값ID-성공",
+					pathParameters(
+						parameterWithName("wishlistId")
+							.description("위시리스트 ID")
+					),
+					requestFields(
+						fieldWithPath("accommodationId")
+							.type(JsonFieldType.NUMBER)
+							.description("매우 큰 숙소 ID (Long.MAX_VALUE)")
+					),
+					responseFields(
+						fieldWithPath("id")
+							.type(JsonFieldType.NUMBER)
+							.description("생성된 위시리스트 항목 ID")
+					)));
+
+			verify(wishlistService).createWishlistAccommodation(eq(wishlistId), any(WishlistRequest.CreateWishlistAccommodationRequest.class), eq(1L));
 		}
 	}
 }
