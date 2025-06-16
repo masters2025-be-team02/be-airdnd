@@ -32,7 +32,7 @@ public enum AccommodationType {
 
 	public static boolean isValid(String name) {
 		try {
-			AccommodationType.valueOf(name);
+			AccommodationType.valueOf(name.toUpperCase().trim());
 			return true;
 		} catch (IllegalArgumentException e) {
 			return false;

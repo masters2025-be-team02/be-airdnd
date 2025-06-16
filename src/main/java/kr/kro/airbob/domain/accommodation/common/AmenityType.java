@@ -47,7 +47,7 @@ public enum AmenityType {
     public static boolean isValid(String name) {
         if (name == null) return false;
         try {
-            AmenityType.valueOf(name.toUpperCase());
+            AmenityType.valueOf(name.toUpperCase().trim());
             return true;
         } catch (IllegalArgumentException e) {
             return false;
