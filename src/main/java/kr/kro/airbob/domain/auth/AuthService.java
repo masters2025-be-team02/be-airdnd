@@ -1,6 +1,7 @@
 package kr.kro.airbob.domain.auth;
 
 import java.time.Duration;
+import java.util.Optional;
 import java.util.UUID;
 import kr.kro.airbob.domain.auth.exception.InvalidPasswordException;
 import kr.kro.airbob.domain.member.Member;
@@ -17,6 +18,7 @@ public class AuthService {
 
     private final MemberRepository memberRepository;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final SessionRedisRepository sessionRedisRepository;
 
     public String login(String email, String password) {
         Member member = memberRepository.findByEmail(email)
@@ -27,16 +29,16 @@ public class AuthService {
         }
 
         String sessionId = UUID.randomUUID().toString();
-        redisTemplate.opsForValue().set("SESSION:" + sessionId, member.getId(), Duration.ofHours(1)); // TTL 설정
+        sessionRedisRepository.saveSession(sessionId, member.getId());
 
         return sessionId;
     }
 
     public void logout(String sessionId) {
-        redisTemplate.delete("SESSION:" + sessionId);
+        sessionRedisRepository.deleteSession(sessionId);
     }
 
-    public Long getMemberIdFromSession(String sessionId) {
-        return (Long) redisTemplate.opsForValue().get("SESSION:" + sessionId);
+    public Optional<Long> getMemberIdFromSession(String sessionId) {
+        return sessionRedisRepository.getMemberIdBySession(sessionId);
     }
 }
