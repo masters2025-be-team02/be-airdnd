@@ -8,6 +8,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import kr.kro.airbob.common.domain.BaseEntity;
 import kr.kro.airbob.domain.member.common.MemberRole;
+import kr.kro.airbob.domain.member.dto.MemberRequestDto.SignupMemberRequestDto;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -34,4 +35,14 @@ public class Member extends BaseEntity {
 	private MemberRole role;
 
 	private String thumbnailImageUrl;
+
+	public static Member createMember(SignupMemberRequestDto request, String hashedPassword) {
+		return Member.builder()
+				.nickname(request.getNickname())
+				.email(request.getEmail())
+				.password(hashedPassword)
+				.thumbnailImageUrl(request.getThumbnailImageUrl())
+				.role(MemberRole.MEMBER)
+				.build();
+	}
 }
