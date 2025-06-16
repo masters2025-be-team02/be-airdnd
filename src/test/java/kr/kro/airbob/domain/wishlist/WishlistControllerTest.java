@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -29,11 +30,14 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import kr.kro.airbob.cursor.dto.CursorRequest;
 import kr.kro.airbob.cursor.dto.CursorResponse;
+import kr.kro.airbob.cursor.exception.CursorEncodingException;
 import kr.kro.airbob.cursor.exception.CursorPageSizeException;
 import kr.kro.airbob.cursor.resolver.CursorParamArgumentResolver;
 import kr.kro.airbob.cursor.util.CursorDecoder;
 import kr.kro.airbob.cursor.util.CursorEncoder;
 import kr.kro.airbob.cursor.util.CursorPageInfoCreator;
+import kr.kro.airbob.domain.accommodation.common.AmenityType;
+import kr.kro.airbob.domain.accommodation.dto.AccommodationResponse;
 import kr.kro.airbob.domain.accommodation.exception.AccommodationNotFoundException;
 import kr.kro.airbob.domain.common.BaseControllerDocumentationTest;
 import kr.kro.airbob.domain.wishlist.api.WishlistController;
@@ -1939,6 +1943,928 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 						parameterWithName("wishlistAccommodationId")
 							.description("잘못된 위시리스트 항목 ID: " + invalidId)
 					)));
+		}
+	}
+
+	@Nested
+	@DisplayName("위시리스트 숙소 목록 조회:")
+	class FindWishlistAccommodationsTests {
+
+		@Test
+		@DisplayName("시나리오: 사용자가 위시리스트의 숙소 목록을 성공적으로 조회한다")
+		void 사용자가_위시리스트의_숙소_목록을_성공적으로_조회한다() throws Exception {
+			// Given: 위시리스트에 여러 숙소가 포함된 상황
+			Long wishlistId = 1L;
+
+			List<AccommodationResponse.AmenityInfoResponse> amenities1 = List.of(
+				new AccommodationResponse.AmenityInfoResponse(AmenityType.WIFI, 1),
+				new AccommodationResponse.AmenityInfoResponse(AmenityType.TV, 1)
+			);
+
+			List<AccommodationResponse.AmenityInfoResponse> amenities2 = List.of(
+				new AccommodationResponse.AmenityInfoResponse(AmenityType.PARKING, 1),
+				new AccommodationResponse.AmenityInfoResponse(AmenityType.KITCHEN, 1)
+			);
+
+			List<WishlistResponse.WishlistAccommodationInfo> accommodations = List.of(
+				new WishlistResponse.WishlistAccommodationInfo(
+					10L,
+					"신라호텔 관련 메모",
+					new AccommodationResponse.WishlistAccommodationInfo(
+						100L,
+						"신라호텔",
+						List.of("hotel1_image1.jpg", "hotel1_image2.jpg"),
+						amenities1,
+						4.5
+					)
+				),
+				new WishlistResponse.WishlistAccommodationInfo(
+					20L,
+					"롯데호텔 관련 메모",
+					new AccommodationResponse.WishlistAccommodationInfo(
+						200L,
+						"롯데호텔",
+						List.of("hotel2_image1.jpg"),
+						amenities2,
+						4.3
+					)
+				),
+				new WishlistResponse.WishlistAccommodationInfo(
+					30L,
+					"게스트하우스 메모",
+					new AccommodationResponse.WishlistAccommodationInfo(
+						300L,
+						"게스트하우스",
+						List.of(),
+						List.of(),
+						null
+					)
+				)
+			);
+
+			CursorResponse.PageInfo pageInfo = CursorResponse.PageInfo.builder()
+				.hasNext(false)
+				.nextCursor(null)
+				.currentSize(3)
+				.build();
+
+			WishlistResponse.WishlistAccommodationInfos expectedResponse =
+				new WishlistResponse.WishlistAccommodationInfos(accommodations, pageInfo);
+
+			when(wishlistService.findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L)))
+				.thenReturn(expectedResponse);
+
+			// When: 사용자가 위시리스트 숙소 목록 조회 API를 호출한다
+			mockMvc.perform(get("/api/members/wishlists/{wishlistId}/accommodations", wishlistId)
+					.param("size", "20"))
+
+				// Then: 위시리스트 숙소 목록이 성공적으로 반환된다
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.wishlistAccommodations").isArray())
+				.andExpect(jsonPath("$.wishlistAccommodations.length()").value(3))
+				.andExpect(jsonPath("$.wishlistAccommodations[0].id").value(10L))
+				.andExpect(jsonPath("$.wishlistAccommodations[0].name").value("신라호텔 관련 메모"))
+				.andExpect(jsonPath("$.wishlistAccommodations[0].accommodationInfo.accommodationId").value(100L))
+				.andExpect(jsonPath("$.wishlistAccommodations[0].accommodationInfo.name").value("신라호텔"))
+				.andExpect(jsonPath("$.wishlistAccommodations[0].accommodationInfo.accommodationImageUrls").isArray())
+				.andExpect(jsonPath("$.wishlistAccommodations[0].accommodationInfo.accommodationImageUrls.length()").value(2))
+				.andExpect(jsonPath("$.wishlistAccommodations[0].accommodationInfo.amenities").isArray())
+				.andExpect(jsonPath("$.wishlistAccommodations[0].accommodationInfo.amenities.length()").value(2))
+				.andExpect(jsonPath("$.wishlistAccommodations[0].accommodationInfo.averageRating").value(4.5))
+				.andExpect(jsonPath("$.wishlistAccommodations[2].accommodationInfo.accommodationImageUrls").isEmpty())
+				.andExpect(jsonPath("$.wishlistAccommodations[2].accommodationInfo.amenities").isEmpty())
+				.andExpect(jsonPath("$.wishlistAccommodations[2].accommodationInfo.averageRating").isEmpty())
+				.andExpect(jsonPath("$.pageInfo.hasNext").value(false))
+				.andExpect(jsonPath("$.pageInfo.currentSize").value(3))
+
+				// document
+				.andDo(document("위시리스트-숙소목록조회-성공",
+					pathParameters(
+						parameterWithName("wishlistId")
+							.description("조회할 위시리스트의 고유 식별자")
+					),
+					queryParameters(
+						parameterWithName("size")
+							.description("페이지 크기 (기본값: 20, 최대: 50)")
+							.optional(),
+						parameterWithName("cursor")
+							.description("다음 페이지를 위한 커서 (첫 페이지에서는 생략)")
+							.optional()
+					),
+					responseFields(
+						fieldWithPath("wishlistAccommodations[]")
+							.type(JsonFieldType.ARRAY)
+							.description("위시리스트 숙소 목록"),
+						fieldWithPath("wishlistAccommodations[].id")
+							.type(JsonFieldType.NUMBER)
+							.description("위시리스트 항목 고유 식별자"),
+						fieldWithPath("wishlistAccommodations[].name")
+							.type(JsonFieldType.STRING)
+							.description("위시리스트 항목 메모"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo")
+							.type(JsonFieldType.OBJECT)
+							.description("숙소 상세 정보"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo.accommodationId")
+							.type(JsonFieldType.NUMBER)
+							.description("숙소 고유 식별자"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo.name")
+							.type(JsonFieldType.STRING)
+							.description("숙소 이름"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo.accommodationImageUrls[]")
+							.type(JsonFieldType.ARRAY)
+							.description("숙소 이미지 URL 목록"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo.amenities[]")
+							.type(JsonFieldType.ARRAY)
+							.description("숙소 편의시설 목록"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo.amenities[].type")
+							.type(JsonFieldType.STRING)
+							.description("편의시설 타입"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo.amenities[].count")
+							.type(JsonFieldType.NUMBER)
+							.description("편의시설 개수"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo.averageRating")
+							.type(JsonFieldType.NUMBER)
+							.description("숙소 평균 평점 (없을 경우 null)")
+							.optional(),
+						fieldWithPath("pageInfo")
+							.type(JsonFieldType.OBJECT)
+							.description("페이징 정보"),
+						fieldWithPath("pageInfo.hasNext")
+							.type(JsonFieldType.BOOLEAN)
+							.description("다음 페이지 존재 여부"),
+						fieldWithPath("pageInfo.nextCursor")
+							.type(JsonFieldType.STRING)
+							.description("다음 페이지 커서 (없을 경우 null)")
+							.optional(),
+						fieldWithPath("pageInfo.currentSize")
+							.type(JsonFieldType.NUMBER)
+							.description("현재 페이지 항목 수")
+					)));
+
+			verify(wishlistService).findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L));
+		}
+
+		@Test
+		@DisplayName("시나리오: 빈 위시리스트의 숙소 목록을 조회한다")
+		void 빈_위시리스트의_숙소_목록을_조회한다() throws Exception {
+			// Given: 숙소가 없는 위시리스트를 조회하는 상황
+			Long emptyWishlistId = 1L;
+
+			CursorResponse.PageInfo pageInfo = CursorResponse.PageInfo.builder()
+				.hasNext(false)
+				.nextCursor(null)
+				.currentSize(0)
+				.build();
+
+			WishlistResponse.WishlistAccommodationInfos expectedResponse =
+				new WishlistResponse.WishlistAccommodationInfos(List.of(), pageInfo);
+
+			when(wishlistService.findWishlistAccommodations(eq(emptyWishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L)))
+				.thenReturn(expectedResponse);
+
+			// When: 빈 위시리스트의 숙소 목록을 조회한다
+			mockMvc.perform(get("/api/members/wishlists/{wishlistId}/accommodations", emptyWishlistId)
+					.param("size", "20"))
+
+				// Then: 빈 목록이 반환된다
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.wishlistAccommodations").isArray())
+				.andExpect(jsonPath("$.wishlistAccommodations.length()").value(0))
+				.andExpect(jsonPath("$.pageInfo.hasNext").value(false))
+				.andExpect(jsonPath("$.pageInfo.currentSize").value(0))
+
+				// document
+				.andDo(document("위시리스트-숙소목록조회-빈목록",
+					pathParameters(
+						parameterWithName("wishlistId")
+							.description("빈 위시리스트의 고유 식별자")
+					),
+					queryParameters(
+						parameterWithName("size")
+							.description("페이지 크기")
+							.optional()
+					),
+					responseFields(
+						fieldWithPath("wishlistAccommodations[]")
+							.type(JsonFieldType.ARRAY)
+							.description("빈 위시리스트 숙소 목록"),
+						fieldWithPath("pageInfo")
+							.type(JsonFieldType.OBJECT)
+							.description("페이징 정보"),
+						fieldWithPath("pageInfo.hasNext")
+							.type(JsonFieldType.BOOLEAN)
+							.description("다음 페이지 존재 여부"),
+						fieldWithPath("pageInfo.nextCursor")
+							.type(JsonFieldType.STRING)
+							.description("다음 페이지 커서")
+							.optional(),
+						fieldWithPath("pageInfo.currentSize")
+							.type(JsonFieldType.NUMBER)
+							.description("현재 페이지 항목 수")
+					)));
+
+			verify(wishlistService).findWishlistAccommodations(eq(emptyWishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L));
+		}
+
+		@Test
+		@DisplayName("시나리오: 존재하지 않는 위시리스트의 숙소 목록 조회를 시도한다")
+		void 존재하지_않는_위시리스트의_숙소_목록_조회를_시도한다() throws Exception {
+			// Given: 존재하지 않는 위시리스트 ID로 조회하려는 상황
+			Long nonExistentWishlistId = 999L;
+
+			when(wishlistService.findWishlistAccommodations(eq(nonExistentWishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L)))
+				.thenThrow(new WishlistNotFoundException());
+
+			// When: 존재하지 않는 위시리스트의 숙소 목록 조회를 시도한다
+			mockMvc.perform(get("/api/members/wishlists/{wishlistId}/accommodations", nonExistentWishlistId)
+					.param("size", "20"))
+
+				// Then: 404 Not Found 오류가 발생한다
+				.andExpect(status().isNotFound())
+
+				// document
+				.andDo(document("위시리스트-숙소목록조회-위시리스트없음-실패",
+					pathParameters(
+						parameterWithName("wishlistId")
+							.description("존재하지 않는 위시리스트 ID")
+					),
+					queryParameters(
+						parameterWithName("size")
+							.description("페이지 크기")
+							.optional()
+					)));
+
+			verify(wishlistService).findWishlistAccommodations(eq(nonExistentWishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L));
+		}
+
+		@Test
+		@DisplayName("시나리오: 다른 사용자의 위시리스트 숙소 목록 조회를 시도한다")
+		void 다른_사용자의_위시리스트_숙소_목록_조회를_시도한다() throws Exception {
+			// Given: 다른 사용자 소유의 위시리스트 조회를 시도하는 상황
+			Long otherUserWishlistId = 1L;
+
+			when(wishlistService.findWishlistAccommodations(eq(otherUserWishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L)))
+				.thenThrow(new WishlistAccessDeniedException());
+
+			// When: 다른 사용자의 위시리스트 숙소 목록 조회를 시도한다
+			mockMvc.perform(get("/api/members/wishlists/{wishlistId}/accommodations", otherUserWishlistId)
+					.param("size", "20"))
+
+				// Then: 403 Forbidden 오류가 발생한다
+				.andExpect(status().isForbidden())
+
+				// document
+				.andDo(document("위시리스트-숙소목록조회-권한없음-실패",
+					pathParameters(
+						parameterWithName("wishlistId")
+							.description("다른 사용자 소유의 위시리스트 ID")
+					),
+					queryParameters(
+						parameterWithName("size")
+							.description("페이지 크기")
+							.optional()
+					)));
+
+			verify(wishlistService).findWishlistAccommodations(eq(otherUserWishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L));
+		}
+
+		@Test
+		@DisplayName("시나리오: 커서 기반 페이징으로 위시리스트 숙소 목록을 조회한다")
+		void 커서_기반_페이징으로_위시리스트_숙소_목록을_조회한다() throws Exception {
+			// Given: 커서를 이용한 페이징 조회 상황
+			Long wishlistId = 1L;
+			String cursor = "eyJsYXN0SWQiOjIwLCJsYXN0Q3JlYXRlZEF0IjoiMjAyNC0wMS0xNVQxMDozMDowMCJ9";
+
+			List<WishlistResponse.WishlistAccommodationInfo> accommodations = List.of(
+				new WishlistResponse.WishlistAccommodationInfo(
+					30L,
+					"세 번째 숙소 메모",
+					new AccommodationResponse.WishlistAccommodationInfo(
+						300L,
+						"세 번째 숙소",
+						List.of("image3.jpg"),
+						List.of(),
+						4.2
+					)
+				),
+				new WishlistResponse.WishlistAccommodationInfo(
+					40L,
+					"네 번째 숙소 메모",
+					new AccommodationResponse.WishlistAccommodationInfo(
+						400L,
+						"네 번째 숙소",
+						List.of("image4.jpg"),
+						List.of(),
+						4.7
+					)
+				)
+			);
+
+			CursorResponse.PageInfo pageInfo = CursorResponse.PageInfo.builder()
+				.hasNext(true)
+				.nextCursor("eyJsYXN0SWQiOjQwLCJsYXN0Q3JlYXRlZEF0IjoiMjAyNC0wMS0xNVQxMDo0NTowMCJ9")
+				.currentSize(2)
+				.build();
+
+			WishlistResponse.WishlistAccommodationInfos expectedResponse =
+				new WishlistResponse.WishlistAccommodationInfos(accommodations, pageInfo);
+
+			when(wishlistService.findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L)))
+				.thenReturn(expectedResponse);
+
+			// When: 커서를 포함한 페이징 조회를 수행한다
+			mockMvc.perform(get("/api/members/wishlists/{wishlistId}/accommodations", wishlistId)
+					.param("size", "2")
+					.param("cursor", cursor))
+
+				// Then: 페이징된 결과가 반환된다
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.wishlistAccommodations").isArray())
+				.andExpect(jsonPath("$.wishlistAccommodations.length()").value(2))
+				.andExpect(jsonPath("$.wishlistAccommodations[0].id").value(30L))
+				.andExpect(jsonPath("$.wishlistAccommodations[1].id").value(40L))
+				.andExpect(jsonPath("$.pageInfo.hasNext").value(true))
+				.andExpect(jsonPath("$.pageInfo.nextCursor").value("eyJsYXN0SWQiOjQwLCJsYXN0Q3JlYXRlZEF0IjoiMjAyNC0wMS0xNVQxMDo0NTowMCJ9"))
+				.andExpect(jsonPath("$.pageInfo.currentSize").value(2))
+
+				// document
+				.andDo(document("위시리스트-숙소목록조회-페이징",
+					pathParameters(
+						parameterWithName("wishlistId")
+							.description("위시리스트 고유 식별자")
+					),
+					queryParameters(
+						parameterWithName("size")
+							.description("페이지 크기"),
+						parameterWithName("cursor")
+							.description("페이징을 위한 커서")
+					),
+					responseFields(
+						fieldWithPath("wishlistAccommodations[]")
+							.type(JsonFieldType.ARRAY)
+							.description("위시리스트 숙소 목록"),
+						fieldWithPath("wishlistAccommodations[].id")
+							.type(JsonFieldType.NUMBER)
+							.description("위시리스트 항목 ID"),
+						fieldWithPath("wishlistAccommodations[].name")
+							.type(JsonFieldType.STRING)
+							.description("위시리스트 항목 메모"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo")
+							.type(JsonFieldType.OBJECT)
+							.description("숙소 정보"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo.accommodationId")
+							.type(JsonFieldType.NUMBER)
+							.description("숙소 ID"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo.name")
+							.type(JsonFieldType.STRING)
+							.description("숙소 이름"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo.accommodationImageUrls[]")
+							.type(JsonFieldType.ARRAY)
+							.description("숙소 이미지 URL 목록"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo.amenities[]")
+							.type(JsonFieldType.ARRAY)
+							.description("편의시설 목록"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo.averageRating")
+							.type(JsonFieldType.NUMBER)
+							.description("평균 평점"),
+						fieldWithPath("pageInfo")
+							.type(JsonFieldType.OBJECT)
+							.description("페이징 정보"),
+						fieldWithPath("pageInfo.hasNext")
+							.type(JsonFieldType.BOOLEAN)
+							.description("다음 페이지 존재 여부"),
+						fieldWithPath("pageInfo.nextCursor")
+							.type(JsonFieldType.STRING)
+							.description("다음 페이지 커서"),
+						fieldWithPath("pageInfo.currentSize")
+							.type(JsonFieldType.NUMBER)
+							.description("현재 페이지 크기")
+					)));
+
+			verify(wishlistService).findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L));
+		}
+
+		@Test
+		@DisplayName("시나리오: 한 개의 숙소만 있는 위시리스트를 조회한다")
+		void 한_개의_숙소만_있는_위시리스트를_조회한다() throws Exception {
+			// Given: 한 개의 숙소만 포함된 위시리스트 조회 상황
+			Long wishlistId = 1L;
+
+			List<AccommodationResponse.AmenityInfoResponse> amenities = List.of(
+				new AccommodationResponse.AmenityInfoResponse(AmenityType.WIFI, 1),
+				new AccommodationResponse.AmenityInfoResponse(AmenityType.PARKING, 1),
+				new AccommodationResponse.AmenityInfoResponse(AmenityType.KITCHEN, 1)
+			);
+
+			List<WishlistResponse.WishlistAccommodationInfo> accommodations = List.of(
+				new WishlistResponse.WishlistAccommodationInfo(
+					10L,
+					"유일한 숙소에 대한 상세한 메모입니다. 정말 좋은 곳이에요!",
+					new AccommodationResponse.WishlistAccommodationInfo(
+						100L,
+						"프리미엄 호텔",
+						List.of("premium_hotel_1.jpg", "premium_hotel_2.jpg", "premium_hotel_3.jpg"),
+						amenities,
+						4.8
+					)
+				)
+			);
+
+			CursorResponse.PageInfo pageInfo = CursorResponse.PageInfo.builder()
+				.hasNext(false)
+				.nextCursor(null)
+				.currentSize(1)
+				.build();
+
+			WishlistResponse.WishlistAccommodationInfos expectedResponse =
+				new WishlistResponse.WishlistAccommodationInfos(accommodations, pageInfo);
+
+			when(wishlistService.findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L)))
+				.thenReturn(expectedResponse);
+
+			// When: 한 개의 숙소만 있는 위시리스트를 조회한다
+			mockMvc.perform(get("/api/members/wishlists/{wishlistId}/accommodations", wishlistId)
+					.param("size", "20"))
+
+				// Then: 한 개의 숙소 정보가 상세히 반환된다
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.wishlistAccommodations").isArray())
+				.andExpect(jsonPath("$.wishlistAccommodations.length()").value(1))
+				.andExpect(jsonPath("$.wishlistAccommodations[0].id").value(10L))
+				.andExpect(jsonPath("$.wishlistAccommodations[0].name").value("유일한 숙소에 대한 상세한 메모입니다. 정말 좋은 곳이에요!"))
+				.andExpect(jsonPath("$.wishlistAccommodations[0].accommodationInfo.accommodationId").value(100L))
+				.andExpect(jsonPath("$.wishlistAccommodations[0].accommodationInfo.name").value("프리미엄 호텔"))
+				.andExpect(jsonPath("$.wishlistAccommodations[0].accommodationInfo.accommodationImageUrls").isArray())
+				.andExpect(jsonPath("$.wishlistAccommodations[0].accommodationInfo.accommodationImageUrls.length()").value(3))
+				.andExpect(jsonPath("$.wishlistAccommodations[0].accommodationInfo.amenities").isArray())
+				.andExpect(jsonPath("$.wishlistAccommodations[0].accommodationInfo.amenities.length()").value(3))
+				.andExpect(jsonPath("$.wishlistAccommodations[0].accommodationInfo.averageRating").value(4.8))
+				.andExpect(jsonPath("$.pageInfo.hasNext").value(false))
+				.andExpect(jsonPath("$.pageInfo.currentSize").value(1))
+
+				// document
+				.andDo(document("위시리스트-숙소목록조회-단일숙소",
+					pathParameters(
+						parameterWithName("wishlistId")
+							.description("한 개의 숙소만 있는 위시리스트 ID")
+					),
+					queryParameters(
+						parameterWithName("size")
+							.description("페이지 크기")
+							.optional()
+					),
+					responseFields(
+						fieldWithPath("wishlistAccommodations[]")
+							.type(JsonFieldType.ARRAY)
+							.description("위시리스트 숙소 목록 (1개)"),
+						fieldWithPath("wishlistAccommodations[].id")
+							.type(JsonFieldType.NUMBER)
+							.description("위시리스트 항목 ID"),
+						fieldWithPath("wishlistAccommodations[].name")
+							.type(JsonFieldType.STRING)
+							.description("상세한 메모"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo")
+							.type(JsonFieldType.OBJECT)
+							.description("숙소 상세 정보"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo.accommodationId")
+							.type(JsonFieldType.NUMBER)
+							.description("숙소 ID"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo.name")
+							.type(JsonFieldType.STRING)
+							.description("숙소 이름"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo.accommodationImageUrls[]")
+							.type(JsonFieldType.ARRAY)
+							.description("다수의 숙소 이미지 URL"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo.amenities[]")
+							.type(JsonFieldType.ARRAY)
+							.description("다양한 편의시설"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo.amenities[].type")
+							.type(JsonFieldType.STRING)
+							.description("편의시설 타입"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo.amenities[].count")
+							.type(JsonFieldType.NUMBER)
+							.description("편의시설 개수"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo.averageRating")
+							.type(JsonFieldType.NUMBER)
+							.description("높은 평점"),
+						fieldWithPath("pageInfo")
+							.type(JsonFieldType.OBJECT)
+							.description("페이징 정보"),
+						fieldWithPath("pageInfo.hasNext")
+							.type(JsonFieldType.BOOLEAN)
+							.description("다음 페이지 존재 여부 (false)"),
+						fieldWithPath("pageInfo.nextCursor")
+							.type(JsonFieldType.STRING)
+							.description("다음 페이지 커서 (null)")
+							.optional(),
+						fieldWithPath("pageInfo.currentSize")
+							.type(JsonFieldType.NUMBER)
+							.description("현재 페이지 크기 (1)")
+					)));
+
+			verify(wishlistService).findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L));
+		}
+
+		@ParameterizedTest(name = "잘못된 위시리스트 ID: {0}")
+		@ValueSource(longs = {-1L, 0L})
+		@DisplayName("시나리오: 잘못된 위시리스트 ID로 숙소 목록 조회를 시도한다")
+		void 잘못된_위시리스트_ID로_숙소_목록_조회를_시도한다(Long invalidWishlistId) throws Exception {
+			// Given: 잘못된 위시리스트 ID로 조회하려는 상황
+			when(wishlistService.findWishlistAccommodations(eq(invalidWishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L)))
+				.thenThrow(new WishlistNotFoundException());
+
+			// When: 잘못된 위시리스트 ID로 조회를 시도한다
+			mockMvc.perform(get("/api/members/wishlists/{wishlistId}/accommodations", invalidWishlistId)
+					.param("size", "20"))
+
+				// Then: 404 Not Found 오류가 발생한다
+				.andExpect(status().isNotFound())
+
+				// document
+				.andDo(document("위시리스트-숙소목록조회-잘못된ID-" + Math.abs(invalidWishlistId),
+					pathParameters(
+						parameterWithName("wishlistId")
+							.description("잘못된 위시리스트 ID: " + invalidWishlistId)
+					),
+					queryParameters(
+						parameterWithName("size")
+							.description("페이지 크기")
+							.optional()
+					)));
+
+			verify(wishlistService).findWishlistAccommodations(eq(invalidWishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L));
+		}
+
+		@Test
+		@DisplayName("시나리오: 최대 페이지 크기로 위시리스트 숙소 목록을 조회한다")
+		void 최대_페이지_크기로_위시리스트_숙소_목록을_조회한다() throws Exception {
+			// Given: 최대 페이지 크기(50)로 조회하는 상황
+			Long wishlistId = 1L;
+			String maxSize = "50";
+
+			// 50개의 숙소 항목 생성
+			List<WishlistResponse.WishlistAccommodationInfo> accommodations = new ArrayList<>();
+			for (int i = 1; i <= 50; i++) {
+				accommodations.add(
+					new WishlistResponse.WishlistAccommodationInfo(
+						(long) i,
+						"숙소 " + i + " 메모",
+						new AccommodationResponse.WishlistAccommodationInfo(
+							(long) (i * 100),
+							"숙소 " + i,
+							List.of("image" + i + ".jpg"),
+							List.of(),
+							4.0 + (i % 10) * 0.1
+						)
+					)
+				);
+			}
+
+			CursorResponse.PageInfo pageInfo = CursorResponse.PageInfo.builder()
+				.hasNext(true)
+				.nextCursor("next_page_cursor")
+				.currentSize(50)
+				.build();
+
+			WishlistResponse.WishlistAccommodationInfos expectedResponse =
+				new WishlistResponse.WishlistAccommodationInfos(accommodations, pageInfo);
+
+			when(wishlistService.findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L)))
+				.thenReturn(expectedResponse);
+
+			// When: 최대 페이지 크기로 조회한다
+			mockMvc.perform(get("/api/members/wishlists/{wishlistId}/accommodations", wishlistId)
+					.param("size", maxSize))
+
+				// Then: 최대 50개의 항목이 반환된다
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.wishlistAccommodations").isArray())
+				.andExpect(jsonPath("$.wishlistAccommodations.length()").value(50))
+				.andExpect(jsonPath("$.wishlistAccommodations[0].id").value(1L))
+				.andExpect(jsonPath("$.wishlistAccommodations[49].id").value(50L))
+				.andExpect(jsonPath("$.pageInfo.hasNext").value(true))
+				.andExpect(jsonPath("$.pageInfo.currentSize").value(50))
+
+				// document
+				.andDo(document("위시리스트-숙소목록조회-최대크기",
+					pathParameters(
+						parameterWithName("wishlistId")
+							.description("위시리스트 ID")
+					),
+					queryParameters(
+						parameterWithName("size")
+							.description("최대 페이지 크기 (50)")
+					),
+					responseFields(
+						fieldWithPath("wishlistAccommodations[]")
+							.type(JsonFieldType.ARRAY)
+							.description("최대 50개의 위시리스트 숙소 목록"),
+						fieldWithPath("wishlistAccommodations[].id")
+							.type(JsonFieldType.NUMBER)
+							.description("위시리스트 항목 ID"),
+						fieldWithPath("wishlistAccommodations[].name")
+							.type(JsonFieldType.STRING)
+							.description("위시리스트 항목 메모"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo")
+							.type(JsonFieldType.OBJECT)
+							.description("숙소 정보"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo.accommodationId")
+							.type(JsonFieldType.NUMBER)
+							.description("숙소 ID"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo.name")
+							.type(JsonFieldType.STRING)
+							.description("숙소 이름"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo.accommodationImageUrls[]")
+							.type(JsonFieldType.ARRAY)
+							.description("숙소 이미지 URL 목록"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo.amenities[]")
+							.type(JsonFieldType.ARRAY)
+							.description("편의시설 목록"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo.averageRating")
+							.type(JsonFieldType.NUMBER)
+							.description("평균 평점"),
+						fieldWithPath("pageInfo")
+							.type(JsonFieldType.OBJECT)
+							.description("페이징 정보"),
+						fieldWithPath("pageInfo.hasNext")
+							.type(JsonFieldType.BOOLEAN)
+							.description("다음 페이지 존재 여부"),
+						fieldWithPath("pageInfo.nextCursor")
+							.type(JsonFieldType.STRING)
+							.description("다음 페이지 커서"),
+						fieldWithPath("pageInfo.currentSize")
+							.type(JsonFieldType.NUMBER)
+							.description("현재 페이지 크기 (50)")
+					)));
+
+			verify(wishlistService).findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L));
+		}
+
+		@Test
+		@DisplayName("시나리오: 잘못된 커서로 위시리스트 숙소 목록 조회 시 첫 페이지로 처리된다")
+		void 잘못된_커서로_위시리스트_숙소_목록_조회_시_첫_페이지로_처리된다() throws Exception {
+			// Given: 잘못된 형식의 커서로 조회하지만 첫 페이지로 처리되는 상황
+			Long wishlistId = 1L;
+			String invalidCursor = "invalid_cursor_format";
+
+			// 잘못된 커서는 디코딩 실패 시 null로 처리되어 첫 페이지 조회가 됨
+			List<WishlistResponse.WishlistAccommodationInfo> accommodations = List.of(
+				new WishlistResponse.WishlistAccommodationInfo(
+					10L,
+					"첫 페이지 숙소 메모",
+					new AccommodationResponse.WishlistAccommodationInfo(
+						100L,
+						"첫 페이지 숙소",
+						List.of("first_page_image.jpg"),
+						List.of(new AccommodationResponse.AmenityInfoResponse(AmenityType.WIFI, 1)),
+						4.2
+					)
+				)
+			);
+
+			CursorResponse.PageInfo pageInfo = CursorResponse.PageInfo.builder()
+				.hasNext(true)
+				.nextCursor("valid_next_cursor")
+				.currentSize(1)
+				.build();
+
+			WishlistResponse.WishlistAccommodationInfos expectedResponse =
+				new WishlistResponse.WishlistAccommodationInfos(accommodations, pageInfo);
+
+			when(wishlistService.findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L)))
+				.thenReturn(expectedResponse);
+
+			// When: 잘못된 커서로 조회를 시도한다
+			mockMvc.perform(get("/api/members/wishlists/{wishlistId}/accommodations", wishlistId)
+					.param("size", "20")
+					.param("cursor", invalidCursor))
+
+				// Then: 에러가 발생하지 않고 첫 페이지가 반환된다
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.wishlistAccommodations").isArray())
+				.andExpect(jsonPath("$.wishlistAccommodations.length()").value(1))
+				.andExpect(jsonPath("$.wishlistAccommodations[0].id").value(10L))
+				.andExpect(jsonPath("$.wishlistAccommodations[0].name").value("첫 페이지 숙소 메모"))
+				.andExpect(jsonPath("$.pageInfo.hasNext").value(true))
+				.andExpect(jsonPath("$.pageInfo.currentSize").value(1))
+
+				// document
+				.andDo(document("위시리스트-숙소목록조회-잘못된커서-첫페이지처리",
+					pathParameters(
+						parameterWithName("wishlistId")
+							.description("위시리스트 ID")
+					),
+					queryParameters(
+						parameterWithName("size")
+							.description("페이지 크기"),
+						parameterWithName("cursor")
+							.description("잘못된 형식의 커서 (첫 페이지로 처리됨)")
+					),
+					responseFields(
+						fieldWithPath("wishlistAccommodations[]")
+							.type(JsonFieldType.ARRAY)
+							.description("첫 페이지 위시리스트 숙소 목록"),
+						fieldWithPath("wishlistAccommodations[].id")
+							.type(JsonFieldType.NUMBER)
+							.description("위시리스트 항목 ID"),
+						fieldWithPath("wishlistAccommodations[].name")
+							.type(JsonFieldType.STRING)
+							.description("위시리스트 항목 메모"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo")
+							.type(JsonFieldType.OBJECT)
+							.description("숙소 정보"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo.accommodationId")
+							.type(JsonFieldType.NUMBER)
+							.description("숙소 ID"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo.name")
+							.type(JsonFieldType.STRING)
+							.description("숙소 이름"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo.accommodationImageUrls[]")
+							.type(JsonFieldType.ARRAY)
+							.description("숙소 이미지 URL 목록"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo.amenities[]")
+							.type(JsonFieldType.ARRAY)
+							.description("편의시설 목록"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo.amenities[].type")
+							.type(JsonFieldType.STRING)
+							.description("편의시설 타입"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo.amenities[].count")
+							.type(JsonFieldType.NUMBER)
+							.description("편의시설 개수"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo.averageRating")
+							.type(JsonFieldType.NUMBER)
+							.description("평균 평점"),
+						fieldWithPath("pageInfo")
+							.type(JsonFieldType.OBJECT)
+							.description("페이징 정보"),
+						fieldWithPath("pageInfo.hasNext")
+							.type(JsonFieldType.BOOLEAN)
+							.description("다음 페이지 존재 여부"),
+						fieldWithPath("pageInfo.nextCursor")
+							.type(JsonFieldType.STRING)
+							.description("다음 페이지를 위한 유효한 커서"),
+						fieldWithPath("pageInfo.currentSize")
+							.type(JsonFieldType.NUMBER)
+							.description("현재 페이지 크기")
+					)));
+
+			verify(wishlistService).findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L));
+		}
+
+		@Test
+		@DisplayName("시나리오: 잘못된 페이지 크기로 위시리스트 숙소 목록을 조회한다")
+		void 잘못된_페이지_크기로_위시리스트_숙소_목록을_조회한다() throws Exception {
+			// Given: 잘못된 페이지 크기로 조회하려는 상황
+			Long wishlistId = 1L;
+			String invalidSize = "100"; // 최대 50을 초과
+
+			when(wishlistService.findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L)))
+				.thenThrow(new CursorPageSizeException());
+
+			// When: 잘못된 페이지 크기로 조회를 시도한다
+			mockMvc.perform(get("/api/members/wishlists/{wishlistId}/accommodations", wishlistId)
+					.param("size", invalidSize))
+
+				// Then: 400 Bad Request 오류가 발생한다
+				.andExpect(status().isBadRequest())
+
+				// document
+				.andDo(document("위시리스트-숙소목록조회-잘못된페이지크기-실패",
+					pathParameters(
+						parameterWithName("wishlistId")
+							.description("위시리스트 ID")
+					),
+					queryParameters(
+						parameterWithName("size")
+							.description("잘못된 페이지 크기 (최대 50 초과)")
+					)));
+
+			verify(wishlistService).findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L));
+		}
+
+		@Test
+		@DisplayName("시나리오: 매우 큰 위시리스트 ID로 숙소 목록을 조회한다")
+		void 매우_큰_위시리스트_ID로_숙소_목록을_조회한다() throws Exception {
+			// Given: 매우 큰 위시리스트 ID로 조회하는 상황
+			Long largeWishlistId = Long.MAX_VALUE;
+
+			when(wishlistService.findWishlistAccommodations(eq(largeWishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L)))
+				.thenThrow(new WishlistNotFoundException());
+
+			// When: 매우 큰 위시리스트 ID로 조회를 시도한다
+			mockMvc.perform(get("/api/members/wishlists/{wishlistId}/accommodations", largeWishlistId)
+					.param("size", "20"))
+
+				// Then: 404 Not Found 오류가 발생한다
+				.andExpect(status().isNotFound())
+
+				// document
+				.andDo(document("위시리스트-숙소목록조회-최대ID-실패",
+					pathParameters(
+						parameterWithName("wishlistId")
+							.description("매우 큰 위시리스트 ID (Long.MAX_VALUE)")
+					),
+					queryParameters(
+						parameterWithName("size")
+							.description("페이지 크기")
+							.optional()
+					)));
+
+			verify(wishlistService).findWishlistAccommodations(eq(largeWishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L));
+		}
+
+		@Test
+		@DisplayName("시나리오: 기본 페이지 크기로 위시리스트 숙소 목록을 조회한다")
+		void 기본_페이지_크기로_위시리스트_숙소_목록을_조회한다() throws Exception {
+			// Given: 페이지 크기를 지정하지 않고 조회하는 상황 (기본값 사용)
+			Long wishlistId = 1L;
+
+			List<WishlistResponse.WishlistAccommodationInfo> accommodations = List.of(
+				new WishlistResponse.WishlistAccommodationInfo(
+					10L,
+					"기본 크기 테스트 메모",
+					new AccommodationResponse.WishlistAccommodationInfo(
+						100L,
+						"기본 크기 테스트 숙소",
+						List.of(),
+						List.of(),
+						4.0
+					)
+				)
+			);
+
+			CursorResponse.PageInfo pageInfo = CursorResponse.PageInfo.builder()
+				.hasNext(false)
+				.nextCursor(null)
+				.currentSize(1)
+				.build();
+
+			WishlistResponse.WishlistAccommodationInfos expectedResponse =
+				new WishlistResponse.WishlistAccommodationInfos(accommodations, pageInfo);
+
+			when(wishlistService.findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L)))
+				.thenReturn(expectedResponse);
+
+			// When: 페이지 크기를 지정하지 않고 조회한다
+			mockMvc.perform(get("/api/members/wishlists/{wishlistId}/accommodations", wishlistId))
+
+				// Then: 기본 페이지 크기로 결과가 반환된다
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.wishlistAccommodations").isArray())
+				.andExpect(jsonPath("$.wishlistAccommodations.length()").value(1))
+				.andExpect(jsonPath("$.pageInfo.hasNext").value(false))
+				.andExpect(jsonPath("$.pageInfo.currentSize").value(1))
+
+				// document
+				.andDo(document("위시리스트-숙소목록조회-기본크기",
+					pathParameters(
+						parameterWithName("wishlistId")
+							.description("위시리스트 ID")
+					),
+					responseFields(
+						fieldWithPath("wishlistAccommodations[]")
+							.type(JsonFieldType.ARRAY)
+							.description("위시리스트 숙소 목록"),
+						fieldWithPath("wishlistAccommodations[].id")
+							.type(JsonFieldType.NUMBER)
+							.description("위시리스트 항목 ID"),
+						fieldWithPath("wishlistAccommodations[].name")
+							.type(JsonFieldType.STRING)
+							.description("위시리스트 항목 메모"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo")
+							.type(JsonFieldType.OBJECT)
+							.description("숙소 정보"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo.accommodationId")
+							.type(JsonFieldType.NUMBER)
+							.description("숙소 ID"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo.name")
+							.type(JsonFieldType.STRING)
+							.description("숙소 이름"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo.accommodationImageUrls[]")
+							.type(JsonFieldType.ARRAY)
+							.description("숙소 이미지 URL 목록"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo.amenities[]")
+							.type(JsonFieldType.ARRAY)
+							.description("편의시설 목록"),
+						fieldWithPath("wishlistAccommodations[].accommodationInfo.averageRating")
+							.type(JsonFieldType.NUMBER)
+							.description("평균 평점"),
+						fieldWithPath("pageInfo")
+							.type(JsonFieldType.OBJECT)
+							.description("페이징 정보"),
+						fieldWithPath("pageInfo.hasNext")
+							.type(JsonFieldType.BOOLEAN)
+							.description("다음 페이지 존재 여부"),
+						fieldWithPath("pageInfo.nextCursor")
+							.type(JsonFieldType.STRING)
+							.description("다음 페이지 커서")
+							.optional(),
+						fieldWithPath("pageInfo.currentSize")
+							.type(JsonFieldType.NUMBER)
+							.description("현재 페이지 크기")
+					)));
+
+			verify(wishlistService).findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L));
 		}
 	}
 }
