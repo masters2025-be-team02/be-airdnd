@@ -45,7 +45,7 @@ public class WishlistRequest {
 
 	public record UpdateWishlistAccommodationRequest(
 		@NotBlank(message = "메모는 공백일 수 없습니다.")
-		@Size(max = 255)
+		@Size(max = 1024)
 		String memo
 	) {
 		@Override

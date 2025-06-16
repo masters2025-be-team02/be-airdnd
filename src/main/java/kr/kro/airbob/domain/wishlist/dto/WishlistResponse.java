@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import kr.kro.airbob.cursor.dto.CursorResponse;
+import kr.kro.airbob.domain.accommodation.dto.AccommodationResponse;
 
 public class WishlistResponse {
 
@@ -67,6 +68,26 @@ public class WishlistResponse {
 
 	public record UpdateWishlistAccommodationResponse(
 		long id
+	) {
+	}
+
+	public record WishlistAccommodationInfos(
+		List<WishlistResponse.WishlistAccommodationInfo> wishlistAccommodations,
+		CursorResponse.PageInfo pageInfo
+	) {
+		@Override
+		public String toString() {
+			return "WishlistAccommodationInfos{" +
+				"wishlistAccommodations=" + wishlistAccommodations +
+				", pageInfo=" + pageInfo +
+				'}';
+		}
+	}
+
+	public record WishlistAccommodationInfo(
+		long id,
+		String name,
+		AccommodationResponse.WishlistAccommodationInfo accommodationInfo
 	) {
 	}
 }

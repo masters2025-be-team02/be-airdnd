@@ -3,6 +3,7 @@ package kr.kro.airbob.domain.wishlist.repository;
 import java.time.LocalDateTime;
 
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -20,5 +21,5 @@ public interface WishlistRepository extends JpaRepository<Wishlist, Long> {
 	   OR (w.createdAt = :lastCreatedAt AND w.id < :lastId)) 
 	   ORDER BY w.createdAt DESC, w.id DESC
 """)
-	Slice<Wishlist> findByMemberIdWithCursor(Long memberId, Long lastId, LocalDateTime lastCreatedAt, PageRequest of);
+	Slice<Wishlist> findByMemberIdWithCursor(Long memberId, Long lastId, LocalDateTime lastCreatedAt, Pageable pageable);
 }
