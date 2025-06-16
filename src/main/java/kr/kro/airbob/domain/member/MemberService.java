@@ -3,7 +3,7 @@ package kr.kro.airbob.domain.member;
 import kr.kro.airbob.domain.member.dto.MemberRequestDto.SignupMemberRequestDto;
 import kr.kro.airbob.domain.member.exception.DuplicatedEmailException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class MemberService {
 
     private final MemberRepository memberRepository;
-    private final BCryptPasswordEncoder encoder;
 
     @Transactional
     public void createMember(SignupMemberRequestDto request) {
@@ -20,7 +19,7 @@ public class MemberService {
             throw new DuplicatedEmailException();
         }
 
-        String hashedPassword = encoder.encode(request.getPassword());
+        String hashedPassword = BCrypt.hashpw(request.getPassword(), BCrypt.gensalt());
 
         Member member = Member.createMember(request, hashedPassword);
         memberRepository.save(member);
