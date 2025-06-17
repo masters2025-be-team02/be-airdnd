@@ -1,9 +1,9 @@
-package kr.kro.airbob.domain.discountPolicy.service;
+package kr.kro.airbob.domain.discountPolicy;
 
-import kr.kro.airbob.domain.discountPolicy.DiscountPolicy;
 import kr.kro.airbob.domain.discountPolicy.dto.request.DiscountPolicyCreateDto;
 import kr.kro.airbob.domain.discountPolicy.dto.request.DiscountPolicyUpdateDto;
 import kr.kro.airbob.domain.discountPolicy.dto.response.DiscountPolicyResponseDto;
+import kr.kro.airbob.domain.discountPolicy.entity.DiscountPolicy;
 import kr.kro.airbob.domain.discountPolicy.repository.DiscountPolicyRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
