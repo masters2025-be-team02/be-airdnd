@@ -1,11 +1,15 @@
 package kr.kro.airbob.domain.accommodation;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
 import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest;
 import kr.kro.airbob.domain.accommodation.dto.AccommodationResponse;
 import kr.kro.airbob.domain.accommodation.dto.AccommodationResponse.AccommodationSearchResponseDto;
+import kr.kro.airbob.domain.auth.AuthService;
+import kr.kro.airbob.domain.auth.common.SessionUtil;
+import kr.kro.airbob.domain.member.MemberService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -27,11 +31,16 @@ import org.springframework.web.bind.annotation.RestController;
 public class AccommodationController {
 
     private final AccommodationService accommodationService;
+    private final AuthService authService;
 
     //todo 이미지 저장 로직 추가
     @PostMapping
-    public ResponseEntity<Map<String, Long>> registerAccommodation(@RequestBody @Valid AccommodationRequest.CreateAccommodationDto request){
-        Long savedAccommodationId = accommodationService.createAccommodation(request);
+    public ResponseEntity<Map<String, Long>> registerAccommodation(@RequestBody @Valid AccommodationRequest.CreateAccommodationDto requestDto,
+                                                                   HttpServletRequest request){
+        String sessionId = SessionUtil.getSessionIdByCookie(request);
+        authService.validateHost(sessionId, requestDto.getHostId());
+
+        Long savedAccommodationId = accommodationService.createAccommodation(requestDto);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(Map.of("id", savedAccommodationId));
     }

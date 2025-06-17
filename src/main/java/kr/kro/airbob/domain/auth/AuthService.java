@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.Optional;
 import java.util.UUID;
 import kr.kro.airbob.domain.auth.exception.InvalidPasswordException;
+import kr.kro.airbob.domain.auth.exception.NotEqualHostException;
 import kr.kro.airbob.domain.member.Member;
 import kr.kro.airbob.domain.member.MemberRepository;
 import kr.kro.airbob.domain.member.exception.MemberNotFoundException;
@@ -40,5 +41,15 @@ public class AuthService {
 
     public Optional<Long> getMemberIdFromSession(String sessionId) {
         return sessionRedisRepository.getMemberIdBySession(sessionId);
+    }
+
+
+    public void validateHost(String sessionId, Long hostId) {
+        Long memberId = sessionRedisRepository.getMemberIdBySession(sessionId).orElse(null);
+
+        if (!hostId.equals(memberId)) {
+            throw new NotEqualHostException();
+        }
+
     }
 }
