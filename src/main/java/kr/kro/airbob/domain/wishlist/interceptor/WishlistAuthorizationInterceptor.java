@@ -19,30 +19,30 @@ public class WishlistAuthorizationInterceptor implements HandlerInterceptor {
 	private final WishlistAccommodationRepository wishlistAccommodationRepository;
 
 	@Override
-	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws
-		Exception {
-
+	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
 		String method = request.getMethod();
 		String uri = request.getRequestURI();
 
-		if ((method.equalsIgnoreCase("POST") || method.equalsIgnoreCase("GET") )
-			&& uri.matches("^/api/members/wishlists/?$")) {
-			return true; // 위시리스트 생성, 조회이면 통과
+		// 모든 요청에서 memberId 확인 및 설정
+		Long requestMemberId = (Long)request.getAttribute("memberId");
+		if (requestMemberId == null) {
+			response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "로그인이 필요합니다.");
+			return false;
 		}
 
-		// URI에서  wishlistId 추출
+		// 위시리스트 생성, 조회는 memberId 설정 후 바로 통과
+		if ((method.equalsIgnoreCase("POST") || method.equalsIgnoreCase("GET"))
+			&& uri.matches("^/api/members/wishlists/?$")) {
+			return true; // memberId는 이미 설정됨
+		}
+
+		// URI에서 wishlistId 추출
 		String[] segments = uri.split("/");
 		Long wishlistId;
 		try {
 			wishlistId = Long.parseLong(segments[WISHLIST_ID_INDEX]);
 		} catch (NumberFormatException e) {
 			response.sendError(HttpServletResponse.SC_BAD_REQUEST, "유효하지 않은 위시리스트 ID입니다.");
-			return false;
-		}
-
-		Long requestMemberId = (Long)request.getAttribute("memberId");
-		if (requestMemberId == null) {
-			response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "로그인이 필요합니다.");
 			return false;
 		}
 
@@ -62,7 +62,6 @@ public class WishlistAuthorizationInterceptor implements HandlerInterceptor {
 		// 위시리스트-숙소 생성, 조회 통과 - 없어도 되지만 명시적으로 표시
 		if ((method.equalsIgnoreCase("POST") || method.equalsIgnoreCase("GET"))
 			&& uri.matches("^/api/members/wishlists/\\d+/accommodations/?$")) {
-
 			return true;
 		}
 
