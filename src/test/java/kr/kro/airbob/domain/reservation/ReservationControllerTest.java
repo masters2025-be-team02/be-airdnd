@@ -16,7 +16,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
-import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -26,7 +25,7 @@ import static org.springframework.restdocs.payload.PayloadDocumentation.*;
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
 import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @AutoConfigureRestDocs
@@ -60,14 +59,14 @@ public class ReservationControllerTest {
 
 
         given(reservationService.createReservation(eq(accommodationId), any()))
-                .willReturn(Optional.of(createdReservationId));
+                .willReturn(createdReservationId);
 
         // when & then
         mockMvc.perform(post("/api/accommodations/{accommodationId}", accommodationId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(asJsonString(requestDto)))
                 .andExpect(status().isCreated())
-                .andExpect(content().string(createdReservationId.toString()))
+                .andExpect(jsonPath("$.id").value(createdReservationId))
                 .andDo(document("reservation-create",
                         pathParameters(
                                 parameterWithName("accommodationId").description("예약할 숙소 ID")
@@ -77,7 +76,9 @@ public class ReservationControllerTest {
                                 fieldWithPath("checkOutDate").description("체크아웃 날짜 및 시간"),
                                 fieldWithPath("message").description("호스트에게 전달할 메시지").optional()
                         ),
-                        responseBody()
+                        responseFields(
+                                fieldWithPath("id").description("생성된 예약 ID")
+                        )
                 ));
     }
 
