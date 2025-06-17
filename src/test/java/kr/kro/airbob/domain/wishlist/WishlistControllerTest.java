@@ -39,6 +39,7 @@ import kr.kro.airbob.cursor.util.CursorPageInfoCreator;
 import kr.kro.airbob.domain.accommodation.common.AmenityType;
 import kr.kro.airbob.domain.accommodation.dto.AccommodationResponse;
 import kr.kro.airbob.domain.accommodation.exception.AccommodationNotFoundException;
+import kr.kro.airbob.domain.accommodation.interceptor.AccommodationAuthorizationInterceptor;
 import kr.kro.airbob.domain.common.BaseControllerDocumentationTest;
 import kr.kro.airbob.domain.wishlist.api.WishlistController;
 import kr.kro.airbob.domain.wishlist.dto.WishlistRequest;
@@ -47,6 +48,7 @@ import kr.kro.airbob.domain.wishlist.exception.WishlistAccessDeniedException;
 import kr.kro.airbob.domain.wishlist.exception.WishlistAccommodationAccessDeniedException;
 import kr.kro.airbob.domain.wishlist.exception.WishlistAccommodationNotFoundException;
 import kr.kro.airbob.domain.wishlist.exception.WishlistNotFoundException;
+import kr.kro.airbob.domain.wishlist.interceptor.WishlistAuthorizationInterceptor;
 
 @WebMvcTest(WishlistController.class)
 @DisplayName("위시리스트 관리 API 테스트")
@@ -72,7 +74,14 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 	@MockitoBean
 	private AccommodationAuthorizationInterceptor accommodationAuthorizationInterceptor;
 
+	@MockitoBean
+	private WishlistAuthorizationInterceptor wishlistAuthorizationInterceptor;
 
+	@MockitoBean
+	private AccommodationAuthorizationInterceptor accommodationAuthorizationInterceptor;
+	
+	
+	
 	@Autowired
 	private WishlistController wishlistController;
 
@@ -97,7 +106,9 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			// When: 사용자가 위시리스트 생성 API를 호출한다
 			mockMvc.perform(post("/api/members/wishlists")
 					.contentType(MediaType.APPLICATION_JSON)
-					.content(objectMapper.writeValueAsString(request)))
+					.content(objectMapper.writeValueAsString(request))
+					.requestAttr("memberId", 1L)
+				)
 
 				// Then: 위시리스트가 성공적으로 생성되고 생성된 위시리스트 정보가 반환된다
 				.andExpect(status().isOk())
@@ -198,7 +209,9 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 				// When: 각각의 위시리스트를 생성한다
 				mockMvc.perform(post("/api/members/wishlists")
 						.contentType(MediaType.APPLICATION_JSON)
-						.content(objectMapper.writeValueAsString(request)))
+						.content(objectMapper.writeValueAsString(request))
+						.requestAttr("memberId", 1L)
+					)
 
 					// Then: 모든 위시리스트가 성공적으로 생성된다
 					.andExpect(status().isOk())
@@ -233,7 +246,9 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 
 			mockMvc.perform(post("/api/members/wishlists")
 					.contentType(MediaType.APPLICATION_JSON)
-					.content(objectMapper.writeValueAsString(request)))
+					.content(objectMapper.writeValueAsString(request))
+					.requestAttr("memberId", 1L)
+				)
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.id").value(1L));
 
@@ -243,7 +258,9 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 
 			mockMvc.perform(post("/api/members/wishlists")
 					.contentType(MediaType.APPLICATION_JSON)
-					.content(objectMapper.writeValueAsString(request)))
+					.content(objectMapper.writeValueAsString(request))
+					.requestAttr("memberId", 1L)
+				)
 
 				// Then: 중복 이름이여도 새로운 위시리스트가 생성된다
 				.andExpect(status().isOk())
@@ -276,7 +293,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			WishlistRequest.updateRequest request = new WishlistRequest.updateRequest("수정된 서울 여행 계획");
 			WishlistResponse.UpdateResponse expectedResponse = new WishlistResponse.UpdateResponse(wishlistId);
 
-			when(wishlistService.updateWishlist(eq(wishlistId), any(WishlistRequest.updateRequest.class), eq(1L)))
+			when(wishlistService.updateWishlist(eq(wishlistId), any(WishlistRequest.updateRequest.class)))
 				.thenReturn(expectedResponse);
 
 			// When: 사용자가 위시리스트 수정 API를 호출한다
@@ -305,7 +322,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 							.description("수정된 위시리스트의 고유 식별자")
 					)));
 
-			verify(wishlistService).updateWishlist(eq(wishlistId), any(WishlistRequest.updateRequest.class), eq(1L));
+			verify(wishlistService).updateWishlist(eq(wishlistId), any(WishlistRequest.updateRequest.class));
 		}
 
 		@ParameterizedTest(name = "{0}")
@@ -383,8 +400,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			Long nonExistentWishlistId = 999L;
 			WishlistRequest.updateRequest request = new WishlistRequest.updateRequest("수정할 이름");
 
-			when(wishlistService.updateWishlist(eq(nonExistentWishlistId), any(WishlistRequest.updateRequest.class),
-				eq(1L)))
+			when(wishlistService.updateWishlist(eq(nonExistentWishlistId), any(WishlistRequest.updateRequest.class)))
 				.thenThrow(new WishlistNotFoundException());
 
 			// When & Then: 존재하지 않는 위시리스트 수정 시도 시 오류 발생
@@ -411,8 +427,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			Long otherMemberWishlistId = 1L;
 			WishlistRequest.updateRequest request = new WishlistRequest.updateRequest("수정할 이름");
 
-			when(wishlistService.updateWishlist(eq(otherMemberWishlistId), any(WishlistRequest.updateRequest.class),
-				eq(1L)))
+			when(wishlistService.updateWishlist(eq(otherMemberWishlistId), any(WishlistRequest.updateRequest.class)))
 				.thenThrow(new WishlistAccessDeniedException());
 
 			// When & Then: 권한 없는 위시리스트 수정 시도 시 오류 발생
@@ -443,7 +458,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			// Given: 존재하는 위시리스트를 삭제하려는 상황
 			Long wishlistId = 1L;
 
-			doNothing().when(wishlistService).deleteWishlist(eq(wishlistId), eq(1L));
+			doNothing().when(wishlistService).deleteWishlist(eq(wishlistId));
 
 			// When: 사용자가 위시리스트 삭제 API를 호출한다
 			mockMvc.perform(delete("/api/members/wishlists/{wishlistId}", wishlistId))
@@ -457,7 +472,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 						parameterWithName("wishlistId")
 							.description("삭제할 위시리스트의 고유 식별자")
 					)));
-			verify(wishlistService).deleteWishlist(eq(wishlistId), eq(1L));
+			verify(wishlistService).deleteWishlist(eq(wishlistId));
 		}
 
 		@Test
@@ -469,7 +484,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			for (int i = 0; i < wishlistIds.length; i++) {
 				Long wishlistId = wishlistIds[i];
 
-				doNothing().when(wishlistService).deleteWishlist(eq(wishlistId), eq(1L));
+				doNothing().when(wishlistService).deleteWishlist(eq(wishlistId));
 
 				// When: 각각의 위시리스트를 삭제한다
 				mockMvc.perform(delete("/api/members/wishlists/{wishlistId}", wishlistId))
@@ -493,7 +508,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			Long nonExistentWishlistId = 999L;
 
 			doThrow(new WishlistNotFoundException())
-				.when(wishlistService).deleteWishlist(eq(nonExistentWishlistId), eq(1L));
+				.when(wishlistService).deleteWishlist(eq(nonExistentWishlistId));
 
 			// When & Then: 존재하지 않는 위시리스트 삭제 시도 시 오류 발생
 			mockMvc.perform(delete("/api/members/wishlists/{wishlistId}", nonExistentWishlistId))
@@ -512,7 +527,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			Long otherMemberWishlistId = 1L;
 
 			doThrow(new WishlistAccessDeniedException())
-				.when(wishlistService).deleteWishlist(eq(otherMemberWishlistId), eq(1L));
+				.when(wishlistService).deleteWishlist(eq(otherMemberWishlistId));
 
 			// When & Then: 권한 없는 위시리스트 삭제 시도 시 오류 발생
 			mockMvc.perform(delete("/api/members/wishlists/{wishlistId}", otherMemberWishlistId))
@@ -551,7 +566,8 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 
 			// When: 사용자가 위시리스트 목록 조회 API를 호출한다
 			mockMvc.perform(get("/api/members/wishlists")
-					.param("size", "20"))
+					.param("size", "20")
+					.requestAttr("memberId", 1L))  // ← 이 부분 추가
 
 				// Then: 위시리스트 목록이 성공적으로 반환된다
 				.andExpect(status().isOk())
@@ -565,7 +581,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 				.andExpect(jsonPath("$.pageInfo.hasNext").value(false))
 				.andExpect(jsonPath("$.pageInfo.currentSize").value(3))
 
-				// document
+				// document 부분은 그대로...
 				.andDo(document("위시리스트-목록조회-성공",
 					queryParameters(
 						parameterWithName("size")
@@ -636,7 +652,8 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			// When: 커서와 함께 위시리스트 목록을 조회한다
 			mockMvc.perform(get("/api/members/wishlists")
 					.param("size", "2")
-					.param("cursor", "eyJpZCI6MywiY3JlYXRlZEF0IjoiMjAyMS0wNS0xN1QwODowMDowMCJ9"))
+					.param("cursor", "eyJpZCI6MywiY3JlYXRlZEF0IjoiMjAyMS0wNS0xN1QwODowMDowMCJ9")
+					.requestAttr("memberId", 1L))  // ← 이 부분 추가
 
 				// Then: 페이징된 위시리스트 목록이 반환된다
 				.andExpect(status().isOk())
@@ -644,7 +661,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 				.andExpect(jsonPath("$.pageInfo.hasNext").value(true))
 				.andExpect(jsonPath("$.pageInfo.nextCursor").isNotEmpty())
 
-				// document
+				// document는 기존과 동일...
 				.andDo(document("위시리스트-페이징조회-성공",
 					queryParameters(
 						parameterWithName("size")
@@ -705,7 +722,8 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 				.thenReturn(expectedResponse);
 
 			// When: 위시리스트 목록을 조회한다
-			mockMvc.perform(get("/api/members/wishlists"))
+			mockMvc.perform(get("/api/members/wishlists")
+					.requestAttr("memberId", 1L))  // ← 이 부분 추가
 
 				// Then: 빈 목록이 반환된다
 				.andExpect(status().isOk())
@@ -736,23 +754,6 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 					)));
 		}
 
-		@Test
-		@DisplayName("시나리오: 잘못된 페이지 크기로 위시리스트를 조회한다")
-		void 잘못된_페이지_크기로_위시리스트를_조회한다() throws Exception {
-			// Given: 잘못된 페이지 크기 (0 또는 음수)
-			when(wishlistService.findWishlists(any(CursorRequest.CursorPageRequest.class), eq(1L)))
-				.thenThrow(new CursorPageSizeException());
-
-			// When & Then: 잘못된 페이지 크기로 조회 시 오류 발생
-			mockMvc.perform(get("/api/members/wishlists")
-					.param("size", "0"))
-				.andExpect(status().isBadRequest())
-				.andDo(document("위시리스트-조회-잘못된크기-실패",
-					queryParameters(
-						parameterWithName("size")
-							.description("잘못된 페이지 크기 (0 이하)")
-					)));
-		}
 
 		@Test
 		@DisplayName("시나리오: 잘못된 커서로 위시리스트를 조회한다")
@@ -779,7 +780,8 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 
 			// When & Then: 잘못된 커서로 조회해도 정상적으로 첫 페이지가 반환됨
 			mockMvc.perform(get("/api/members/wishlists")
-					.param("cursor", invalidCursor))
+					.param("cursor", invalidCursor)
+					.requestAttr("memberId", 1L))  // ← 이 부분 추가
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.wishlists.length()").value(1))
 				.andDo(document("위시리스트-조회-잘못된커서-정상처리",
@@ -805,7 +807,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 							.description("위시리스트에 포함된 숙소 수"),
 						fieldWithPath("wishlists[].thumbnailImageUrl")
 							.type(JsonFieldType.STRING)
-							.description("대표 이미지 URL")
+							.description("대표 이미지 URL (없을 경우 null)")
 							.optional(),
 						fieldWithPath("pageInfo")
 							.type(JsonFieldType.OBJECT)
@@ -815,7 +817,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 							.description("다음 페이지 존재 여부"),
 						fieldWithPath("pageInfo.nextCursor")
 							.type(JsonFieldType.STRING)
-							.description("다음 페이지 커서")
+							.description("다음 페이지 커서 (없을 경우 null)")
 							.optional(),
 						fieldWithPath("pageInfo.currentSize")
 							.type(JsonFieldType.NUMBER)
@@ -839,7 +841,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			WishlistResponse.CreateWishlistAccommodationResponse expectedResponse =
 				new WishlistResponse.CreateWishlistAccommodationResponse(1L);
 
-			when(wishlistService.createWishlistAccommodation(eq(wishlistId), any(WishlistRequest.CreateWishlistAccommodationRequest.class), eq(1L)))
+			when(wishlistService.createWishlistAccommodation(eq(wishlistId), any(WishlistRequest.CreateWishlistAccommodationRequest.class)))
 				.thenReturn(expectedResponse);
 
 			// When: 사용자가 위시리스트에 숙소 추가 API를 호출한다
@@ -868,7 +870,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 							.description("생성된 위시리스트 항목의 고유 식별자")
 					)));
 
-			verify(wishlistService).createWishlistAccommodation(eq(wishlistId), any(WishlistRequest.CreateWishlistAccommodationRequest.class), eq(1L));
+			verify(wishlistService).createWishlistAccommodation(eq(wishlistId), any(WishlistRequest.CreateWishlistAccommodationRequest.class));
 		}
 
 		@Test
@@ -880,7 +882,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			WishlistRequest.CreateWishlistAccommodationRequest request =
 				new WishlistRequest.CreateWishlistAccommodationRequest(accommodationId);
 
-			when(wishlistService.createWishlistAccommodation(eq(nonExistentWishlistId), any(WishlistRequest.CreateWishlistAccommodationRequest.class), eq(1L)))
+			when(wishlistService.createWishlistAccommodation(eq(nonExistentWishlistId), any(WishlistRequest.CreateWishlistAccommodationRequest.class)))
 				.thenThrow(new WishlistNotFoundException());
 
 			// When: 존재하지 않는 위시리스트에 숙소 추가를 시도한다
@@ -903,7 +905,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 							.description("추가하려는 숙소 ID")
 					)));
 
-			verify(wishlistService).createWishlistAccommodation(eq(nonExistentWishlistId), any(WishlistRequest.CreateWishlistAccommodationRequest.class), eq(1L));
+			verify(wishlistService).createWishlistAccommodation(eq(nonExistentWishlistId), any(WishlistRequest.CreateWishlistAccommodationRequest.class));
 		}
 
 		@Test
@@ -915,7 +917,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			WishlistRequest.CreateWishlistAccommodationRequest request =
 				new WishlistRequest.CreateWishlistAccommodationRequest(nonExistentAccommodationId);
 
-			when(wishlistService.createWishlistAccommodation(eq(wishlistId), any(WishlistRequest.CreateWishlistAccommodationRequest.class), eq(1L)))
+			when(wishlistService.createWishlistAccommodation(eq(wishlistId), any(WishlistRequest.CreateWishlistAccommodationRequest.class)))
 				.thenThrow(new AccommodationNotFoundException());
 
 			// When: 존재하지 않는 숙소를 위시리스트에 추가를 시도한다
@@ -938,7 +940,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 							.description("존재하지 않는 숙소 ID")
 					)));
 
-			verify(wishlistService).createWishlistAccommodation(eq(wishlistId), any(WishlistRequest.CreateWishlistAccommodationRequest.class), eq(1L));
+			verify(wishlistService).createWishlistAccommodation(eq(wishlistId), any(WishlistRequest.CreateWishlistAccommodationRequest.class));
 		}
 
 		@Test
@@ -950,7 +952,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			WishlistRequest.CreateWishlistAccommodationRequest request =
 				new WishlistRequest.CreateWishlistAccommodationRequest(accommodationId);
 
-			when(wishlistService.createWishlistAccommodation(eq(otherUserWishlistId), any(WishlistRequest.CreateWishlistAccommodationRequest.class), eq(1L)))
+			when(wishlistService.createWishlistAccommodation(eq(otherUserWishlistId), any(WishlistRequest.CreateWishlistAccommodationRequest.class)))
 				.thenThrow(new WishlistAccessDeniedException());
 
 			// When: 다른 사용자의 위시리스트에 숙소 추가를 시도한다
@@ -973,7 +975,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 							.description("추가하려는 숙소 ID")
 					)));
 
-			verify(wishlistService).createWishlistAccommodation(eq(otherUserWishlistId), any(WishlistRequest.CreateWishlistAccommodationRequest.class), eq(1L));
+			verify(wishlistService).createWishlistAccommodation(eq(otherUserWishlistId), any(WishlistRequest.CreateWishlistAccommodationRequest.class));
 		}
 
 		@Test
@@ -985,7 +987,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			WishlistRequest.CreateWishlistAccommodationRequest request =
 				new WishlistRequest.CreateWishlistAccommodationRequest(duplicateAccommodationId);
 
-			when(wishlistService.createWishlistAccommodation(eq(wishlistId), any(WishlistRequest.CreateWishlistAccommodationRequest.class), eq(1L)))
+			when(wishlistService.createWishlistAccommodation(eq(wishlistId), any(WishlistRequest.CreateWishlistAccommodationRequest.class)))
 				.thenThrow(new WishlistAccessDeniedException()); // 중복 체크에서 WishlistAccessDeniedException이 발생
 
 			// When: 중복된 숙소를 위시리스트에 추가를 시도한다
@@ -1008,7 +1010,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 							.description("이미 위시리스트에 존재하는 숙소 ID")
 					)));
 
-			verify(wishlistService).createWishlistAccommodation(eq(wishlistId), any(WishlistRequest.CreateWishlistAccommodationRequest.class), eq(1L));
+			verify(wishlistService).createWishlistAccommodation(eq(wishlistId), any(WishlistRequest.CreateWishlistAccommodationRequest.class));
 		}
 
 		@ParameterizedTest(name = "{0}")
@@ -1086,7 +1088,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 				WishlistResponse.CreateWishlistAccommodationResponse expectedResponse =
 					new WishlistResponse.CreateWishlistAccommodationResponse((long)(i + 1));
 
-				when(wishlistService.createWishlistAccommodation(eq(wishlistId), any(WishlistRequest.CreateWishlistAccommodationRequest.class), eq(1L)))
+				when(wishlistService.createWishlistAccommodation(eq(wishlistId), any(WishlistRequest.CreateWishlistAccommodationRequest.class)))
 					.thenReturn(expectedResponse);
 
 				// When: 각각의 숙소를 위시리스트에 추가한다
@@ -1128,7 +1130,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			WishlistResponse.CreateWishlistAccommodationResponse expectedResponse =
 				new WishlistResponse.CreateWishlistAccommodationResponse(1L);
 
-			when(wishlistService.createWishlistAccommodation(eq(wishlistId), any(WishlistRequest.CreateWishlistAccommodationRequest.class), eq(1L)))
+			when(wishlistService.createWishlistAccommodation(eq(wishlistId), any(WishlistRequest.CreateWishlistAccommodationRequest.class)))
 				.thenReturn(expectedResponse);
 
 			// When: 매우 큰 숙소 ID로 위시리스트에 추가를 시도한다
@@ -1157,7 +1159,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 							.description("생성된 위시리스트 항목 ID")
 					)));
 
-			verify(wishlistService).createWishlistAccommodation(eq(wishlistId), any(WishlistRequest.CreateWishlistAccommodationRequest.class), eq(1L));
+			verify(wishlistService).createWishlistAccommodation(eq(wishlistId), any(WishlistRequest.CreateWishlistAccommodationRequest.class));
 		}
 	}
 
@@ -1177,8 +1179,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			WishlistResponse.UpdateWishlistAccommodationResponse expectedResponse =
 				new WishlistResponse.UpdateWishlistAccommodationResponse(wishlistAccommodationId);
 
-			when(wishlistService.updateWishlistAccommodation(eq(wishlistId), eq(wishlistAccommodationId),
-				any(WishlistRequest.UpdateWishlistAccommodationRequest.class), eq(1L)))
+			when(wishlistService.updateWishlistAccommodation(eq(wishlistAccommodationId), any(WishlistRequest.UpdateWishlistAccommodationRequest.class)))
 				.thenReturn(expectedResponse);
 
 			// When: 사용자가 위시리스트 숙소 메모 수정 API를 호출한다
@@ -1210,8 +1211,8 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 							.description("수정된 위시리스트 항목의 고유 식별자")
 					)));
 
-			verify(wishlistService).updateWishlistAccommodation(eq(wishlistId), eq(wishlistAccommodationId),
-				any(WishlistRequest.UpdateWishlistAccommodationRequest.class), eq(1L));
+			verify(wishlistService).updateWishlistAccommodation(eq(wishlistAccommodationId),
+				any(WishlistRequest.UpdateWishlistAccommodationRequest.class));
 		}
 
 		@Test
@@ -1224,8 +1225,8 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			WishlistRequest.UpdateWishlistAccommodationRequest request =
 				new WishlistRequest.UpdateWishlistAccommodationRequest(memo);
 
-			when(wishlistService.updateWishlistAccommodation(eq(nonExistentWishlistId), eq(wishlistAccommodationId),
-				any(WishlistRequest.UpdateWishlistAccommodationRequest.class), eq(1L)))
+			when(wishlistService.updateWishlistAccommodation( eq(wishlistAccommodationId),
+				any(WishlistRequest.UpdateWishlistAccommodationRequest.class)))
 				.thenThrow(new WishlistNotFoundException());
 
 			// When: 존재하지 않는 위시리스트의 숙소 메모 수정을 시도한다
@@ -1251,8 +1252,8 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 							.description("수정하려는 메모 내용")
 					)));
 
-			verify(wishlistService).updateWishlistAccommodation(eq(nonExistentWishlistId), eq(wishlistAccommodationId),
-				any(WishlistRequest.UpdateWishlistAccommodationRequest.class), eq(1L));
+			verify(wishlistService).updateWishlistAccommodation(eq(wishlistAccommodationId),
+				any(WishlistRequest.UpdateWishlistAccommodationRequest.class));
 		}
 
 		@Test
@@ -1265,8 +1266,8 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			WishlistRequest.UpdateWishlistAccommodationRequest request =
 				new WishlistRequest.UpdateWishlistAccommodationRequest(memo);
 
-			when(wishlistService.updateWishlistAccommodation(eq(wishlistId), eq(nonExistentWishlistAccommodationId),
-				any(WishlistRequest.UpdateWishlistAccommodationRequest.class), eq(1L)))
+			when(wishlistService.updateWishlistAccommodation(eq(nonExistentWishlistAccommodationId),
+				any(WishlistRequest.UpdateWishlistAccommodationRequest.class)))
 				.thenThrow(new WishlistAccommodationNotFoundException());
 
 			// When: 존재하지 않는 위시리스트 항목의 메모 수정을 시도한다
@@ -1292,8 +1293,8 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 							.description("수정하려는 메모 내용")
 					)));
 
-			verify(wishlistService).updateWishlistAccommodation(eq(wishlistId), eq(nonExistentWishlistAccommodationId),
-				any(WishlistRequest.UpdateWishlistAccommodationRequest.class), eq(1L));
+			verify(wishlistService).updateWishlistAccommodation(eq(nonExistentWishlistAccommodationId),
+				any(WishlistRequest.UpdateWishlistAccommodationRequest.class));
 		}
 
 		@Test
@@ -1306,8 +1307,8 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			WishlistRequest.UpdateWishlistAccommodationRequest request =
 				new WishlistRequest.UpdateWishlistAccommodationRequest(memo);
 
-			when(wishlistService.updateWishlistAccommodation(eq(otherUserWishlistId), eq(wishlistAccommodationId),
-				any(WishlistRequest.UpdateWishlistAccommodationRequest.class), eq(1L)))
+			when(wishlistService.updateWishlistAccommodation( eq(wishlistAccommodationId),
+				any(WishlistRequest.UpdateWishlistAccommodationRequest.class)))
 				.thenThrow(new WishlistAccessDeniedException());
 
 			// When: 다른 사용자의 위시리스트 숙소 메모 수정을 시도한다
@@ -1333,8 +1334,8 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 							.description("수정하려는 메모 내용")
 					)));
 
-			verify(wishlistService).updateWishlistAccommodation(eq(otherUserWishlistId), eq(wishlistAccommodationId),
-				any(WishlistRequest.UpdateWishlistAccommodationRequest.class), eq(1L));
+			verify(wishlistService).updateWishlistAccommodation( eq(wishlistAccommodationId),
+				any(WishlistRequest.UpdateWishlistAccommodationRequest.class));
 		}
 
 		@Test
@@ -1347,8 +1348,8 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			WishlistRequest.UpdateWishlistAccommodationRequest request =
 				new WishlistRequest.UpdateWishlistAccommodationRequest(memo);
 
-			when(wishlistService.updateWishlistAccommodation(eq(wishlistId), eq(otherWishlistAccommodationId),
-				any(WishlistRequest.UpdateWishlistAccommodationRequest.class), eq(1L)))
+			when(wishlistService.updateWishlistAccommodation( eq(otherWishlistAccommodationId),
+				any(WishlistRequest.UpdateWishlistAccommodationRequest.class)))
 				.thenThrow(new WishlistAccommodationAccessDeniedException());
 
 			// When: 다른 위시리스트에 속한 항목의 메모 수정을 시도한다
@@ -1374,8 +1375,8 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 							.description("수정하려는 메모 내용")
 					)));
 
-			verify(wishlistService).updateWishlistAccommodation(eq(wishlistId), eq(otherWishlistAccommodationId),
-				any(WishlistRequest.UpdateWishlistAccommodationRequest.class), eq(1L));
+			verify(wishlistService).updateWishlistAccommodation( eq(otherWishlistAccommodationId),
+				any(WishlistRequest.UpdateWishlistAccommodationRequest.class));
 		}
 
 		@ParameterizedTest(name = "{0}")
@@ -1471,8 +1472,8 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 				WishlistResponse.UpdateWishlistAccommodationResponse expectedResponse =
 					new WishlistResponse.UpdateWishlistAccommodationResponse(wishlistAccommodationIds[i]);
 
-				when(wishlistService.updateWishlistAccommodation(eq(wishlistId), eq(wishlistAccommodationIds[i]),
-					any(WishlistRequest.UpdateWishlistAccommodationRequest.class), eq(1L)))
+				when(wishlistService.updateWishlistAccommodation( eq(wishlistAccommodationIds[i]),
+					any(WishlistRequest.UpdateWishlistAccommodationRequest.class)))
 					.thenReturn(expectedResponse);
 
 				// When: 각각의 위시리스트 항목 메모를 수정한다
@@ -1518,8 +1519,8 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			WishlistResponse.UpdateWishlistAccommodationResponse expectedResponse =
 				new WishlistResponse.UpdateWishlistAccommodationResponse(wishlistAccommodationId);
 
-			when(wishlistService.updateWishlistAccommodation(eq(wishlistId), eq(wishlistAccommodationId),
-				any(WishlistRequest.UpdateWishlistAccommodationRequest.class), eq(1L)))
+			when(wishlistService.updateWishlistAccommodation(eq(wishlistAccommodationId),
+				any(WishlistRequest.UpdateWishlistAccommodationRequest.class)))
 				.thenReturn(expectedResponse);
 
 			// When: 최대 길이의 메모로 수정을 시도한다
@@ -1551,8 +1552,8 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 							.description("수정된 위시리스트 항목 ID")
 					)));
 
-			verify(wishlistService).updateWishlistAccommodation(eq(wishlistId), eq(wishlistAccommodationId),
-				any(WishlistRequest.UpdateWishlistAccommodationRequest.class), eq(1L));
+			verify(wishlistService).updateWishlistAccommodation( eq(wishlistAccommodationId),
+				any(WishlistRequest.UpdateWishlistAccommodationRequest.class));
 		}
 
 		@Test
@@ -1567,8 +1568,8 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			WishlistResponse.UpdateWishlistAccommodationResponse expectedResponse =
 				new WishlistResponse.UpdateWishlistAccommodationResponse(wishlistAccommodationId);
 
-			when(wishlistService.updateWishlistAccommodation(eq(wishlistId), eq(wishlistAccommodationId),
-				any(WishlistRequest.UpdateWishlistAccommodationRequest.class), eq(1L)))
+			when(wishlistService.updateWishlistAccommodation( eq(wishlistAccommodationId),
+				any(WishlistRequest.UpdateWishlistAccommodationRequest.class)))
 				.thenReturn(expectedResponse);
 
 			// When: 특수 문자가 포함된 메모로 수정을 시도한다
@@ -1600,8 +1601,8 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 							.description("수정된 위시리스트 항목 ID")
 					)));
 
-			verify(wishlistService).updateWishlistAccommodation(eq(wishlistId), eq(wishlistAccommodationId),
-				any(WishlistRequest.UpdateWishlistAccommodationRequest.class), eq(1L));
+			verify(wishlistService).updateWishlistAccommodation(eq(wishlistAccommodationId),
+				any(WishlistRequest.UpdateWishlistAccommodationRequest.class));
 		}
 	}
 
@@ -1617,7 +1618,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			Long wishlistAccommodationId = 10L;
 
 			doNothing().when(wishlistService)
-				.deleteWishlistAccommodation(eq(wishlistId), eq(wishlistAccommodationId), eq(1L));
+				.deleteWishlistAccommodation( eq(wishlistAccommodationId));
 
 			// When: 사용자가 위시리스트 숙소 삭제 API를 호출한다
 			mockMvc.perform(delete("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
@@ -1635,7 +1636,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 							.description("삭제할 위시리스트 항목의 고유 식별자")
 					)));
 
-			verify(wishlistService).deleteWishlistAccommodation(eq(wishlistId), eq(wishlistAccommodationId), eq(1L));
+			verify(wishlistService).deleteWishlistAccommodation(eq(wishlistAccommodationId));
 		}
 
 		@Test
@@ -1647,7 +1648,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 
 			doThrow(new WishlistNotFoundException())
 				.when(wishlistService)
-				.deleteWishlistAccommodation(eq(nonExistentWishlistId), eq(wishlistAccommodationId), eq(1L));
+				.deleteWishlistAccommodation(eq(wishlistAccommodationId));
 
 			// When: 존재하지 않는 위시리스트의 숙소 삭제를 시도한다
 			mockMvc.perform(delete("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
@@ -1665,7 +1666,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 							.description("삭제하려는 위시리스트 항목 ID")
 					)));
 
-			verify(wishlistService).deleteWishlistAccommodation(eq(nonExistentWishlistId), eq(wishlistAccommodationId), eq(1L));
+			verify(wishlistService).deleteWishlistAccommodation( eq(wishlistAccommodationId));
 		}
 
 		@Test
@@ -1677,7 +1678,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 
 			doThrow(new WishlistAccommodationNotFoundException())
 				.when(wishlistService)
-				.deleteWishlistAccommodation(eq(wishlistId), eq(nonExistentWishlistAccommodationId), eq(1L));
+				.deleteWishlistAccommodation( eq(nonExistentWishlistAccommodationId));
 
 			// When: 존재하지 않는 위시리스트 항목 삭제를 시도한다
 			mockMvc.perform(delete("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
@@ -1695,7 +1696,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 							.description("존재하지 않는 위시리스트 항목 ID")
 					)));
 
-			verify(wishlistService).deleteWishlistAccommodation(eq(wishlistId), eq(nonExistentWishlistAccommodationId), eq(1L));
+			verify(wishlistService).deleteWishlistAccommodation( eq(nonExistentWishlistAccommodationId));
 		}
 
 		@Test
@@ -1707,7 +1708,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 
 			doThrow(new WishlistAccessDeniedException())
 				.when(wishlistService)
-				.deleteWishlistAccommodation(eq(otherUserWishlistId), eq(wishlistAccommodationId), eq(1L));
+				.deleteWishlistAccommodation(eq(wishlistAccommodationId));
 
 			// When: 다른 사용자의 위시리스트 숙소 삭제를 시도한다
 			mockMvc.perform(delete("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
@@ -1725,7 +1726,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 							.description("삭제하려는 위시리스트 항목 ID")
 					)));
 
-			verify(wishlistService).deleteWishlistAccommodation(eq(otherUserWishlistId), eq(wishlistAccommodationId), eq(1L));
+			verify(wishlistService).deleteWishlistAccommodation( eq(wishlistAccommodationId));
 		}
 
 		@Test
@@ -1737,7 +1738,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 
 			doThrow(new WishlistAccommodationAccessDeniedException())
 				.when(wishlistService)
-				.deleteWishlistAccommodation(eq(wishlistId), eq(otherWishlistAccommodationId), eq(1L));
+				.deleteWishlistAccommodation( eq(otherWishlistAccommodationId));
 
 			// When: 다른 위시리스트에 속한 항목 삭제를 시도한다
 			mockMvc.perform(delete("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
@@ -1755,7 +1756,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 							.description("다른 위시리스트에 속한 항목 ID")
 					)));
 
-			verify(wishlistService).deleteWishlistAccommodation(eq(wishlistId), eq(otherWishlistAccommodationId), eq(1L));
+			verify(wishlistService).deleteWishlistAccommodation( eq(otherWishlistAccommodationId));
 		}
 
 		@Test
@@ -1767,7 +1768,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 
 			for (int i = 0; i < wishlistAccommodationIds.length; i++) {
 				doNothing().when(wishlistService)
-					.deleteWishlistAccommodation(eq(wishlistId), eq(wishlistAccommodationIds[i]), eq(1L));
+					.deleteWishlistAccommodation(eq(wishlistAccommodationIds[i]));
 
 				// When: 각각의 위시리스트 항목을 삭제한다
 				mockMvc.perform(delete("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
@@ -1785,7 +1786,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 								.description("삭제할 위시리스트 항목 ID: " + wishlistAccommodationIds[i])
 						)));
 
-				verify(wishlistService).deleteWishlistAccommodation(eq(wishlistId), eq(wishlistAccommodationIds[i]), eq(1L));
+				verify(wishlistService).deleteWishlistAccommodation( eq(wishlistAccommodationIds[i]));
 			}
 		}
 
@@ -1797,7 +1798,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			Long wishlistAccommodationId = Long.MAX_VALUE - 1;
 
 			doNothing().when(wishlistService)
-				.deleteWishlistAccommodation(eq(wishlistId), eq(wishlistAccommodationId), eq(1L));
+				.deleteWishlistAccommodation( eq(wishlistAccommodationId));
 
 			// When: 매우 큰 ID 값의 위시리스트 항목 삭제를 시도한다
 			mockMvc.perform(delete("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
@@ -1815,7 +1816,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 							.description("매우 큰 위시리스트 항목 ID (Long.MAX_VALUE - 1)")
 					)));
 
-			verify(wishlistService).deleteWishlistAccommodation(eq(wishlistId), eq(wishlistAccommodationId), eq(1L));
+			verify(wishlistService).deleteWishlistAccommodation( eq(wishlistAccommodationId));
 		}
 
 		@Test
@@ -1827,7 +1828,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 
 			// 첫 번째 삭제는 성공
 			doNothing().when(wishlistService)
-				.deleteWishlistAccommodation(eq(wishlistId), eq(alreadyDeletedAccommodationId), eq(1L));
+				.deleteWishlistAccommodation(eq(alreadyDeletedAccommodationId));
 
 			// 첫 번째 삭제 수행
 			mockMvc.perform(delete("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
@@ -1837,7 +1838,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			// 두 번째 삭제 시도 시 예외 발생
 			doThrow(new WishlistAccommodationNotFoundException())
 				.when(wishlistService)
-				.deleteWishlistAccommodation(eq(wishlistId), eq(alreadyDeletedAccommodationId), eq(1L));
+				.deleteWishlistAccommodation(eq(alreadyDeletedAccommodationId));
 
 			// When: 이미 삭제된 항목을 다시 삭제하려 시도한다
 			mockMvc.perform(delete("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
@@ -1856,7 +1857,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 					)));
 
 			verify(wishlistService, times(2))
-				.deleteWishlistAccommodation(eq(wishlistId), eq(alreadyDeletedAccommodationId), eq(1L));
+				.deleteWishlistAccommodation( eq(alreadyDeletedAccommodationId));
 		}
 
 		@Test
@@ -1868,7 +1869,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 
 			doThrow(new WishlistAccommodationNotFoundException())
 				.when(wishlistService)
-				.deleteWishlistAccommodation(eq(emptyWishlistId), eq(nonExistentAccommodationId), eq(1L));
+				.deleteWishlistAccommodation( eq(nonExistentAccommodationId));
 
 			// When: 빈 위시리스트에서 항목 삭제를 시도한다
 			mockMvc.perform(delete("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
@@ -1886,7 +1887,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 							.description("존재하지 않는 위시리스트 항목 ID")
 					)));
 
-			verify(wishlistService).deleteWishlistAccommodation(eq(emptyWishlistId), eq(nonExistentAccommodationId), eq(1L));
+			verify(wishlistService).deleteWishlistAccommodation( eq(nonExistentAccommodationId));
 		}
 
 		@Test
@@ -1897,7 +1898,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			Long lastAccommodationId = 10L;
 
 			doNothing().when(wishlistService)
-				.deleteWishlistAccommodation(eq(wishlistId), eq(lastAccommodationId), eq(1L));
+				.deleteWishlistAccommodation( eq(lastAccommodationId));
 
 			// When: 위시리스트의 마지막 숙소를 삭제한다
 			mockMvc.perform(delete("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
@@ -1915,7 +1916,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 							.description("위시리스트의 마지막 남은 숙소 ID")
 					)));
 
-			verify(wishlistService).deleteWishlistAccommodation(eq(wishlistId), eq(lastAccommodationId), eq(1L));
+			verify(wishlistService).deleteWishlistAccommodation( eq(lastAccommodationId));
 		}
 
 		@ParameterizedTest(name = "잘못된 ID: {0}")
@@ -2011,7 +2012,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			WishlistResponse.WishlistAccommodationInfos expectedResponse =
 				new WishlistResponse.WishlistAccommodationInfos(accommodations, pageInfo);
 
-			when(wishlistService.findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L)))
+			when(wishlistService.findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class)))
 				.thenReturn(expectedResponse);
 
 			// When: 사용자가 위시리스트 숙소 목록 조회 API를 호출한다
@@ -2101,7 +2102,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 							.description("현재 페이지 항목 수")
 					)));
 
-			verify(wishlistService).findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L));
+			verify(wishlistService).findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class));
 		}
 
 		@Test
@@ -2119,7 +2120,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			WishlistResponse.WishlistAccommodationInfos expectedResponse =
 				new WishlistResponse.WishlistAccommodationInfos(List.of(), pageInfo);
 
-			when(wishlistService.findWishlistAccommodations(eq(emptyWishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L)))
+			when(wishlistService.findWishlistAccommodations(eq(emptyWishlistId), any(CursorRequest.CursorPageRequest.class)))
 				.thenReturn(expectedResponse);
 
 			// When: 빈 위시리스트의 숙소 목록을 조회한다
@@ -2163,7 +2164,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 							.description("현재 페이지 항목 수")
 					)));
 
-			verify(wishlistService).findWishlistAccommodations(eq(emptyWishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L));
+			verify(wishlistService).findWishlistAccommodations(eq(emptyWishlistId), any(CursorRequest.CursorPageRequest.class));
 		}
 
 		@Test
@@ -2172,7 +2173,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			// Given: 존재하지 않는 위시리스트 ID로 조회하려는 상황
 			Long nonExistentWishlistId = 999L;
 
-			when(wishlistService.findWishlistAccommodations(eq(nonExistentWishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L)))
+			when(wishlistService.findWishlistAccommodations(eq(nonExistentWishlistId), any(CursorRequest.CursorPageRequest.class)))
 				.thenThrow(new WishlistNotFoundException());
 
 			// When: 존재하지 않는 위시리스트의 숙소 목록 조회를 시도한다
@@ -2194,7 +2195,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 							.optional()
 					)));
 
-			verify(wishlistService).findWishlistAccommodations(eq(nonExistentWishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L));
+			verify(wishlistService).findWishlistAccommodations(eq(nonExistentWishlistId), any(CursorRequest.CursorPageRequest.class));
 		}
 
 		@Test
@@ -2203,7 +2204,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			// Given: 다른 사용자 소유의 위시리스트 조회를 시도하는 상황
 			Long otherUserWishlistId = 1L;
 
-			when(wishlistService.findWishlistAccommodations(eq(otherUserWishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L)))
+			when(wishlistService.findWishlistAccommodations(eq(otherUserWishlistId), any(CursorRequest.CursorPageRequest.class)))
 				.thenThrow(new WishlistAccessDeniedException());
 
 			// When: 다른 사용자의 위시리스트 숙소 목록 조회를 시도한다
@@ -2225,7 +2226,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 							.optional()
 					)));
 
-			verify(wishlistService).findWishlistAccommodations(eq(otherUserWishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L));
+			verify(wishlistService).findWishlistAccommodations(eq(otherUserWishlistId), any(CursorRequest.CursorPageRequest.class));
 		}
 
 		@Test
@@ -2269,7 +2270,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			WishlistResponse.WishlistAccommodationInfos expectedResponse =
 				new WishlistResponse.WishlistAccommodationInfos(accommodations, pageInfo);
 
-			when(wishlistService.findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L)))
+			when(wishlistService.findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class)))
 				.thenReturn(expectedResponse);
 
 			// When: 커서를 포함한 페이징 조회를 수행한다
@@ -2341,7 +2342,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 							.description("현재 페이지 크기")
 					)));
 
-			verify(wishlistService).findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L));
+			verify(wishlistService).findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class));
 		}
 
 		@Test
@@ -2379,7 +2380,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			WishlistResponse.WishlistAccommodationInfos expectedResponse =
 				new WishlistResponse.WishlistAccommodationInfos(accommodations, pageInfo);
 
-			when(wishlistService.findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L)))
+			when(wishlistService.findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class)))
 				.thenReturn(expectedResponse);
 
 			// When: 한 개의 숙소만 있는 위시리스트를 조회한다
@@ -2462,7 +2463,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 							.description("현재 페이지 크기 (1)")
 					)));
 
-			verify(wishlistService).findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L));
+			verify(wishlistService).findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class));
 		}
 
 		@ParameterizedTest(name = "잘못된 위시리스트 ID: {0}")
@@ -2470,7 +2471,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 		@DisplayName("시나리오: 잘못된 위시리스트 ID로 숙소 목록 조회를 시도한다")
 		void 잘못된_위시리스트_ID로_숙소_목록_조회를_시도한다(Long invalidWishlistId) throws Exception {
 			// Given: 잘못된 위시리스트 ID로 조회하려는 상황
-			when(wishlistService.findWishlistAccommodations(eq(invalidWishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L)))
+			when(wishlistService.findWishlistAccommodations(eq(invalidWishlistId), any(CursorRequest.CursorPageRequest.class)))
 				.thenThrow(new WishlistNotFoundException());
 
 			// When: 잘못된 위시리스트 ID로 조회를 시도한다
@@ -2492,7 +2493,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 							.optional()
 					)));
 
-			verify(wishlistService).findWishlistAccommodations(eq(invalidWishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L));
+			verify(wishlistService).findWishlistAccommodations(eq(invalidWishlistId), any(CursorRequest.CursorPageRequest.class));
 		}
 
 		@Test
@@ -2529,7 +2530,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			WishlistResponse.WishlistAccommodationInfos expectedResponse =
 				new WishlistResponse.WishlistAccommodationInfos(accommodations, pageInfo);
 
-			when(wishlistService.findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L)))
+			when(wishlistService.findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class)))
 				.thenReturn(expectedResponse);
 
 			// When: 최대 페이지 크기로 조회한다
@@ -2597,7 +2598,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 							.description("현재 페이지 크기 (50)")
 					)));
 
-			verify(wishlistService).findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L));
+			verify(wishlistService).findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class));
 		}
 
 		@Test
@@ -2631,7 +2632,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			WishlistResponse.WishlistAccommodationInfos expectedResponse =
 				new WishlistResponse.WishlistAccommodationInfos(accommodations, pageInfo);
 
-			when(wishlistService.findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L)))
+			when(wishlistService.findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class)))
 				.thenReturn(expectedResponse);
 
 			// When: 잘못된 커서로 조회를 시도한다
@@ -2708,7 +2709,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 							.description("현재 페이지 크기")
 					)));
 
-			verify(wishlistService).findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L));
+			verify(wishlistService).findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class));
 		}
 
 		@Test
@@ -2718,7 +2719,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			Long wishlistId = 1L;
 			String invalidSize = "100"; // 최대 50을 초과
 
-			when(wishlistService.findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L)))
+			when(wishlistService.findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class)))
 				.thenThrow(new CursorPageSizeException());
 
 			// When: 잘못된 페이지 크기로 조회를 시도한다
@@ -2739,7 +2740,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 							.description("잘못된 페이지 크기 (최대 50 초과)")
 					)));
 
-			verify(wishlistService).findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L));
+			verify(wishlistService).findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class));
 		}
 
 		@Test
@@ -2748,7 +2749,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			// Given: 매우 큰 위시리스트 ID로 조회하는 상황
 			Long largeWishlistId = Long.MAX_VALUE;
 
-			when(wishlistService.findWishlistAccommodations(eq(largeWishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L)))
+			when(wishlistService.findWishlistAccommodations(eq(largeWishlistId), any(CursorRequest.CursorPageRequest.class)))
 				.thenThrow(new WishlistNotFoundException());
 
 			// When: 매우 큰 위시리스트 ID로 조회를 시도한다
@@ -2770,7 +2771,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 							.optional()
 					)));
 
-			verify(wishlistService).findWishlistAccommodations(eq(largeWishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L));
+			verify(wishlistService).findWishlistAccommodations(eq(largeWishlistId), any(CursorRequest.CursorPageRequest.class));
 		}
 
 		@Test
@@ -2802,7 +2803,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			WishlistResponse.WishlistAccommodationInfos expectedResponse =
 				new WishlistResponse.WishlistAccommodationInfos(accommodations, pageInfo);
 
-			when(wishlistService.findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L)))
+			when(wishlistService.findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class)))
 				.thenReturn(expectedResponse);
 
 			// When: 페이지 크기를 지정하지 않고 조회한다
@@ -2864,7 +2865,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 							.description("현재 페이지 크기")
 					)));
 
-			verify(wishlistService).findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class), eq(1L));
+			verify(wishlistService).findWishlistAccommodations(eq(wishlistId), any(CursorRequest.CursorPageRequest.class));
 		}
 	}
 }

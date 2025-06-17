@@ -39,7 +39,6 @@ public class WishlistController {
 
 		log.info(requestDto.toString());
 		WishlistResponse.CreateResponse response = wishlistService.createWishlist(requestDto, memberId);
-		log.info(response.toString());
 		return ResponseEntity.ok(response);
 	}
 
@@ -70,7 +69,6 @@ public class WishlistController {
 		log.info(requestDto.toString());
 		WishlistResponse.WishlistInfos response =
 			wishlistService.findWishlists(requestDto, memberId);
-		log.info(response.toString());
 		return ResponseEntity.ok(response);
 	}
 
