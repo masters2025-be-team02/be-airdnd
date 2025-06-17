@@ -2,10 +2,10 @@ package kr.kro.airbob.domain.auth.filter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import kr.kro.airbob.domain.auth.common.SessionUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
@@ -33,7 +33,7 @@ public class SessionAuthFilter extends OncePerRequestFilter {
             return;
         }
 
-        String sessionId = getSessionIdByCookie(request);
+        String sessionId = SessionUtil.getSessionIdByCookie(request);
 
         // 세션 ID가 없거나 레디스에 없으면 401 Unauthorized 반환
         if (sessionId == null || !Boolean.TRUE.equals(redisTemplate.hasKey("SESSION:" + sessionId))) {
@@ -50,21 +50,6 @@ public class SessionAuthFilter extends OncePerRequestFilter {
         request.setAttribute("memberId", memberId);
 
         filterChain.doFilter(request, response);
-    }
-
-    private String getSessionIdByCookie(HttpServletRequest request) {
-        String sessionId = null;
-        Cookie[] cookies = request.getCookies();
-
-        if (cookies != null) {
-            for (Cookie cookie : cookies) {
-                if ("SESSION_ID".equals(cookie.getName())) {
-                    sessionId = cookie.getValue();
-                    break;
-                }
-            }
-        }
-        return sessionId;
     }
 
     private long cheekMemberIdType(String sessionId) {
