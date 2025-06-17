@@ -39,10 +39,6 @@ public class AuthService {
         sessionRedisRepository.deleteSession(sessionId);
     }
 
-    public Optional<Long> getMemberIdFromSession(String sessionId) {
-        return sessionRedisRepository.getMemberIdBySession(sessionId);
-    }
-
 
     public void validateHost(String sessionId, Long hostId) {
         Long memberId = sessionRedisRepository.getMemberIdBySession(sessionId).orElse(null);
