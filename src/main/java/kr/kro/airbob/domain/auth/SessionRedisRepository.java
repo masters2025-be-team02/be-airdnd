@@ -9,19 +9,20 @@ import org.springframework.stereotype.Repository;
 @Repository
 @RequiredArgsConstructor
 public class SessionRedisRepository {
-    private final RedisTemplate<String, Object> redisTemplate;
     private static final Duration TTL = Duration.ofHours(1);
+    private static final String SESSION = "SESSION:";
+    private final RedisTemplate<String, Object> redisTemplate;
 
     public void saveSession(String sessionId, Long memberId) {
-        redisTemplate.opsForValue().set("SESSION:" + sessionId, memberId, TTL);
+        redisTemplate.opsForValue().set(SESSION + sessionId, memberId, TTL);
     }
 
     public Optional<Long> getMemberIdBySession(String sessionId) {
-        Object value = redisTemplate.opsForValue().get("SESSION:" + sessionId);
-        return Optional.ofNullable((Long) value);
+        Object value = redisTemplate.opsForValue().get(SESSION + sessionId);
+        return Optional.of((Long) value);
     }
 
     public void deleteSession(String sessionId) {
-        redisTemplate.delete("SESSION:" + sessionId);
+        redisTemplate.delete(SESSION + sessionId);
     }
 }
