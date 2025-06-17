@@ -2,6 +2,7 @@ package kr.kro.airbob.common.exception;
 
 import java.util.stream.Collectors;
 
+import kr.kro.airbob.domain.member.exception.DuplicatedEmailException;
 import kr.kro.airbob.domain.accommodation.exception.AccommodationNotFoundException;
 import kr.kro.airbob.domain.reservation.exception.AlreadyReservedException;
 import org.springframework.http.HttpStatus;
@@ -80,6 +81,12 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(CursorPageSizeException.class)
 	public ResponseEntity<Void> handleCursorPageSizeException(CursorPageSizeException e) {
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+	}
+
+	@ExceptionHandler(DuplicatedEmailException.class)
+	public ResponseEntity<Void> handleDuplicatedEmailException(DuplicatedEmailException e) {
+		log.error("email duplicated: {}", e.getMessage());
+		return ResponseEntity.status(HttpStatus.CONFLICT).build();
 	}
 
 	@ExceptionHandler(Exception.class)
