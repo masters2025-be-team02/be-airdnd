@@ -5,6 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Optional;
 import kr.kro.airbob.domain.auth.common.SessionUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -45,24 +46,20 @@ public class SessionAuthFilter extends OncePerRequestFilter {
             return;
         }
 
-        long memberId = cheekMemberIdType(sessionId);
+        long memberId = checkMemberIdType(sessionId);
 
         request.setAttribute("memberId", memberId);
 
         filterChain.doFilter(request, response);
     }
 
-    private long cheekMemberIdType(String sessionId) {
-        long memberId;
-        Object raw = redisTemplate.opsForValue().get("SESSION:" + sessionId);
+    private long checkMemberIdType(String sessionId) {
+        Object value = redisTemplate.opsForValue().get("SESSION:" + sessionId);
 
-        if (raw instanceof Integer i) {
-            memberId = i.longValue();
-        } else if (raw instanceof Long l) {
-            memberId = l;
+        if (value instanceof Number number) {
+            return number.longValue();
         } else {
-            throw new IllegalStateException("Unexpected session type: " + raw.getClass());
+            throw new IllegalStateException("Unexpected session type: " + value.getClass());
         }
-        return memberId;
     }
 }
