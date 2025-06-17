@@ -37,6 +37,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.restdocs.RestDocumentationContextProvider;
 import org.springframework.restdocs.RestDocumentationExtension;
@@ -54,6 +55,8 @@ class AccommodationControllerTest {
     private AccommodationService accommodationService;
     @MockitoBean
     private CursorDecoder cursorDecoder;
+    @MockitoBean
+    private RedisTemplate<String, Object> redisTemplate;
 
     @Autowired
     private MockMvc mockMvc;
