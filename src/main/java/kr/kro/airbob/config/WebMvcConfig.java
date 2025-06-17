@@ -2,12 +2,14 @@ package kr.kro.airbob.config;
 
 import java.util.List;
 
-import kr.kro.airbob.common.filter.SessionAuthFilter;
+import kr.kro.airbob.domain.accommodation.interceptor.AccommodationAuthorizationInterceptor;
+import kr.kro.airbob.domain.auth.filter.SessionAuthFilter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import kr.kro.airbob.cursor.resolver.CursorParamArgumentResolver;
@@ -20,10 +22,17 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
 	private final CursorParamArgumentResolver cursorParamArgumentResolver;
 	private final SessionAuthFilter sessionAuthFilter;
+	private final AccommodationAuthorizationInterceptor interceptor;
 
 	@Override
 	public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
 		resolvers.add(cursorParamArgumentResolver);
+	}
+
+	@Override
+	public void addInterceptors(InterceptorRegistry registry) {
+		registry.addInterceptor(interceptor)
+				.addPathPatterns("/api/accommodations/**"); // 적용 경로
 	}
 
 	@Bean
