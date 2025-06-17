@@ -66,6 +66,7 @@ public class WishlistService {
 	@Transactional
 	public WishlistResponse.UpdateResponse updateWishlist(Long wishlistId, WishlistRequest.updateRequest request, Long loggedInMemberId) {
 
+		Member member = findMemberById(loggedInMemberId); // todo: exist?
 		Wishlist foundWishlist = findWishlistById(wishlistId);
 		log.info("{} 위시리스트 조회 성공", foundWishlist.getId());
 
@@ -95,6 +96,7 @@ public class WishlistService {
 	@Transactional(readOnly = true)
 	public WishlistResponse.WishlistInfos findWishlists(CursorRequest.CursorPageRequest request, Long loggedInMemberId) {
 
+		// todo: exist?
 		Member member = findMemberById(loggedInMemberId); // 사용자 존재 여부를 위해 넣었는데, 필요한지 의문. member는 사용하지 않음
 
 		Long lastId = request.lastId();
@@ -144,7 +146,7 @@ public class WishlistService {
 
 		Wishlist wishlist = findWishlistById(wishlistId);
 		Accommodation accommodation = findAccommodationById(request.accommodationId());
-		Member member = findMemberById(loggedInMemberId);
+		Member member = findMemberById(loggedInMemberId); // todo: exist?
 
 		validateWishlistOwnership(wishlist, member.getId());
 		validateWishlistAccommodationDuplicate(wishlistId, accommodation.getId());
@@ -168,7 +170,7 @@ public class WishlistService {
 		Wishlist wishlist = findWishlistById(wishlistId);
 		WishlistAccommodation wishlistAccommodation = findWishlistAccommodation(wishlistAccommodationId);
 
-		Member member = findMemberById(loggedInMemberId);
+		Member member = findMemberById(loggedInMemberId); // todo: exist?
 
 		validateWishlistOwnership(wishlist, member.getId());
 		validateWishlistAccommodationOwnership(wishlistAccommodation, wishlistId);
@@ -184,7 +186,7 @@ public class WishlistService {
 		Wishlist wishlist = findWishlistById(wishlistId);
 		WishlistAccommodation wishlistAccommodation = findWishlistAccommodation(wishlistAccommodationId);
 
-		Member member = findMemberById(loggedInMemberId);
+		Member member = findMemberById(loggedInMemberId); // todo: exist?
 
 		validateWishlistOwnership(wishlist, member.getId());
 		validateWishlistAccommodationOwnership(wishlistAccommodation, wishlistId);
@@ -197,7 +199,7 @@ public class WishlistService {
 		CursorRequest.CursorPageRequest request, Long loggedInMemberId) {
 
 		Wishlist wishlist = findWishlistById(wishlistId);
-		Member member = findMemberById(loggedInMemberId);
+		Member member = findMemberById(loggedInMemberId); // todo: exist?
 
 		validateWishlistOwnership(wishlist, member.getId());
 
