@@ -10,6 +10,7 @@ import kr.kro.airbob.cursor.util.CursorDecoder;
 import kr.kro.airbob.domain.accommodation.interceptor.AccommodationAuthorizationInterceptor;
 import kr.kro.airbob.domain.common.BaseControllerDocumentationTest;
 import kr.kro.airbob.domain.member.dto.MemberRequestDto.SignupMemberRequestDto;
+import kr.kro.airbob.domain.recentlyViewed.interceptor.RecentlyViewedAuthorizationInterceptor;
 import kr.kro.airbob.domain.wishlist.interceptor.WishlistAuthorizationInterceptor;
 
 import org.junit.jupiter.api.DisplayName;
@@ -43,6 +44,8 @@ public class MemberControllerTest extends BaseControllerDocumentationTest {
     @MockitoBean
     private WishlistAuthorizationInterceptor wishlistAuthorizationInterceptor;
 
+    @MockitoBean
+    private RecentlyViewedAuthorizationInterceptor recentlyViewedAuthorizationInterceptor;
 
     @Override
     protected Object getController() {

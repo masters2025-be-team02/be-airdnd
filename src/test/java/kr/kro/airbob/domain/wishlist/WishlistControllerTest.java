@@ -41,6 +41,7 @@ import kr.kro.airbob.domain.accommodation.dto.AccommodationResponse;
 import kr.kro.airbob.domain.accommodation.exception.AccommodationNotFoundException;
 import kr.kro.airbob.domain.accommodation.interceptor.AccommodationAuthorizationInterceptor;
 import kr.kro.airbob.domain.common.BaseControllerDocumentationTest;
+import kr.kro.airbob.domain.recentlyViewed.interceptor.RecentlyViewedAuthorizationInterceptor;
 import kr.kro.airbob.domain.wishlist.api.WishlistController;
 import kr.kro.airbob.domain.wishlist.dto.WishlistRequest;
 import kr.kro.airbob.domain.wishlist.dto.WishlistResponse;
@@ -76,6 +77,9 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 
 	@MockitoBean
 	private WishlistAuthorizationInterceptor wishlistAuthorizationInterceptor;
+
+	@MockitoBean
+	private RecentlyViewedAuthorizationInterceptor recentlyViewedAuthorizationInterceptor;
 
 	@Autowired
 	private WishlistController wishlistController;

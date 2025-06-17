@@ -19,6 +19,7 @@ import kr.kro.airbob.cursor.util.CursorDecoder;
 import kr.kro.airbob.domain.accommodation.interceptor.AccommodationAuthorizationInterceptor;
 import kr.kro.airbob.domain.auth.dto.AuthRequestDto.LoginRequest;
 import kr.kro.airbob.domain.common.BaseControllerDocumentationTest;
+import kr.kro.airbob.domain.recentlyViewed.interceptor.RecentlyViewedAuthorizationInterceptor;
 import kr.kro.airbob.domain.wishlist.interceptor.WishlistAuthorizationInterceptor;
 
 import org.junit.jupiter.api.DisplayName;
@@ -49,6 +50,9 @@ class AuthControllerTest extends BaseControllerDocumentationTest {
     private AccommodationAuthorizationInterceptor accommodationAuthorizationInterceptor;
     @MockitoBean
     private WishlistAuthorizationInterceptor wishlistAuthorizationInterceptor;
+
+    @MockitoBean
+    private RecentlyViewedAuthorizationInterceptor recentlyViewedAuthorizationInterceptor;
 
     @Autowired
     private MockMvc mockMvc;
