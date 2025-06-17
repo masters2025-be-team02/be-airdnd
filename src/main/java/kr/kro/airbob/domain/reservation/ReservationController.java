@@ -10,7 +10,7 @@ import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/accommodations")
+@RequestMapping("/api/reservations/accommodations")
 public class ReservationController {
 
     private final ReservationService reservationService;
