@@ -2,6 +2,8 @@ package kr.kro.airbob.common.exception;
 
 import java.util.stream.Collectors;
 
+import kr.kro.airbob.domain.accommodation.exception.AccommodationNotFoundException;
+import kr.kro.airbob.domain.reservation.exception.AlreadyReservedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -38,6 +40,22 @@ public class GlobalExceptionHandler {
 		return ResponseEntity
 			.status(HttpStatus.NOT_FOUND)
 			.build();
+	}
+
+	@ExceptionHandler(AccommodationNotFoundException.class)
+	public ResponseEntity<Void> handleAccommodationNotFoundException(AccommodationNotFoundException e) {
+		log.error("AccommodationNotFoundException: {}", e.getMessage());
+		return ResponseEntity
+				.status(HttpStatus.NOT_FOUND)
+				.build();
+	}
+
+	@ExceptionHandler(AlreadyReservedException.class)
+	public ResponseEntity<Void> handleAlreadyReservedException(AlreadyReservedException e) {
+		log.error("AlreadyReservedException: {}", e.getMessage());
+		return ResponseEntity
+				.status(HttpStatus.CONFLICT)
+				.build();
 	}
 
 	@ExceptionHandler(WishlistNotFoundException.class)
