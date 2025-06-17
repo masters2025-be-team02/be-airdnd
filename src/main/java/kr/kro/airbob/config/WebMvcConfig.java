@@ -4,6 +4,7 @@ import java.util.List;
 
 import kr.kro.airbob.domain.accommodation.interceptor.AccommodationAuthorizationInterceptor;
 import kr.kro.airbob.domain.auth.filter.SessionAuthFilter;
+import kr.kro.airbob.domain.recentlyViewed.interceptor.RecentlyViewedAuthorizationInterceptor;
 import kr.kro.airbob.domain.wishlist.interceptor.WishlistAuthorizationInterceptor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
@@ -25,7 +26,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
 	private final SessionAuthFilter sessionAuthFilter;
 	private final AccommodationAuthorizationInterceptor interceptor;
 	private final WishlistAuthorizationInterceptor wishlistInterceptor;
-
+	private final RecentlyViewedAuthorizationInterceptor recentlyViewedInterceptor;
 	@Override
 	public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
 		resolvers.add(cursorParamArgumentResolver);
@@ -38,6 +39,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
 		registry.addInterceptor(wishlistInterceptor)
 			.addPathPatterns("/api/members/wishlists/**");
+
+		registry.addInterceptor(recentlyViewedInterceptor)
+			.addPathPatterns("/api/members/recentlyViewed/**");
 	}
 
 	@Bean

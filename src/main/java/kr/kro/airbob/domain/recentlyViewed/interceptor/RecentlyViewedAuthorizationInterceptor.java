@@ -12,6 +12,14 @@ public class RecentlyViewedAuthorizationInterceptor implements HandlerIntercepto
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws
 		Exception {
-		return HandlerInterceptor.super.preHandle(request, response, handler);
+
+		Long memberId = (Long)request.getAttribute("memberId");
+
+		if (memberId == null) {
+			response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "로그인이 필요합니다.");
+			return false;
+		}
+
+		return true;
 	}
 }

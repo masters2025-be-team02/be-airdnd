@@ -1,5 +1,6 @@
 package kr.kro.airbob.domain.accommodation.dto;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import kr.kro.airbob.domain.accommodation.common.AmenityType;
@@ -39,5 +40,23 @@ public class AccommodationResponse {
 		private List<AccommodationRequest.AmenityInfo> amenityInfos;
 		private Double averageRating;
 		private Integer reviewCount;
+	}
+
+	public record RecentlyViewedAccommodations(
+		List<RecentlyViewedAccommodation> accommodations,
+		int totalCount
+	) {
+
+	}
+
+	public record RecentlyViewedAccommodation(
+		LocalDateTime viewedAt,
+		Long accommodationId,
+		String accommodationName,
+		String thumbnailUrl,
+		List<AmenityInfoResponse> amenities,
+		Double reviewRating,
+		Boolean isInWishlist
+	) {
 	}
 }
