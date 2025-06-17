@@ -1,6 +1,6 @@
 package kr.kro.airbob.domain.discountPolicy.repository;
 
-import kr.kro.airbob.domain.discountPolicy.DiscountPolicy;
+import kr.kro.airbob.domain.discountPolicy.entity.DiscountPolicy;
 import kr.kro.airbob.domain.discountPolicy.dto.response.DiscountPolicyResponseDto;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

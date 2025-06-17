@@ -16,7 +16,7 @@ import kr.kro.airbob.domain.member.Member;
 import kr.kro.airbob.domain.payment.common.PaymentGateway;
 import kr.kro.airbob.domain.payment.common.PaymentMethod;
 import kr.kro.airbob.domain.payment.common.PaymentStatus;
-import kr.kro.airbob.domain.reservation.Reservation;
+import kr.kro.airbob.domain.reservation.entity.Reservation;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
