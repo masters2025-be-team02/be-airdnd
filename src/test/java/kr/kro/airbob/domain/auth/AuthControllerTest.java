@@ -19,6 +19,8 @@ import kr.kro.airbob.cursor.util.CursorDecoder;
 import kr.kro.airbob.domain.accommodation.interceptor.AccommodationAuthorizationInterceptor;
 import kr.kro.airbob.domain.auth.dto.AuthRequestDto.LoginRequest;
 import kr.kro.airbob.domain.common.BaseControllerDocumentationTest;
+import kr.kro.airbob.domain.wishlist.interceptor.WishlistAuthorizationInterceptor;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,6 +47,12 @@ class AuthControllerTest extends BaseControllerDocumentationTest {
     private RedisTemplate<String, Object> redisTemplate;
     @MockitoBean
     private AccommodationAuthorizationInterceptor accommodationAuthorizationInterceptor;
+
+    @MockitoBean
+    private AccommodationAuthorizationInterceptor accommodationAuthorizationInterceptor;
+
+    @MockitoBean
+    private WishlistAuthorizationInterceptor wishlistAuthorizationInterceptor;
 
     @Autowired
     private MockMvc mockMvc;

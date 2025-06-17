@@ -71,7 +71,7 @@ class WishlistIntegrationTest {
 
 	@Autowired
 	private WishlistAccommodationRepository wishlistAccommodationRepository;
-	
+
 	@Autowired
 	private MemberRepository memberRepository;
 
