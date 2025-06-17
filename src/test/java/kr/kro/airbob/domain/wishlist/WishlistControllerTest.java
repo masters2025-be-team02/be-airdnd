@@ -77,11 +77,6 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 	@MockitoBean
 	private WishlistAuthorizationInterceptor wishlistAuthorizationInterceptor;
 
-	@MockitoBean
-	private AccommodationAuthorizationInterceptor accommodationAuthorizationInterceptor;
-	
-	
-	
 	@Autowired
 	private WishlistController wishlistController;
 

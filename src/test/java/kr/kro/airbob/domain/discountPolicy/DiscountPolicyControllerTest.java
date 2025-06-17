@@ -11,6 +11,9 @@ import kr.kro.airbob.domain.discountPolicy.common.PromotionType;
 import kr.kro.airbob.domain.discountPolicy.dto.request.DiscountPolicyCreateDto;
 import kr.kro.airbob.domain.discountPolicy.dto.request.DiscountPolicyUpdateDto;
 import kr.kro.airbob.domain.discountPolicy.dto.response.DiscountPolicyResponseDto;
+import kr.kro.airbob.domain.discountPolicy.DiscountPolicyService;
+import kr.kro.airbob.domain.wishlist.interceptor.WishlistAuthorizationInterceptor;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +48,9 @@ public class DiscountPolicyControllerTest {
     private RedisTemplate<String, Object> redisTemplate;
     @MockitoBean
     private AccommodationAuthorizationInterceptor accommodationAuthorizationInterceptor;
+
+    @MockitoBean
+    private WishlistAuthorizationInterceptor wishlistAuthorizationInterceptor;
 
     @Autowired
     private MockMvc mockMvc;

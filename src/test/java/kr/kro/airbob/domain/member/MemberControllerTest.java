@@ -10,6 +10,8 @@ import kr.kro.airbob.cursor.util.CursorDecoder;
 import kr.kro.airbob.domain.accommodation.interceptor.AccommodationAuthorizationInterceptor;
 import kr.kro.airbob.domain.common.BaseControllerDocumentationTest;
 import kr.kro.airbob.domain.member.dto.MemberRequestDto.SignupMemberRequestDto;
+import kr.kro.airbob.domain.wishlist.interceptor.WishlistAuthorizationInterceptor;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,6 +39,9 @@ public class MemberControllerTest extends BaseControllerDocumentationTest {
     private RedisTemplate<String, Object> redisTemplate;
     @MockitoBean
     private AccommodationAuthorizationInterceptor accommodationAuthorizationInterceptor;
+
+    @MockitoBean
+    private WishlistAuthorizationInterceptor wishlistAuthorizationInterceptor;
 
 
     @Override

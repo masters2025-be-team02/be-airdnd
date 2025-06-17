@@ -20,7 +20,7 @@ public class AccommodationAuthorizationInterceptor implements HandlerInterceptor
     private final WishlistAccommodationRepository wishlistAccommodationRepository;
 
     @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws IOException {
         String method = request.getMethod();
         String uri = request.getRequestURI();
 
