@@ -1,4 +1,4 @@
-package kr.kro.airbob.common.filter;
+package kr.kro.airbob.domain.auth.filter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -33,18 +33,7 @@ public class SessionAuthFilter extends OncePerRequestFilter {
             return;
         }
 
-
-        Cookie[] cookies = request.getCookies();
-        String sessionId = null;
-
-        if (cookies != null) {
-            for (Cookie cookie : cookies) {
-                if ("SESSION_ID".equals(cookie.getName())) {
-                    sessionId = cookie.getValue();
-                    break;
-                }
-            }
-        }
+        String sessionId = getSessionIdByCookie(request);
 
         // 세션 ID가 없거나 레디스에 없으면 401 Unauthorized 반환
         if (sessionId == null || !Boolean.TRUE.equals(redisTemplate.hasKey("SESSION:" + sessionId))) {
@@ -56,9 +45,39 @@ public class SessionAuthFilter extends OncePerRequestFilter {
             return;
         }
 
-        Long memberId = (Long) redisTemplate.opsForValue().get("SESSION:" + sessionId);
+        long memberId = cheekMemberIdType(sessionId);
+
         request.setAttribute("memberId", memberId);
 
         filterChain.doFilter(request, response);
+    }
+
+    private String getSessionIdByCookie(HttpServletRequest request) {
+        String sessionId = null;
+        Cookie[] cookies = request.getCookies();
+
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("SESSION_ID".equals(cookie.getName())) {
+                    sessionId = cookie.getValue();
+                    break;
+                }
+            }
+        }
+        return sessionId;
+    }
+
+    private long cheekMemberIdType(String sessionId) {
+        long memberId;
+        Object raw = redisTemplate.opsForValue().get("SESSION:" + sessionId);
+
+        if (raw instanceof Integer i) {
+            memberId = i.longValue();
+        } else if (raw instanceof Long l) {
+            memberId = l;
+        } else {
+            throw new IllegalStateException("Unexpected session type: " + raw.getClass());
+        }
+        return memberId;
     }
 }
