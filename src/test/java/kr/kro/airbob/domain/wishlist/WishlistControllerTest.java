@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Stream;
 
+import kr.kro.airbob.domain.accommodation.interceptor.AccommodationAuthorizationInterceptor;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -60,6 +61,8 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 
 	@MockitoBean
 	private RedisTemplate<String, Object> redisTemplate;
+	@MockitoBean
+	private AccommodationAuthorizationInterceptor accommodationAuthorizationInterceptor;
 
 
 	@Autowired

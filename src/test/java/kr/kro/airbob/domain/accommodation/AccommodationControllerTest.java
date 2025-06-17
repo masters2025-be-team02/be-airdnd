@@ -22,7 +22,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
 import java.util.List;
+import kr.kro.airbob.config.WebMvcConfig;
 import kr.kro.airbob.cursor.util.CursorDecoder;
 import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest.AddressInfo;
 import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest.AmenityInfo;
@@ -30,6 +32,9 @@ import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest.CreateAccommo
 import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest.OccupancyPolicyInfo;
 import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest.UpdateAccommodationDto;
 import kr.kro.airbob.domain.accommodation.dto.AccommodationResponse.AccommodationSearchResponseDto;
+import kr.kro.airbob.domain.accommodation.interceptor.AccommodationAuthorizationInterceptor;
+import kr.kro.airbob.domain.accommodation.repository.AccommodationRepository;
+import kr.kro.airbob.domain.auth.AuthService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -37,6 +42,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.restdocs.RestDocumentationContextProvider;
@@ -57,6 +64,10 @@ class AccommodationControllerTest {
     private CursorDecoder cursorDecoder;
     @MockitoBean
     private RedisTemplate<String, Object> redisTemplate;
+    @MockitoBean
+    private AuthService authService;
+    @MockitoBean
+    private AccommodationAuthorizationInterceptor accommodationAuthorizationInterceptor;
 
     @Autowired
     private MockMvc mockMvc;
@@ -68,7 +79,9 @@ class AccommodationControllerTest {
     private WebApplicationContext context;
 
     @BeforeEach
-    void setUp(RestDocumentationContextProvider restDocumentation) {
+    void setUp(RestDocumentationContextProvider restDocumentation) throws IOException {
+        given(accommodationAuthorizationInterceptor.preHandle(any(), any(), any())).willReturn(true);
+
         this.mockMvc = MockMvcBuilders
                 .webAppContextSetup(context)
                 .apply(documentationConfiguration(restDocumentation)

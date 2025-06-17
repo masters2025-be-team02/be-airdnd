@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import kr.kro.airbob.cursor.util.CursorDecoder;
+import kr.kro.airbob.domain.accommodation.interceptor.AccommodationAuthorizationInterceptor;
 import kr.kro.airbob.domain.common.BaseControllerDocumentationTest;
 import kr.kro.airbob.domain.member.dto.MemberRequestDto.SignupMemberRequestDto;
 import org.junit.jupiter.api.DisplayName;
@@ -34,6 +35,8 @@ public class MemberControllerTest extends BaseControllerDocumentationTest {
     private CursorDecoder cursorDecoder;
     @MockitoBean
     private RedisTemplate<String, Object> redisTemplate;
+    @MockitoBean
+    private AccommodationAuthorizationInterceptor accommodationAuthorizationInterceptor;
 
 
     @Override
