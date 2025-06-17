@@ -3,6 +3,7 @@ package kr.kro.airbob.domain.wishlist.repository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -74,7 +75,8 @@ public interface WishlistAccommodationRepository extends JpaRepository<WishlistA
         WHERE wa.id IN :wishlistAccommodationIds
         ORDER BY wa.id, ai.id
         """)
-	List<WishlistImageProjection> findAccommodationImagesByWishlistAccommodationIds(@Param("wishlistAccommodationIds") List<Long> wishlistAccommodationIds);
+	List<WishlistImageProjection> findAccommodationImagesByWishlistAccommodationIds(
+		@Param("wishlistAccommodationIds") List<Long> wishlistAccommodationIds);
 
 	@Query(value = """
 		SELECT 
@@ -99,4 +101,10 @@ public interface WishlistAccommodationRepository extends JpaRepository<WishlistA
 		@Param("wishlistAccommodationIds")	List<Long> wishlistAccommodationIds);
 
 	boolean existsByWishlistIdAndAccommodationId(Long wishlistId, Long accommodationId);
+
+	@Query("select wa.wishlist.id from WishlistAccommodation wa where wa.id = :wishlistAccommodationId")
+	Optional<Long> findWishlistIdByWishlistAccommodationId(
+		@Param("wishlistAccommodationId") Long wishlistAccommodationId);
+
 }
+

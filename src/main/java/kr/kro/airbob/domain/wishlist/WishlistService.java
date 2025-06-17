@@ -64,40 +64,30 @@ public class WishlistService {
 	}
 
 	@Transactional
-	public WishlistResponse.UpdateResponse updateWishlist(Long wishlistId, WishlistRequest.updateRequest request, Long loggedInMemberId) {
+	public WishlistResponse.UpdateResponse updateWishlist(Long wishlistId, WishlistRequest.updateRequest request) {
 
-		Member member = findMemberById(loggedInMemberId); // todo: exist?
-		Wishlist foundWishlist = findWishlistById(wishlistId);
-		log.info("{} 위시리스트 조회 성공", foundWishlist.getId());
+		Wishlist wishlist = findWishlistById(wishlistId);
+		log.info("{} 위시리스트 조회 성공", wishlist.getId());
 
-		validateWishlistOwnership(foundWishlist, loggedInMemberId);
+		log.info("위시리스트 이름 {} -> {} 변경", wishlist.getName(), request.name());
+		wishlist.updateName(request.name());
 
-		log.info("위시리스트 이름 {} -> {} 변경", foundWishlist.getName(), request.name());
-		foundWishlist.updateName(request.name());
-
-		return new WishlistResponse.UpdateResponse(foundWishlist.getId());
+		return new WishlistResponse.UpdateResponse(wishlist.getId());
 	}
 
 	@Transactional
-	public void deleteWishlist(Long wishlistId, Long loggedInMemberId) {
+	public void deleteWishlist(Long wishlistId) {
 		// 위시리스트 존재, 작성자 id 검증을 위한 조회
-		Wishlist foundWishlist = findWishlistById(wishlistId);
-		log.info("{} 위시리스트 조회 성공", foundWishlist.getId());
-
-		Member member = findMemberById(loggedInMemberId);
-
-		validateWishlistOwnershipOrAdmin(foundWishlist, member);
+		Wishlist wishlist = findWishlistById(wishlistId);
+		log.info("{} 위시리스트 조회 성공", wishlist.getId());
 
 		// 위시리스트에 속한 숙소 삭제
-		wishlistAccommodationRepository.deleteAllByWishlistId(foundWishlist.getId());
-		wishlistRepository.delete(foundWishlist);
+		wishlistAccommodationRepository.deleteAllByWishlistId(wishlist.getId());
+		wishlistRepository.delete(wishlist);
 	}
 
 	@Transactional(readOnly = true)
 	public WishlistResponse.WishlistInfos findWishlists(CursorRequest.CursorPageRequest request, Long loggedInMemberId) {
-
-		// todo: exist?
-		Member member = findMemberById(loggedInMemberId); // 사용자 존재 여부를 위해 넣었는데, 필요한지 의문. member는 사용하지 않음
 
 		Long lastId = request.lastId();
 		LocalDateTime lastCreatedAt = request.lastCreatedAt();
@@ -142,14 +132,12 @@ public class WishlistService {
 
 	@Transactional
 	public WishlistResponse.CreateWishlistAccommodationResponse createWishlistAccommodation(Long wishlistId,
-		WishlistRequest.CreateWishlistAccommodationRequest request, Long loggedInMemberId) {
+		WishlistRequest.CreateWishlistAccommodationRequest request) {
+
+		Accommodation accommodation = findAccommodationById(request.accommodationId());
+		validateWishlistAccommodationDuplicate(wishlistId, accommodation.getId());
 
 		Wishlist wishlist = findWishlistById(wishlistId);
-		Accommodation accommodation = findAccommodationById(request.accommodationId());
-		Member member = findMemberById(loggedInMemberId); // todo: exist?
-
-		validateWishlistOwnership(wishlist, member.getId());
-		validateWishlistAccommodationDuplicate(wishlistId, accommodation.getId());
 
 		WishlistAccommodation wishlistAccommodation = WishlistAccommodation.builder()
 			.wishlist(wishlist)
@@ -163,45 +151,26 @@ public class WishlistService {
 	}
 
 	@Transactional
-	public WishlistResponse.UpdateWishlistAccommodationResponse updateWishlistAccommodation(Long wishlistId,
-		Long wishlistAccommodationId, WishlistRequest.UpdateWishlistAccommodationRequest request,
-		Long loggedInMemberId) {
+	public WishlistResponse.UpdateWishlistAccommodationResponse updateWishlistAccommodation(
+		Long wishlistAccommodationId, WishlistRequest.UpdateWishlistAccommodationRequest request) {
 
-		Wishlist wishlist = findWishlistById(wishlistId);
 		WishlistAccommodation wishlistAccommodation = findWishlistAccommodation(wishlistAccommodationId);
-
-		Member member = findMemberById(loggedInMemberId); // todo: exist?
-
-		validateWishlistOwnership(wishlist, member.getId());
-		validateWishlistAccommodationOwnership(wishlistAccommodation, wishlistId);
-
 		wishlistAccommodation.updateMemo(request.memo());
 
 		return new WishlistResponse.UpdateWishlistAccommodationResponse(wishlistAccommodation.getId());
 	}
 
 	@Transactional
-	public void deleteWishlistAccommodation(Long wishlistId, Long wishlistAccommodationId, Long loggedInMemberId) {
+	public void deleteWishlistAccommodation(Long wishlistAccommodationId) {
 
-		Wishlist wishlist = findWishlistById(wishlistId);
 		WishlistAccommodation wishlistAccommodation = findWishlistAccommodation(wishlistAccommodationId);
-
-		Member member = findMemberById(loggedInMemberId); // todo: exist?
-
-		validateWishlistOwnership(wishlist, member.getId());
-		validateWishlistAccommodationOwnership(wishlistAccommodation, wishlistId);
 
 		wishlistAccommodationRepository.delete(wishlistAccommodation);
 	}
 
 	@Transactional(readOnly = true)
 	public WishlistResponse.WishlistAccommodationInfos findWishlistAccommodations(Long wishlistId,
-		CursorRequest.CursorPageRequest request, Long loggedInMemberId) {
-
-		Wishlist wishlist = findWishlistById(wishlistId);
-		Member member = findMemberById(loggedInMemberId); // todo: exist?
-
-		validateWishlistOwnership(wishlist, member.getId());
+		CursorRequest.CursorPageRequest request) {
 
 		Long lastId = request.lastId();
 		LocalDateTime lastCreatedAt = request.lastCreatedAt();
@@ -329,27 +298,6 @@ public class WishlistService {
 	private WishlistAccommodation findWishlistAccommodation(Long wishlistAccommodationId){
 		return wishlistAccommodationRepository.findById(wishlistAccommodationId)
 			.orElseThrow(WishlistAccommodationNotFoundException::new);
-	}
-
-	private void validateWishlistOwnership(Wishlist wishlist, Long memberId) {
-		if (!wishlist.isOwnedBy(memberId)) {
-			log.error("사용자 아이디: {}, 위시리스트 작성자 아이디: {}", memberId, wishlist.getMember().getId());
-			throw new WishlistAccessDeniedException();
-		}
-	}
-
-	private void validateWishlistOwnershipOrAdmin(Wishlist wishlist, Member member) {
-		if (!wishlist.isOwnedBy(member.getId()) && member.getRole() != MemberRole.ADMIN) {
-			log.error("사용자 아이디: {}, 위시리스트 작성자 아이디: {}", member.getId(), wishlist.getMember().getId());
-			throw new WishlistAccessDeniedException();
-		}
-	}
-
-	private void validateWishlistAccommodationOwnership(WishlistAccommodation wishlistAccommodation, Long wishlistId) {
-		if (!wishlistAccommodation.isOwnedBy(wishlistId)) {
-			log.error("위시리스트: {}, 항목이 속한 위시리스트: {}", wishlistId, wishlistAccommodation.getAccommodation().getId());
-			throw new WishlistAccommodationAccessDeniedException();
-		}
 	}
 
 	private void validateWishlistAccommodationDuplicate(Long wishlistId, Long accommodationId) {

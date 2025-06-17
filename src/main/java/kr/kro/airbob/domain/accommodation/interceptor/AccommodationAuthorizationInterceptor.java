@@ -4,6 +4,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import kr.kro.airbob.domain.accommodation.repository.AccommodationRepository;
+import kr.kro.airbob.domain.wishlist.repository.WishlistAccommodationRepository;
+import kr.kro.airbob.domain.wishlist.repository.WishlistRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -12,49 +14,83 @@ import org.springframework.web.servlet.HandlerInterceptor;
 @RequiredArgsConstructor
 public class AccommodationAuthorizationInterceptor implements HandlerInterceptor {
 
-    private final AccommodationRepository accommodationRepository;
+    public static final int WISHLIST_ID_INDEX = 4;
+    public static final int WISHLIST_ACCOMMODATION_ID_INDEX = 6;
+    private final WishlistRepository wishlistRepository;
+    private final WishlistAccommodationRepository wishlistAccommodationRepository;
 
     @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
-            throws IOException {
-
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         String method = request.getMethod();
         String uri = request.getRequestURI();
 
-        if (!(method.equals("PATCH") || method.equals("DELETE"))) {
-            return true; // 수정/삭제가 아니면 통과
-        }
-
-        // URI에서 숙소 ID 추출 (예: /api/accommodations/123)
-        String[] segments = uri.split("/");
-        Long accommodationId;
-        try {
-            accommodationId = Long.parseLong(segments[segments.length - 1]);
-        } catch (NumberFormatException e) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "유효하지 않은 숙소 ID입니다.");
-            return false;
-        }
-
-        // 필터에서 저장한 memberId 가져오기
-        Long requestMemberId = (Long) request.getAttribute("memberId");
+        // 모든 요청에서 memberId 확인 및 설정
+        Long requestMemberId = (Long)request.getAttribute("memberId");
         if (requestMemberId == null) {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "로그인이 필요합니다.");
             return false;
         }
 
-        // 숙소 정보 조회 및 작성자 검증
-        Long writerId = accommodationRepository.findHostIdByAccommodationId(accommodationId).orElse(null);
+        // 위시리스트 생성, 조회는 memberId 설정 후 통과
+        if ((method.equalsIgnoreCase("POST") || method.equalsIgnoreCase("GET"))
+            && uri.matches("^/api/members/wishlists/?$")) {
+            return true;
+        }
 
-        if (writerId == null) {
-            response.sendError(HttpServletResponse.SC_NOT_FOUND, "숙소를 찾을 수 없습니다.");
+        // URI에서 wishlistId 추출
+        String[] segments = uri.split("/");
+        Long wishlistId;
+        try {
+            wishlistId = Long.parseLong(segments[WISHLIST_ID_INDEX]);
+        } catch (NumberFormatException e) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "유효하지 않은 위시리스트 ID입니다.");
             return false;
         }
 
-        if (!writerId.equals(requestMemberId)) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "해당 숙소는 작성자만 .");
+        // 위시리스트 생성자 검증
+        Long memberId = wishlistRepository.findMemberIdByWishlistId(wishlistId).orElse(null);
+
+        if (memberId == null) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "위시리스트를 찾을 수 없습니다.");
             return false;
         }
 
+        if (!memberId.equals(requestMemberId)) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "위시리스트에 대한 접근 권한이 없습니다.");
+            return false;
+        }
+
+        // 위시리스트-숙소 생성, 조회 통과 - 없어도 되지만 명시적으로 표시
+        if ((method.equalsIgnoreCase("POST") || method.equalsIgnoreCase("GET"))
+            && uri.matches("^/api/members/wishlists/\\d+/accommodations/?$")) {
+            return true;
+        }
+
+        if ((method.equalsIgnoreCase("PATCH") || method.equalsIgnoreCase("DELETE"))
+            && uri.matches("^/api/members/wishlists/\\d+/accommodations/\\d+$")) {
+            // 위시리스트 숙소 메모 수정, 삭제인 경우 위시리스트 내부 항목인지 검증 절차
+            Long wishlistAccommodationId;
+
+            try {
+                wishlistAccommodationId = Long.parseLong(segments[WISHLIST_ACCOMMODATION_ID_INDEX]);
+            } catch (NumberFormatException e) {
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "유효하지 않은 위시리스트-숙소 ID입니다.");
+                return false;
+            }
+
+            Long foundWishlistId = wishlistAccommodationRepository.findWishlistIdByWishlistAccommodationId(
+                wishlistAccommodationId).orElse(null);
+
+            if (foundWishlistId == null) {
+                response.sendError(HttpServletResponse.SC_NOT_FOUND, "위시리스트-숙소를 찾을 수 없습니다.");
+                return false;
+            }
+
+            if (!foundWishlistId.equals(wishlistId)) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN, "해당 위시리스트에 속하지 않은 숙소입니다.");
+                return false;
+            }
+        }
         return true;
     }
 }
