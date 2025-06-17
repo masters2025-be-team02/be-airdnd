@@ -35,4 +35,9 @@ public class RecentlyViewedService {
 		}
 		redisTemplate.expire(key, Duration.ofDays(TTL_DAYS));
 	}
+
+	public void removeRecentlyViewed(Long memberId, Long accommodationId) {
+		String key = RECENTLY_VIEWED_KEY_PREFIX + memberId;
+		redisTemplate.opsForZSet().remove(key, accommodationId.toString());
+	}
 }
