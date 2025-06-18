@@ -35,7 +35,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
 	@Override
 	public void addInterceptors(InterceptorRegistry registry) {
 		registry.addInterceptor(interceptor)
-				.addPathPatterns("/api/accommodations/**"); // 적용 경로
+			.addPathPatterns("/api/accommodations/**") // 적용 경로
+			.excludePathPatterns("/api/accommodations/*/reviews/**"); // 리뷰 관련 요청 제외
 
 		registry.addInterceptor(wishlistInterceptor)
 			.addPathPatterns("/api/members/wishlists/**");
