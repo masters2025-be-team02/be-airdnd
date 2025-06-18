@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -106,5 +107,15 @@ public interface WishlistAccommodationRepository extends JpaRepository<WishlistA
 	Optional<Long> findWishlistIdByWishlistAccommodationId(
 		@Param("wishlistAccommodationId") Long wishlistAccommodationId);
 
+	@Query("""
+	SELECT 
+		wa.accommodation.id
+	FROM WishlistAccommodation wa 
+	WHERE wa.wishlist.member.id = :memberId
+	AND wa.accommodation.id IN :accommodationIds
+	""")
+	Set<Long> findAccommodationIdsByMemberIdAndAccommodationIds(
+		@Param("memberId") Long memberId,
+		@Param("accommodationIds") List<Long> accommodationIds);
 }
 

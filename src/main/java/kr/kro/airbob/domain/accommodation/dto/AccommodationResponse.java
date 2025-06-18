@@ -42,6 +42,7 @@ public class AccommodationResponse {
 		private Integer reviewCount;
 	}
 
+	@Builder
 	public record RecentlyViewedAccommodations(
 		List<RecentlyViewedAccommodation> accommodations,
 		int totalCount
@@ -49,13 +50,14 @@ public class AccommodationResponse {
 
 	}
 
+	@Builder
 	public record RecentlyViewedAccommodation(
 		LocalDateTime viewedAt,
 		Long accommodationId,
 		String accommodationName,
 		String thumbnailUrl,
 		List<AmenityInfoResponse> amenities,
-		Double reviewRating,
+		Double averageRating,
 		Boolean isInWishlist
 	) {
 	}
