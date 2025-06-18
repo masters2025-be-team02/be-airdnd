@@ -42,17 +42,6 @@ class AuthControllerTest extends BaseControllerDocumentationTest {
 
     @MockitoBean
     private AuthService authService;
-    @MockitoBean
-    private CursorDecoder cursorDecoder;
-    @MockitoBean
-    private RedisTemplate<String, Object> redisTemplate;
-    @MockitoBean
-    private AccommodationAuthorizationInterceptor accommodationAuthorizationInterceptor;
-    @MockitoBean
-    private WishlistAuthorizationInterceptor wishlistAuthorizationInterceptor;
-
-    @MockitoBean
-    private RecentlyViewedAuthorizationInterceptor recentlyViewedAuthorizationInterceptor;
 
     @Autowired
     private MockMvc mockMvc;

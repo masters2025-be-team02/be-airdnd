@@ -34,18 +34,6 @@ public class MemberControllerTest extends BaseControllerDocumentationTest {
     private MemberController memberController;
     @MockitoBean
     private MemberService memberService;
-    @MockitoBean
-    private CursorDecoder cursorDecoder;
-    @MockitoBean
-    private RedisTemplate<String, Object> redisTemplate;
-    @MockitoBean
-    private AccommodationAuthorizationInterceptor accommodationAuthorizationInterceptor;
-
-    @MockitoBean
-    private WishlistAuthorizationInterceptor wishlistAuthorizationInterceptor;
-
-    @MockitoBean
-    private RecentlyViewedAuthorizationInterceptor recentlyViewedAuthorizationInterceptor;
 
     @Override
     protected Object getController() {
