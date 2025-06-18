@@ -31,6 +31,7 @@ import kr.kro.airbob.domain.discountPolicy.dto.request.DiscountPolicyCreateDto;
 import kr.kro.airbob.domain.discountPolicy.dto.request.DiscountPolicyUpdateDto;
 import kr.kro.airbob.domain.discountPolicy.dto.response.DiscountPolicyResponseDto;
 import kr.kro.airbob.domain.discountPolicy.entity.DiscountPolicy;
+import kr.kro.airbob.domain.recentlyViewed.interceptor.RecentlyViewedAuthorizationInterceptor;
 import kr.kro.airbob.domain.wishlist.interceptor.WishlistAuthorizationInterceptor;
 
 @AutoConfigureRestDocs
