@@ -1,16 +1,16 @@
-package kr.kro.airbob.domain.discountPolicy.controller;
+package kr.kro.airbob.domain.discountPolicy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import kr.kro.airbob.cursor.util.CursorDecoder;
+import kr.kro.airbob.domain.discountPolicy.entity.DiscountPolicy;
 import kr.kro.airbob.domain.accommodation.interceptor.AccommodationAuthorizationInterceptor;
-import kr.kro.airbob.domain.discountPolicy.DiscountPolicy;
+import kr.kro.airbob.domain.discountPolicy.DiscountPolicyService;
 import kr.kro.airbob.domain.discountPolicy.common.DiscountType;
 import kr.kro.airbob.domain.discountPolicy.common.PromotionType;
 import kr.kro.airbob.domain.discountPolicy.dto.request.DiscountPolicyCreateDto;
 import kr.kro.airbob.domain.discountPolicy.dto.request.DiscountPolicyUpdateDto;
 import kr.kro.airbob.domain.discountPolicy.dto.response.DiscountPolicyResponseDto;
-import kr.kro.airbob.domain.discountPolicy.service.DiscountPolicyService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

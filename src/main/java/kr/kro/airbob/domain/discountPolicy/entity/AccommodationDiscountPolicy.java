@@ -1,4 +1,4 @@
-package kr.kro.airbob.domain.discountPolicy;
+package kr.kro.airbob.domain.discountPolicy.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;

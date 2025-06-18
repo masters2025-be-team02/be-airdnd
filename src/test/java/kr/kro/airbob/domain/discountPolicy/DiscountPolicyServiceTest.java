@@ -1,11 +1,12 @@
-package kr.kro.airbob.domain.discountPolicy.service;
+package kr.kro.airbob.domain.discountPolicy;
 
-import kr.kro.airbob.domain.discountPolicy.DiscountPolicy;
 import kr.kro.airbob.domain.discountPolicy.common.DiscountType;
 import kr.kro.airbob.domain.discountPolicy.common.PromotionType;
 import kr.kro.airbob.domain.discountPolicy.dto.request.DiscountPolicyCreateDto;
 import kr.kro.airbob.domain.discountPolicy.dto.request.DiscountPolicyUpdateDto;
 import kr.kro.airbob.domain.discountPolicy.dto.response.DiscountPolicyResponseDto;
+import kr.kro.airbob.domain.discountPolicy.entity.DiscountPolicy;
+import kr.kro.airbob.domain.discountPolicy.exception.DiscountNotFoundException;
 import kr.kro.airbob.domain.discountPolicy.repository.DiscountPolicyRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,7 +18,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -175,8 +175,8 @@ public class DiscountPolicyServiceTest {
 
         // when & then
         assertThatThrownBy(() -> discountPolicyService.updateDiscountPolicy(updateDto, policyId))
-                .isInstanceOf(NoSuchElementException.class)
-                .hasMessage("해당 id에 해당하는 할인 정책이 없습니다.");
+                .isInstanceOf(DiscountNotFoundException.class)
+                .hasMessage("존재하지 않는 할인정책입니다.");
     }
 
     @Test
@@ -207,8 +207,8 @@ public class DiscountPolicyServiceTest {
 
         // when & then
         assertThatThrownBy(() -> discountPolicyService.deletePolicy(policyId))
-                .isInstanceOf(NoSuchElementException.class)
-                .hasMessage("해당 id에 해당하는 할인 정책이 없습니다.");
+                .isInstanceOf(DiscountNotFoundException.class)
+                .hasMessage("존재하지 않는 할인정책입니다.");
     }
 
 }

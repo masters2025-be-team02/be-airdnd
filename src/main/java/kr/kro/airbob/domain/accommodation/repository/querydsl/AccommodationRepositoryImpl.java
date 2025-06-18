@@ -4,7 +4,7 @@ import static kr.kro.airbob.domain.accommodation.entity.QAccommodation.accommoda
 import static kr.kro.airbob.domain.accommodation.entity.QAccommodationAmenity.accommodationAmenity;
 import static kr.kro.airbob.domain.accommodation.entity.QAmenity.amenity;
 import static kr.kro.airbob.domain.accommodation.entity.QOccupancyPolicy.occupancyPolicy;
-import static kr.kro.airbob.domain.reservation.QReservedDate.reservedDate;
+import static kr.kro.airbob.domain.reservation.entity.QReservedDate.reservedDate;
 import static kr.kro.airbob.domain.review.QReview.review;
 
 import com.querydsl.core.BooleanBuilder;
