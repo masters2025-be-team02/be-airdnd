@@ -1,6 +1,8 @@
 package kr.kro.airbob.domain.wishlist.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 public class WishlistRequest {
@@ -30,6 +32,26 @@ public class WishlistRequest {
 		public String toString() {
 			return "updateRequest{" +
 				"name='" + name + '\'' +
+				'}';
+		}
+	}
+
+	public record CreateWishlistAccommodationRequest(
+		@Positive(message = "숙소 ID는 양수여야 합니다.")
+		@NotNull(message = "숙소 ID는 필수입니다.")
+		Long accommodationId
+	) {
+	}
+
+	public record UpdateWishlistAccommodationRequest(
+		@NotBlank(message = "메모는 공백일 수 없습니다.")
+		@Size(max = 1024)
+		String memo
+	) {
+		@Override
+		public String toString() {
+			return "UpdateWishlistAccommodationRequest{" +
+				"memo='" + memo + '\'' +
 				'}';
 		}
 	}

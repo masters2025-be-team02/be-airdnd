@@ -1,16 +1,15 @@
 package kr.kro.airbob.domain.discountPolicy;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.JsonNodeType;
-import kr.kro.airbob.cursor.util.CursorDecoder;
-import kr.kro.airbob.domain.discountPolicy.entity.DiscountPolicy;
-import kr.kro.airbob.domain.accommodation.interceptor.AccommodationAuthorizationInterceptor;
-import kr.kro.airbob.domain.discountPolicy.DiscountPolicyService;
-import kr.kro.airbob.domain.discountPolicy.common.DiscountType;
-import kr.kro.airbob.domain.discountPolicy.common.PromotionType;
-import kr.kro.airbob.domain.discountPolicy.dto.request.DiscountPolicyCreateDto;
-import kr.kro.airbob.domain.discountPolicy.dto.request.DiscountPolicyUpdateDto;
-import kr.kro.airbob.domain.discountPolicy.dto.response.DiscountPolicyResponseDto;
+import static org.mockito.BDDMockito.*;
+import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.*;
+import static org.springframework.restdocs.payload.PayloadDocumentation.*;
+import static org.springframework.restdocs.request.RequestDocumentation.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,17 +20,19 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.time.LocalDateTime;
-import java.util.List;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeType;
 
-import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.willDoNothing;
-import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
-import static org.springframework.restdocs.payload.PayloadDocumentation.*;
-import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
-import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import kr.kro.airbob.cursor.util.CursorDecoder;
+import kr.kro.airbob.domain.accommodation.interceptor.AccommodationAuthorizationInterceptor;
+import kr.kro.airbob.domain.discountPolicy.common.DiscountType;
+import kr.kro.airbob.domain.discountPolicy.common.PromotionType;
+import kr.kro.airbob.domain.discountPolicy.dto.request.DiscountPolicyCreateDto;
+import kr.kro.airbob.domain.discountPolicy.dto.request.DiscountPolicyUpdateDto;
+import kr.kro.airbob.domain.discountPolicy.dto.response.DiscountPolicyResponseDto;
+import kr.kro.airbob.domain.discountPolicy.entity.DiscountPolicy;
+import kr.kro.airbob.domain.recentlyViewed.interceptor.RecentlyViewedAuthorizationInterceptor;
+import kr.kro.airbob.domain.wishlist.interceptor.WishlistAuthorizationInterceptor;
 
 @AutoConfigureRestDocs
 @WebMvcTest(DiscountPolicyController.class)
@@ -45,6 +46,12 @@ public class DiscountPolicyControllerTest {
     private RedisTemplate<String, Object> redisTemplate;
     @MockitoBean
     private AccommodationAuthorizationInterceptor accommodationAuthorizationInterceptor;
+
+    @MockitoBean
+    private WishlistAuthorizationInterceptor wishlistAuthorizationInterceptor;
+
+    @MockitoBean
+    private RecentlyViewedAuthorizationInterceptor recentlyViewedAuthorizationInterceptor;
 
     @Autowired
     private MockMvc mockMvc;

@@ -46,6 +46,8 @@ public class AuthService {
         if (!hostId.equals(memberId)) {
             throw new NotEqualHostException();
         }
-
     }
+
+
+
 }

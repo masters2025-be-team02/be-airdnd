@@ -16,7 +16,7 @@ public class AccommodationAuthorizationInterceptor implements HandlerInterceptor
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
-            throws IOException {
+        throws IOException {
 
         String method = request.getMethod();
         String uri = request.getRequestURI();
