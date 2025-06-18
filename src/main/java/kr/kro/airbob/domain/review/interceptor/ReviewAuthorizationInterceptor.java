@@ -84,6 +84,12 @@ public class ReviewAuthorizationInterceptor implements HandlerInterceptor {
 			return false;
 		}
 
+		Long reviewerId = reviewRepository.findMemberIdByReviewId(reviewId);
+		if (!requestMemberId.equals(reviewerId)) {
+			response.sendError(HttpServletResponse.SC_FORBIDDEN, "본인의 리뷰만 수정 또는 삭제할 수 있습니다.");
+			return false;
+		}
+
 		if (!accommodationId.equals(reviewedAccommodationId)) {
 			response.sendError(HttpServletResponse.SC_FORBIDDEN, "해당 숙소의 리뷰가 아닙니다.");
 			return false;
