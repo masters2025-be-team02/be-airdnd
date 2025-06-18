@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
-import kr.kro.airbob.domain.accommodation.interceptor.AccommodationAuthorizationInterceptor;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -23,25 +22,17 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import kr.kro.airbob.cursor.dto.CursorRequest;
 import kr.kro.airbob.cursor.dto.CursorResponse;
-import kr.kro.airbob.cursor.exception.CursorEncodingException;
 import kr.kro.airbob.cursor.exception.CursorPageSizeException;
-import kr.kro.airbob.cursor.resolver.CursorParamArgumentResolver;
-import kr.kro.airbob.cursor.util.CursorDecoder;
-import kr.kro.airbob.cursor.util.CursorEncoder;
-import kr.kro.airbob.cursor.util.CursorPageInfoCreator;
 import kr.kro.airbob.domain.accommodation.common.AmenityType;
 import kr.kro.airbob.domain.accommodation.dto.AccommodationResponse;
 import kr.kro.airbob.domain.accommodation.exception.AccommodationNotFoundException;
-import kr.kro.airbob.domain.accommodation.interceptor.AccommodationAuthorizationInterceptor;
 import kr.kro.airbob.domain.common.BaseControllerDocumentationTest;
-import kr.kro.airbob.domain.recentlyViewed.interceptor.RecentlyViewedAuthorizationInterceptor;
 import kr.kro.airbob.domain.wishlist.api.WishlistController;
 import kr.kro.airbob.domain.wishlist.dto.WishlistRequest;
 import kr.kro.airbob.domain.wishlist.dto.WishlistResponse;
@@ -49,7 +40,6 @@ import kr.kro.airbob.domain.wishlist.exception.WishlistAccessDeniedException;
 import kr.kro.airbob.domain.wishlist.exception.WishlistAccommodationAccessDeniedException;
 import kr.kro.airbob.domain.wishlist.exception.WishlistAccommodationNotFoundException;
 import kr.kro.airbob.domain.wishlist.exception.WishlistNotFoundException;
-import kr.kro.airbob.domain.wishlist.interceptor.WishlistAuthorizationInterceptor;
 
 @WebMvcTest(WishlistController.class)
 @DisplayName("위시리스트 관리 API 테스트")
@@ -57,29 +47,6 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 
 	@MockitoBean
 	private WishlistService wishlistService;
-
-	@MockitoBean
-	private CursorParamArgumentResolver cursorParamArgumentResolver;
-
-	@MockitoBean
-	private CursorDecoder cursorDecoder;
-
-	@MockitoBean
-	private CursorEncoder cursorEncoder;
-
-	@MockitoBean
-	private CursorPageInfoCreator cursorPageInfoCreator;
-
-	@MockitoBean
-	private RedisTemplate<String, Object> redisTemplate;
-	@MockitoBean
-	private AccommodationAuthorizationInterceptor accommodationAuthorizationInterceptor;
-
-	@MockitoBean
-	private WishlistAuthorizationInterceptor wishlistAuthorizationInterceptor;
-
-	@MockitoBean
-	private RecentlyViewedAuthorizationInterceptor recentlyViewedAuthorizationInterceptor;
 
 	@Autowired
 	private WishlistController wishlistController;
