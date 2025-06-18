@@ -36,30 +36,20 @@ public class ReviewController {
 
 	@PatchMapping("/{reviewId}")
 	public ResponseEntity<ReviewResponse.UpdateResponse> updateContentResponse(
-		@PathVariable Long accommodationId,
-		@PathVariable Long reviewId,
-		ReviewRequest.UpdateContentRequest requestDto,
-		HttpServletRequest request) {
-
-		Long memberId = (Long) request.getAttribute("memberId");
+		@PathVariable Long reviewId, ReviewRequest.UpdateContentRequest requestDto) {
 
 		ReviewResponse.UpdateResponse response =
-			reviewService.updateContentReview(accommodationId, reviewId, requestDto, memberId);
+			reviewService.updateContentReview(reviewId, requestDto);
 
 		return ResponseEntity.ok(response);
 	}
 
 	@PatchMapping("/{reviewId}")
 	public ResponseEntity<ReviewResponse.UpdateResponse> updateRatingResponse(
-		@PathVariable Long accommodationId,
-		@PathVariable Long reviewId,
-		ReviewRequest.UpdateRatingRequest requestDto,
-		HttpServletRequest request) {
-
-		Long memberId = (Long) request.getAttribute("memberId");
+		@PathVariable Long reviewId, ReviewRequest.UpdateRatingRequest requestDto) {
 
 		ReviewResponse.UpdateResponse response =
-			reviewService.updateRatingReview(accommodationId, reviewId, requestDto, memberId);
+			reviewService.updateRatingReview(reviewId, requestDto);
 
 		return ResponseEntity.ok(response);
 	}

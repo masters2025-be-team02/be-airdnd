@@ -11,6 +11,7 @@ import kr.kro.airbob.domain.member.MemberRepository;
 import kr.kro.airbob.domain.member.exception.MemberNotFoundException;
 import kr.kro.airbob.domain.review.dto.ReviewRequest;
 import kr.kro.airbob.domain.review.dto.ReviewResponse;
+import kr.kro.airbob.domain.review.exception.ReviewNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -40,11 +41,29 @@ public class ReviewService {
 		return new ReviewResponse.CreateResponse(savedReview.getId());
 	}
 
+	@Transactional
+	public ReviewResponse.UpdateResponse updateContentReview(Long reviewId, ReviewRequest.UpdateContentRequest request) {
+		Review review = findReviewById(reviewId);
+		review.updateContent(request.content());
+		return new ReviewResponse.UpdateResponse(review.getId());
+	}
+
+	@Transactional
+	public ReviewResponse.UpdateResponse updateRatingReview(Long reviewId, ReviewRequest.UpdateRatingRequest request) {
+		Review review = findReviewById(reviewId);
+		review.updateRating(request.rating());
+		return new ReviewResponse.UpdateResponse(review.getId());
+	}
+
 	private Member findMemberById(Long memberId) {
 		return memberRepository.findById(memberId).orElseThrow(MemberNotFoundException::new);
 	}
 
 	private Accommodation findAccommodationById(Long accommodationId) {
 		return accommodationRepository.findById(accommodationId).orElseThrow(AccommodationNotFoundException::new);
+	}
+
+	private Review findReviewById(Long reviewId) {
+		return reviewRepository.findById(reviewId).orElseThrow(ReviewNotFoundException::new);
 	}
 }
