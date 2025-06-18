@@ -46,6 +46,8 @@ include::{generated}/위시리스트-연속삭제-5.adoc[]
 
 include::{generated}/위시리스트-연속생성-1.adoc[]
 
+include::{generated}/logout.adoc[]
+
 include::{generated}/update-discount-policy.adoc[]
 
 include::{generated}/위시리스트-삭제-존재하지않음-실패.adoc[]
@@ -75,6 +77,8 @@ include::{generated}/위시리스트-수정-길이초과-실패.adoc[]
 include::{generated}/위시리스트-연속생성-2.adoc[]
 
 include::{generated}/위시리스트-연속생성-5.adoc[]
+
+include::{generated}/login.adoc[]
 
 include::{generated}/위시리스트-중복이름-허용.adoc[]
 
