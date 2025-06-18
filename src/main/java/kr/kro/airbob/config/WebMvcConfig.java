@@ -49,7 +49,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
 		log.info("sessionFilter");
 		FilterRegistrationBean<SessionAuthFilter> bean = new FilterRegistrationBean<>(sessionAuthFilter);
 		bean.addUrlPatterns("/api/accommodations", "/api/accommodations/*",
-			"/api/members/recentlyViewed/*");
+			"/api/members/wishlists", "/api/members/wishlists/*",
+			"/api/members/recentlyViewed", "/api/members/recentlyViewed/*");
 		bean.setOrder(1);
 		return bean;
 	}
