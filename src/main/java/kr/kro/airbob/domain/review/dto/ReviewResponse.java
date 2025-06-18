@@ -4,4 +4,9 @@ public class ReviewResponse {
 
 	private ReviewResponse() {
 	}
+
+	public record CreateResponse(
+		long id
+	) {
+	}
 }
