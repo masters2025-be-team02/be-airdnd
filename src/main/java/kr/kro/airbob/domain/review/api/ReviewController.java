@@ -1,13 +1,18 @@
 package kr.kro.airbob.domain.review.api;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import kr.kro.airbob.domain.review.ReviewService;
 import kr.kro.airbob.domain.review.dto.ReviewRequest;
 import kr.kro.airbob.domain.review.dto.ReviewResponse;
@@ -23,7 +28,7 @@ public class ReviewController {
 	@PostMapping
 	public ResponseEntity<ReviewResponse.CreateResponse> createReview(
 		@PathVariable Long accommodationId,
-		ReviewRequest.CreateRequest requestDto,
+		@Valid @RequestBody ReviewRequest.CreateRequest requestDto,
 		HttpServletRequest request) {
 
 		Long memberId = (Long) request.getAttribute("memberId");
@@ -34,9 +39,10 @@ public class ReviewController {
 		return ResponseEntity.ok(response);
 	}
 
-	@PatchMapping("/{reviewId}")
+	@PatchMapping("/{reviewId}/content")
 	public ResponseEntity<ReviewResponse.UpdateResponse> updateContentResponse(
-		@PathVariable Long reviewId, ReviewRequest.UpdateContentRequest requestDto) {
+		@PathVariable Long reviewId,
+		@Valid @RequestBody ReviewRequest.UpdateContentRequest requestDto) {
 
 		ReviewResponse.UpdateResponse response =
 			reviewService.updateContentReview(reviewId, requestDto);
@@ -44,9 +50,10 @@ public class ReviewController {
 		return ResponseEntity.ok(response);
 	}
 
-	@PatchMapping("/{reviewId}")
+	@PatchMapping("/{reviewId}/rating")
 	public ResponseEntity<ReviewResponse.UpdateResponse> updateRatingResponse(
-		@PathVariable Long reviewId, ReviewRequest.UpdateRatingRequest requestDto) {
+		@PathVariable Long reviewId,
+		@Valid @RequestBody ReviewRequest.UpdateRatingRequest requestDto) {
 
 		ReviewResponse.UpdateResponse response =
 			reviewService.updateRatingReview(reviewId, requestDto);
@@ -54,5 +61,9 @@ public class ReviewController {
 		return ResponseEntity.ok(response);
 	}
 
-
+	@DeleteMapping("/{reviewId}")
+	@ResponseStatus(HttpStatus.OK)
+	public void deleteReview(@PathVariable Long reviewId) {
+		reviewService.deleteReview(reviewId);
+	}
 }

@@ -55,6 +55,12 @@ public class ReviewService {
 		return new ReviewResponse.UpdateResponse(review.getId());
 	}
 
+	@Transactional
+	public void deleteReview(Long reviewId) {
+		Review review = findReviewById(reviewId);
+		reviewRepository.delete(review);
+	}
+
 	private Member findMemberById(Long memberId) {
 		return memberRepository.findById(memberId).orElseThrow(MemberNotFoundException::new);
 	}
