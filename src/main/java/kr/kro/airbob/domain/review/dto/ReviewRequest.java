@@ -21,4 +21,19 @@ public class ReviewRequest {
 		String content
 	) {
 	}
+
+	public record UpdateContentRequest(
+
+		@NotBlank(message = "후기 본문은 공백일 수 없습니다.")
+		@Size(max = 1024)
+		String content
+	) {
+	}
+
+	public record UpdateRatingRequest(
+		@NotNull(message = "평점은 필수입니다.")
+		@Positive(message = "평점은 양수여야 합니다.")
+		Integer rating
+	) {
+	}
 }

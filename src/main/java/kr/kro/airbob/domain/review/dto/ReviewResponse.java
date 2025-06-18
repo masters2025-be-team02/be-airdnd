@@ -9,4 +9,9 @@ public class ReviewResponse {
 		long id
 	) {
 	}
+
+	public record UpdateResponse(
+		long id
+	) {
+	}
 }
