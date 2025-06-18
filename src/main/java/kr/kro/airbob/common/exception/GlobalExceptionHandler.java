@@ -6,8 +6,6 @@ import kr.kro.airbob.domain.accommodation.exception.AccommodationNotFoundExcepti
 import kr.kro.airbob.domain.reservation.exception.AlreadyReservedException;
 import kr.kro.airbob.domain.auth.exception.NotEqualHostException;
 import kr.kro.airbob.domain.member.exception.DuplicatedEmailException;
-import kr.kro.airbob.domain.accommodation.exception.AccommodationNotFoundException;
-import kr.kro.airbob.domain.reservation.exception.AlreadyReservedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
