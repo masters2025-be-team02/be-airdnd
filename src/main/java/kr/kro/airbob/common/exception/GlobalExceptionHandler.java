@@ -42,14 +42,6 @@ public class GlobalExceptionHandler {
 			.build();
 	}
 
-	@ExceptionHandler(AccommodationNotFoundException.class)
-	public ResponseEntity<Void> handleAccommodationNotFoundException(AccommodationNotFoundException e) {
-		log.error("AccommodationNotFoundException: {}", e.getMessage());
-		return ResponseEntity
-				.status(HttpStatus.NOT_FOUND)
-				.build();
-	}
-
 	@ExceptionHandler(AlreadyReservedException.class)
 	public ResponseEntity<Void> handleAlreadyReservedException(AlreadyReservedException e) {
 		log.error("AlreadyReservedException: {}", e.getMessage());
