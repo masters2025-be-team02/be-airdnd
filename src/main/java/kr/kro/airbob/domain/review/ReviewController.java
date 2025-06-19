@@ -34,7 +34,7 @@ public class ReviewController {
 		@Valid @RequestBody ReviewRequest.CreateRequest requestDto,
 		HttpServletRequest request) {
 
-		Long memberId = (Long) request.getAttribute("memberId");
+		Long memberId = (Long)request.getAttribute("memberId");
 
 		ReviewResponse.CreateResponse response =
 			reviewService.createReview(accommodationId, requestDto, memberId);
@@ -78,6 +78,15 @@ public class ReviewController {
 
 		ReviewResponse.ReviewInfos response =
 			reviewService.findReviews(accommodationId, cursorRequest, sortType);
+
+		return ResponseEntity.ok(response);
+	}
+
+	@GetMapping("/summary")
+	public ResponseEntity<ReviewResponse.ReviewSummary> findReviewSummary(@PathVariable Long accommodationId) {
+
+		ReviewResponse.ReviewSummary response =
+			reviewService.findReviewSummary(accommodationId);
 
 		return ResponseEntity.ok(response);
 	}

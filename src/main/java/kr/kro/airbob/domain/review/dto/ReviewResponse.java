@@ -1,10 +1,12 @@
 package kr.kro.airbob.domain.review.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
 import kr.kro.airbob.cursor.dto.CursorResponse;
 import kr.kro.airbob.domain.member.dto.MemberResponse;
+import kr.kro.airbob.domain.review.AccommodationReviewSummary;
 
 public class ReviewResponse {
 
@@ -35,5 +37,20 @@ public class ReviewResponse {
 		LocalDateTime reviewedAt,
 		MemberResponse.ReviewerInfo reviewer
 	) {
+	}
+
+	public record ReviewSummary(
+		int totalCount,
+		BigDecimal averageRating
+	) {
+		public static ReviewSummary of(AccommodationReviewSummary summary) {
+			if (summary == null) {
+				return new ReviewSummary(0, BigDecimal.ZERO);
+			}
+			return new ReviewSummary(
+				summary.getTotalReviewCount().intValue(),
+				summary.getAverageRating()
+			);
+		}
 	}
 }

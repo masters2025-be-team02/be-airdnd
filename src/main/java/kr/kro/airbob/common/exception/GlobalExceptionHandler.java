@@ -19,6 +19,7 @@ import kr.kro.airbob.cursor.exception.CursorPageSizeException;
 import kr.kro.airbob.domain.accommodation.exception.AccommodationNotFoundException;
 import kr.kro.airbob.domain.member.exception.MemberNotFoundException;
 import kr.kro.airbob.domain.review.ReviewSortType;
+import kr.kro.airbob.domain.review.exception.ReviewSummaryNotFoundException;
 import kr.kro.airbob.domain.wishlist.exception.WishlistAccessDeniedException;
 import kr.kro.airbob.domain.wishlist.exception.WishlistAccommodationAccessDeniedException;
 import kr.kro.airbob.domain.wishlist.exception.WishlistAccommodationNotFoundException;
@@ -30,17 +31,20 @@ import lombok.extern.slf4j.Slf4j;
 public class GlobalExceptionHandler {
 
 	@ExceptionHandler(MethodArgumentTypeMismatchException.class)
-	public ResponseEntity<?> handleEnumBindingError(MethodArgumentTypeMismatchException e) {
-		if (e.getRequiredType() == ReviewSortType.class) {
-			return ResponseEntity.badRequest()
-				.body("지원하지 않는 정렬 방식입니다. [LATEST, HIGH_RATING, LOW_RATING] 중 하나를 사용하세요.");
-		}
-		return ResponseEntity.badRequest().body("잘못된 요청입니다.");
+	public ResponseEntity<Void> handleEnumBindingError(MethodArgumentTypeMismatchException e) {
+		return ResponseEntity.badRequest().build();
 	}
 
 	@ExceptionHandler(AccommodationNotFoundException.class)
 	public ResponseEntity<Void> handleAccommodationNotFoundException(AccommodationNotFoundException e) {
 		log.error("AccommodationNotFoundException: {}", e.getMessage());
+		return ResponseEntity.status(HttpStatus.NOT_FOUND)
+			.build();
+	}
+
+	@ExceptionHandler(ReviewSummaryNotFoundException.class)
+	public ResponseEntity<Void> handleReviewSummaryNotFoundException(ReviewSummaryNotFoundException e) {
+		log.error("ReviewSummaryNotFoundException: {}", e.getMessage());
 		return ResponseEntity.status(HttpStatus.NOT_FOUND)
 			.build();
 	}

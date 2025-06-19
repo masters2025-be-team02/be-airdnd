@@ -20,6 +20,8 @@ import kr.kro.airbob.domain.member.exception.MemberNotFoundException;
 import kr.kro.airbob.domain.review.dto.ReviewRequest;
 import kr.kro.airbob.domain.review.dto.ReviewResponse;
 import kr.kro.airbob.domain.review.exception.ReviewNotFoundException;
+import kr.kro.airbob.domain.review.exception.ReviewSummaryNotFoundException;
+import kr.kro.airbob.domain.review.repository.AccommodationReviewSummaryRepository;
 import kr.kro.airbob.domain.review.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +34,7 @@ public class ReviewService {
 	private final ReviewRepository reviewRepository;
 	private final MemberRepository memberRepository;
 	private final AccommodationRepository accommodationRepository;
+	private final AccommodationReviewSummaryRepository summaryRepository;
 
 	private final CursorPageInfoCreator cursorPageInfoCreator;
 
@@ -49,6 +52,9 @@ public class ReviewService {
 			.build();
 
 		Review savedReview = reviewRepository.save(review);
+
+		updateReviewSummaryOnCreate(accommodationId, request.rating());
+
 		return new ReviewResponse.CreateResponse(savedReview.getId());
 	}
 
@@ -62,14 +68,23 @@ public class ReviewService {
 	@Transactional
 	public ReviewResponse.UpdateResponse updateRatingReview(Long reviewId, ReviewRequest.UpdateRatingRequest request) {
 		Review review = findReviewById(reviewId);
+		int oldRating = review.getRating();
 		review.updateRating(request.rating());
+
+		updateReviewSummaryOnUpdate(review.getAccommodation().getId(), oldRating, request.rating());
+
 		return new ReviewResponse.UpdateResponse(review.getId());
 	}
 
 	@Transactional
 	public void deleteReview(Long reviewId) {
 		Review review = findReviewById(reviewId);
+		Long accommodationId = review.getAccommodation().getId();
+		int rating = review.getRating();
+
 		reviewRepository.delete(review);
+
+		updateReviewSummaryOnDelete(accommodationId, rating);
 	}
 
 	@Transactional(readOnly = true)
@@ -99,6 +114,15 @@ public class ReviewService {
 		return new ReviewResponse.ReviewInfos(reviewInfos, pageInfo);
 	}
 
+	@Transactional(readOnly = true)
+	public ReviewResponse.ReviewSummary findReviewSummary(Long accommodationId) {
+
+		AccommodationReviewSummary summary = summaryRepository.findByAccommodationId(accommodationId)
+			.orElse(null);
+
+		return ReviewResponse.ReviewSummary.of(summary);
+	}
+
 	private Member findMemberById(Long memberId) {
 		return memberRepository.findById(memberId).orElseThrow(MemberNotFoundException::new);
 	}
@@ -109,5 +133,41 @@ public class ReviewService {
 
 	private Review findReviewById(Long reviewId) {
 		return reviewRepository.findById(reviewId).orElseThrow(ReviewNotFoundException::new);
+	}
+
+	private AccommodationReviewSummary findSummaryByAccommodationId(Long accommodationId) {
+		return summaryRepository.findByAccommodationId(accommodationId).orElseThrow(ReviewSummaryNotFoundException::new);
+	}
+
+	private void updateReviewSummaryOnCreate(Long accommodationId, int rating) {
+		AccommodationReviewSummary summary = summaryRepository.findByAccommodationId(accommodationId)
+			.orElseGet(() -> createNewSummary(accommodationId));
+
+		summary.addReview(rating);
+		summaryRepository.save(summary); // 명시적 save
+	}
+
+	private void updateReviewSummaryOnUpdate(Long accommodationId, int oldRating, int newRating) {
+
+		AccommodationReviewSummary summary = findSummaryByAccommodationId(accommodationId);
+
+		summary.updateReview(oldRating, newRating);
+	}
+
+	private void updateReviewSummaryOnDelete(Long accommodationId, int rating) {
+		AccommodationReviewSummary summary = findSummaryByAccommodationId(accommodationId);
+
+		summary.removeReview(rating);
+
+		if (summary.getTotalReviewCount() == 0) {
+			summaryRepository.delete(summary);
+		}
+	}
+
+	private AccommodationReviewSummary createNewSummary(Long accommodationId) {
+		Accommodation accommodation = findAccommodationById(accommodationId);
+		return AccommodationReviewSummary.builder()
+			.accommodation(accommodation)
+			.build();
 	}
 }
