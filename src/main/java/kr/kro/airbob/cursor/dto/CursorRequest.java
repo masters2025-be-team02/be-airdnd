@@ -30,4 +30,13 @@ public class CursorRequest {
 				'}';
 		}
 	}
+
+	@Builder
+	public record ReviewCursorPageRequest(
+		Integer size,
+		Long lastId,
+		LocalDateTime lastCreatedAt,
+		Integer lastRating
+	) {
+	}
 }

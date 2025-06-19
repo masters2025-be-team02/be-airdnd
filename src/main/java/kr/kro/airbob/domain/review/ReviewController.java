@@ -17,7 +17,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import kr.kro.airbob.cursor.annotation.CursorParam;
 import kr.kro.airbob.cursor.dto.CursorRequest;
-import kr.kro.airbob.domain.review.ReviewService;
+import kr.kro.airbob.domain.review.repository.ReviewService;
 import kr.kro.airbob.domain.review.ReviewSortType;
 import kr.kro.airbob.domain.review.dto.ReviewRequest;
 import kr.kro.airbob.domain.review.dto.ReviewResponse;
@@ -76,10 +76,10 @@ public class ReviewController {
 	public ResponseEntity<ReviewResponse.ReviewInfos> findReviews(
 		@PathVariable Long accommodationId,
 		@RequestParam(defaultValue = "LATEST") ReviewSortType sortType,
-		@CursorParam CursorRequest.CursorPageRequest requestDto) {
+		@CursorParam CursorRequest.ReviewCursorPageRequest cursorRequest) {
 
 		ReviewResponse.ReviewInfos response =
-			reviewService.findReviews(accommodationId, sortType, requestDto);
+			reviewService.findReviews(accommodationId, cursorRequest, sortType);
 
 		return ResponseEntity.ok(response);
 	}
