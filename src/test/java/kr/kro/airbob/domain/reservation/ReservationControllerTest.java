@@ -5,15 +5,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.util.StdDateFormat;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import kr.kro.airbob.cursor.util.CursorDecoder;
-import kr.kro.airbob.domain.accommodation.interceptor.AccommodationAuthorizationInterceptor;
 import kr.kro.airbob.domain.common.BaseControllerDocumentationTest;
 import kr.kro.airbob.domain.reservation.dto.ReservationRequestDto;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -46,11 +43,6 @@ public class ReservationControllerTest extends BaseControllerDocumentationTest {
 
     @Autowired
     private ObjectMapper objectMapper;
-
-    @Override
-    protected Object getController() {
-        return reservationController;
-    }
 
     @Test
     void createReservation() throws Exception {
@@ -98,7 +90,9 @@ public class ReservationControllerTest extends BaseControllerDocumentationTest {
                 .writeValueAsString(obj);
     }
 
-
-
+    @Override
+    protected Object getController() {
+        return reservationController;
+    }
 
 }
