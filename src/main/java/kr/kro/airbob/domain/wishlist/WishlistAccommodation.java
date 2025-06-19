@@ -1,5 +1,7 @@
 package kr.kro.airbob.domain.wishlist;
 
+import java.util.Objects;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -36,4 +38,11 @@ public class WishlistAccommodation extends BaseEntity {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "accommodation_id")
 	private Accommodation accommodation;
+
+	public void updateMemo(String memo) {
+		this.memo = memo;
+	}
+	public boolean isOwnedBy(Long wishlistId) {
+		return Objects.equals(wishlist.getId(), wishlistId);
+	}
 }

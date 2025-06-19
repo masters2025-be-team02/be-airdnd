@@ -1,6 +1,6 @@
 package kr.kro.airbob.domain.discountPolicy.dto.response;
 
-import kr.kro.airbob.domain.discountPolicy.DiscountPolicy;
+import kr.kro.airbob.domain.discountPolicy.entity.DiscountPolicy;
 import kr.kro.airbob.domain.discountPolicy.common.PromotionType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

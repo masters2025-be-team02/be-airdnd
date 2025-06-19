@@ -6,19 +6,52 @@ import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.restdocs.RestDocumentationContextProvider;
 import org.springframework.restdocs.RestDocumentationExtension;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import kr.kro.airbob.common.exception.GlobalExceptionHandler;
+import kr.kro.airbob.cursor.resolver.CursorParamArgumentResolver;
+import kr.kro.airbob.cursor.util.CursorDecoder;
+import kr.kro.airbob.cursor.util.CursorEncoder;
+import kr.kro.airbob.cursor.util.CursorPageInfoCreator;
+import kr.kro.airbob.domain.accommodation.interceptor.AccommodationAuthorizationInterceptor;
+import kr.kro.airbob.domain.recentlyViewed.interceptor.RecentlyViewedAuthorizationInterceptor;
+import kr.kro.airbob.domain.wishlist.interceptor.WishlistAuthorizationInterceptor;
 
 @ExtendWith(RestDocumentationExtension.class)
 public abstract class BaseControllerDocumentationTest {
 
 	protected MockMvc mockMvc;
+
+	@MockitoBean
+	private CursorParamArgumentResolver cursorParamArgumentResolver;
+
+	@MockitoBean
+	private CursorDecoder cursorDecoder;
+
+	@MockitoBean
+	private CursorEncoder cursorEncoder;
+
+	@MockitoBean
+	private CursorPageInfoCreator cursorPageInfoCreator;
+
+	@MockitoBean
+	private RedisTemplate<String, Object> redisTemplate;
+
+	@MockitoBean
+	private AccommodationAuthorizationInterceptor accommodationAuthorizationInterceptor;
+
+	@MockitoBean
+	private WishlistAuthorizationInterceptor wishlistAuthorizationInterceptor;
+
+	@MockitoBean
+	private RecentlyViewedAuthorizationInterceptor recentlyViewedAuthorizationInterceptor;
 
 	@Autowired
 	protected ObjectMapper objectMapper;

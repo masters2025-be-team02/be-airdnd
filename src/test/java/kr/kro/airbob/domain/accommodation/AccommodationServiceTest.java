@@ -149,10 +149,16 @@ class AccommodationServiceTest {
                 new AmenityInfo("POOL", 1)
         );
 
+        OccupancyPolicyInfo policyInfo = OccupancyPolicyInfo.builder()
+                .maxOccupancy(6)
+                .build();
+
         CreateAccommodationDto request = CreateAccommodationDto.builder()
                 .hostId(1L)
                 .amenityInfos(amenities)
                 .type("HOTEL_ROOM")
+                .addressInfo(mock(AddressInfo.class))
+                .occupancyPolicyInfo(policyInfo)
                 .build();
 
         Member member = Member.builder()
@@ -196,10 +202,16 @@ class AccommodationServiceTest {
                 new AmenityInfo("POOL", 0),       // 무시됨
                 new AmenityInfo("PARKING", -1)    // 무시됨
         );
+        OccupancyPolicyInfo policyInfo = OccupancyPolicyInfo.builder()
+                .maxOccupancy(6)
+                .build();
+
         CreateAccommodationDto request = CreateAccommodationDto.builder()
                 .hostId(1L)
                 .amenityInfos(amenities)
                 .type("HOTEL_ROOM")
+                .addressInfo(mock(AddressInfo.class))
+                .occupancyPolicyInfo(policyInfo)
                 .build();
 
         Member member = Member.builder()

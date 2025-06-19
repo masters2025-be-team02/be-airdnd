@@ -10,9 +10,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import kr.kro.airbob.cursor.annotation.CursorParam;
 import kr.kro.airbob.cursor.dto.CursorRequest;
+import kr.kro.airbob.domain.auth.AuthService;
+import kr.kro.airbob.domain.auth.common.SessionUtil;
 import kr.kro.airbob.domain.wishlist.WishlistService;
 import kr.kro.airbob.domain.wishlist.dto.WishlistRequest;
 import kr.kro.airbob.domain.wishlist.dto.WishlistResponse;
@@ -22,47 +25,102 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-@RequestMapping("/api")
+@RequestMapping("/api/members/wishlists")
 public class WishlistController {
 
 	private final WishlistService wishlistService;
-	private static final Long TEMP_LOGGED_IN_MEMBER_ID = 1L;
 
-	@PostMapping("/members/wishlists")
-	public ResponseEntity<WishlistResponse.createResponse> createWishlist(
-		@Valid @RequestBody WishlistRequest.createRequest request) {
-		log.info(request.toString());
-		WishlistResponse.createResponse response = wishlistService.createWishlist(request, TEMP_LOGGED_IN_MEMBER_ID);
-		log.info(response.toString());
+	@PostMapping
+	public ResponseEntity<WishlistResponse.CreateResponse> createWishlist(
+		@Valid @RequestBody WishlistRequest.createRequest requestDto,
+		HttpServletRequest request) {
+
+		Long memberId = (Long) request.getAttribute("memberId");
+
+		log.info(requestDto.toString());
+		WishlistResponse.CreateResponse response = wishlistService.createWishlist(requestDto, memberId);
 		return ResponseEntity.ok(response);
 	}
 
-	@PatchMapping("/members/wishlists/{wishlistId}")
-	public ResponseEntity<WishlistResponse.updateResponse> updateWishlist(
+	@PatchMapping("/{wishlistId}")
+	public ResponseEntity<WishlistResponse.UpdateResponse> updateWishlist(
 		@PathVariable Long wishlistId,
-		@Valid @RequestBody WishlistRequest.updateRequest request) {
-		log.info(request.toString());
-		WishlistResponse.updateResponse response = wishlistService.updateWishlist(wishlistId, request,
-			TEMP_LOGGED_IN_MEMBER_ID);
+		@Valid @RequestBody WishlistRequest.updateRequest requestDto) {
+		log.info(requestDto.toString());
+		WishlistResponse.UpdateResponse response = wishlistService.updateWishlist(wishlistId, requestDto);
 		log.info(response.toString());
 		return ResponseEntity.ok(response);
 	}
 
-	@DeleteMapping("/members/wishlists/{wishlistId}")
+	@DeleteMapping("/{wishlistId}")
 	public ResponseEntity<Void> deleteWishlist(@PathVariable Long wishlistId) {
 		log.info("{} 위시리스트 삭제 요청", wishlistId);
-		wishlistService.deleteWishlist(wishlistId, TEMP_LOGGED_IN_MEMBER_ID);
+		wishlistService.deleteWishlist(wishlistId);
 		log.info("{} 위시리스트 삭제 요청 완료", wishlistId);
 		return ResponseEntity.noContent().build();
 	}
 
-	@GetMapping("/members/wishlists")
+	@GetMapping
 	public ResponseEntity<WishlistResponse.WishlistInfos> findWishlists(
-		@CursorParam CursorRequest.CursorPageRequest request) {
-		log.info(request.toString());
+		@CursorParam CursorRequest.CursorPageRequest requestDto, HttpServletRequest request) {
+
+		Long memberId = (Long) request.getAttribute("memberId");
+
+		log.info(requestDto.toString());
 		WishlistResponse.WishlistInfos response =
-			wishlistService.findWishlists(request, TEMP_LOGGED_IN_MEMBER_ID);
-		log.info(response.toString());
+			wishlistService.findWishlists(requestDto, memberId);
+		return ResponseEntity.ok(response);
+	}
+
+	@PostMapping("/{wishlistId}/accommodations")
+	public ResponseEntity<WishlistResponse.CreateWishlistAccommodationResponse> createWishlistAccommodation(
+		@PathVariable Long wishlistId,
+		@Valid @RequestBody WishlistRequest.CreateWishlistAccommodationRequest requestDto) {
+		log.info("{} 위시리스트에 {} 숙소 추가 요청", wishlistId, requestDto.accommodationId());
+		WishlistResponse.CreateWishlistAccommodationResponse response =
+			wishlistService.createWishlistAccommodation(wishlistId, requestDto);
+		return ResponseEntity.ok(response);
+	}
+
+	@PatchMapping("/{wishlistId}/accommodations/{wishlistAccommodationId}")
+	public ResponseEntity<WishlistResponse.UpdateWishlistAccommodationResponse> updateWishlistAccommodation(
+		@PathVariable Long wishlistId,
+		@PathVariable Long wishlistAccommodationId,
+		@Valid @RequestBody WishlistRequest.UpdateWishlistAccommodationRequest requestDto) {
+
+		log.info("위시리스트 {} 안의 항목 {}의 메모 수정 요청 내용: {}"
+			, wishlistId, wishlistAccommodationId, requestDto.toString());
+
+		WishlistResponse.UpdateWishlistAccommodationResponse response =
+			wishlistService.updateWishlistAccommodation(wishlistAccommodationId, requestDto);
+
+		return ResponseEntity.ok(response);
+	}
+
+	@DeleteMapping("/{wishlistId}/accommodations/{wishlistAccommodationId}")
+	public ResponseEntity<Void> deleteWishlistAccommodation(
+		@PathVariable Long wishlistId,
+		@PathVariable Long wishlistAccommodationId) {
+
+		log.info("위시리스트 {} 안의 항목 {} 삭제 요청", wishlistId, wishlistAccommodationId);
+
+		wishlistService.deleteWishlistAccommodation(wishlistAccommodationId);
+
+		return ResponseEntity.noContent().build();
+	}
+
+	// todo: 추후 필터링 적용(날짜, 게스트 인원)
+	@GetMapping("/{wishlistId}/accommodations")
+	public ResponseEntity<WishlistResponse.WishlistAccommodationInfos> findWishlistAccommodations(
+		@CursorParam CursorRequest.CursorPageRequest requestDto,
+		@PathVariable Long wishlistId
+	) {
+
+		log.info("위시리스트: {} 조회 요청. cursor: {}", wishlistId, requestDto.toString());
+
+		WishlistResponse.WishlistAccommodationInfos response
+			= wishlistService.findWishlistAccommodations(wishlistId, requestDto);
+
 		return ResponseEntity.ok(response);
 	}
 }
