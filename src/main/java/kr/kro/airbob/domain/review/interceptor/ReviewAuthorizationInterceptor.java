@@ -7,7 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import kr.kro.airbob.domain.accommodation.repository.AccommodationRepository;
 import kr.kro.airbob.domain.reservation.repository.ReservationRepository;
-import kr.kro.airbob.domain.review.ReviewRepository;
+import kr.kro.airbob.domain.review.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
 
 @Component

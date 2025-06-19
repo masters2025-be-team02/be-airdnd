@@ -1,4 +1,4 @@
-package kr.kro.airbob.domain.review.api;
+package kr.kro.airbob.domain.review;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,8 +17,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import kr.kro.airbob.cursor.annotation.CursorParam;
 import kr.kro.airbob.cursor.dto.CursorRequest;
-import kr.kro.airbob.domain.review.repository.ReviewService;
-import kr.kro.airbob.domain.review.ReviewSortType;
 import kr.kro.airbob.domain.review.dto.ReviewRequest;
 import kr.kro.airbob.domain.review.dto.ReviewResponse;
 import lombok.RequiredArgsConstructor;

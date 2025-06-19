@@ -1,7 +1,9 @@
 package kr.kro.airbob.domain.review.dto;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
+import kr.kro.airbob.cursor.dto.CursorResponse;
 import kr.kro.airbob.domain.member.dto.MemberResponse;
 
 public class ReviewResponse {
@@ -21,7 +23,8 @@ public class ReviewResponse {
 
 	public record ReviewInfos(
 		List<ReviewInfo> reviews,
-		int totalCount
+		CursorResponse.PageInfo pageInfo
+
 	) {
 	}
 
@@ -29,6 +32,7 @@ public class ReviewResponse {
 		long id,
 		int rating,
 		String content,
+		LocalDateTime reviewedAt,
 		MemberResponse.ReviewerInfo reviewer
 	) {
 	}

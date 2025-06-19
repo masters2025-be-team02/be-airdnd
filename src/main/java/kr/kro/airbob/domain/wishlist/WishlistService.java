@@ -91,7 +91,7 @@ public class WishlistService {
 
 		Long lastId = request.lastId();
 		LocalDateTime lastCreatedAt = request.lastCreatedAt();
-
+		// todo: projection으로 조회 고려
 		Slice<Wishlist> wishlistSlice = wishlistRepository.findByMemberIdWithCursor(
 			loggedInMemberId,
 			lastId,

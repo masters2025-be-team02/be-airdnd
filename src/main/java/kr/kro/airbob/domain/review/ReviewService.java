@@ -1,8 +1,7 @@
-package kr.kro.airbob.domain.review.repository;
+package kr.kro.airbob.domain.review;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Stream;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
@@ -18,13 +17,10 @@ import kr.kro.airbob.domain.accommodation.repository.AccommodationRepository;
 import kr.kro.airbob.domain.member.Member;
 import kr.kro.airbob.domain.member.MemberRepository;
 import kr.kro.airbob.domain.member.exception.MemberNotFoundException;
-import kr.kro.airbob.domain.review.Review;
-import kr.kro.airbob.domain.review.ReviewRepository;
-import kr.kro.airbob.domain.review.ReviewSortType;
 import kr.kro.airbob.domain.review.dto.ReviewRequest;
 import kr.kro.airbob.domain.review.dto.ReviewResponse;
-import kr.kro.airbob.domain.review.dto.projection.ReviewProjection;
 import kr.kro.airbob.domain.review.exception.ReviewNotFoundException;
+import kr.kro.airbob.domain.review.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -87,20 +83,17 @@ public class ReviewService {
 		LocalDateTime lastCreatedAt = cursorRequest.lastCreatedAt();
 		Integer lastRating = cursorRequest.lastRating();
 
-		Slice<ReviewProjection> reviewSlice = reviewRepository.findByAccommodationIdWithCursor(
+		Slice<ReviewResponse.ReviewInfo> reviewSlice = reviewRepository.findByAccommodationIdWithCursor(
 			accommodationId, lastId, lastCreatedAt, lastRating, sortType, pageRequest);
 
-		List<ReviewResponse.ReviewInfo> reviewInfos = reviewSlice.getContent()
-			.stream()
-			.map(ReviewResponse.ReviewInfo::from)
-			.toList();
+		List<ReviewResponse.ReviewInfo> reviewInfos = reviewSlice.getContent().stream().toList();
 
 		CursorResponse.PageInfo pageInfo = cursorPageInfoCreator.createPageInfo(
 			reviewSlice.getContent(),
 			reviewSlice.hasNext(),
-			ReviewProjection::reviewId,
-			ReviewProjection::reviewedAt,
-			ReviewProjection::rating
+			ReviewResponse.ReviewInfo::id,
+			ReviewResponse.ReviewInfo::reviewedAt,
+			ReviewResponse.ReviewInfo::rating
 		);
 
 		return new ReviewResponse.ReviewInfos(reviewInfos, pageInfo);
