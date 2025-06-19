@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.util.StdDateFormat;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import kr.kro.airbob.cursor.util.CursorDecoder;
 import kr.kro.airbob.domain.accommodation.interceptor.AccommodationAuthorizationInterceptor;
+import kr.kro.airbob.domain.common.BaseControllerDocumentationTest;
 import kr.kro.airbob.domain.reservation.dto.ReservationRequestDto;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,23 +33,24 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @AutoConfigureRestDocs
 @WebMvcTest(ReservationController.class)
-public class ReservationControllerTest {
+public class ReservationControllerTest extends BaseControllerDocumentationTest {
 
     @MockitoBean
     private ReservationService reservationService;
 
-    @MockitoBean
-    private CursorDecoder cursorDecoder;
-    @MockitoBean
-    private RedisTemplate<String, Object> redisTemplate;
-    @MockitoBean
-    private AccommodationAuthorizationInterceptor accommodationAuthorizationInterceptor;
+    @Autowired
+    private ReservationController reservationController;
 
     @Autowired
     private MockMvc mockMvc;
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Override
+    protected Object getController() {
+        return reservationController;
+    }
 
     @Test
     void createReservation() throws Exception {

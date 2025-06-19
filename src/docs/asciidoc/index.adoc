@@ -1,96 +1,251 @@
 = Airbob REST API 문서
 :doctype: book
 :toc: left
-:toclevels: 2
+:toclevels: 3
+:sectlinks:
 :sectnums:
 :icons: font
 :source-highlighter: highlightjs
 :highlightjs-theme: github
 :docinfo1:
 
-== API 문서 목록
+== 개요
 
-include::{generated}/delete-discount-policy.adoc[]
+이 문서는 Airbob 서비스의 REST API에 대한 명세를 제공합니다.
 
-include::{generated}/위시리스트-수정-공백문자-실패.adoc[]
+=== 기본 정보
+* Base URL: `http://localhost:8080/api`
+* Content-Type: `application/json`
+* 인증 방식: Bearer Token
 
-include::{generated}/create-discount-policy.adoc[]
+=== 공통 응답 코드
+|===
+|상태 코드|설명
+
+|200|성공
+|201|생성 성공
+|400|잘못된 요청
+|401|인증 실패
+|403|권한 없음
+|404|리소스 없음
+|500|서버 오류
+|===
+
+== 위시리스트 API
+
+include::{generated}/위시리스트-마지막숙소삭제-성공.adoc[]
+
+include::{generated}/위시리스트-목록조회-성공.adoc[]
 
 include::{generated}/위시리스트-빈목록조회-성공.adoc[]
 
-include::{generated}/위시리스트-조회-잘못된크기-실패.adoc[]
+include::{generated}/위시리스트-삭제-권한없음-실패.adoc[]
 
-include::{generated}/위시리스트-생성-성공.adoc[]
+include::{generated}/위시리스트-삭제-성공.adoc[]
+
+include::{generated}/위시리스트-삭제-존재하지않음-실패.adoc[]
 
 include::{generated}/위시리스트-생성-null-실패.adoc[]
 
-include::{generated}/find-valid-discount-policies.adoc[]
-
-include::{generated}/위시리스트-조회-잘못된커서-정상처리.adoc[]
-
 include::{generated}/위시리스트-생성-공백문자-실패.adoc[]
-
-include::{generated}/숙소 조건 검색.adoc[]
-
-include::{generated}/위시리스트-연속삭제-4.adoc[]
-
-include::{generated}/위시리스트-연속삭제-3.adoc[]
 
 include::{generated}/위시리스트-생성-길이초과-실패.adoc[]
 
+include::{generated}/위시리스트-생성-빈이름-실패.adoc[]
+
+include::{generated}/위시리스트-생성-성공.adoc[]
+
+include::{generated}/위시리스트-수정-null-실패.adoc[]
+
+include::{generated}/위시리스트-수정-공백문자-실패.adoc[]
+
+include::{generated}/위시리스트-수정-권한없음-실패.adoc[]
+
+include::{generated}/위시리스트-수정-길이초과-실패.adoc[]
+
+include::{generated}/위시리스트-수정-빈이름-실패.adoc[]
+
+include::{generated}/위시리스트-수정-성공.adoc[]
+
 include::{generated}/위시리스트-수정-존재하지않음-실패.adoc[]
 
+include::{generated}/위시리스트-숙소메모수정-null메모-실패.adoc[]
+
+include::{generated}/위시리스트-숙소메모수정-공백메모-실패.adoc[]
+
+include::{generated}/위시리스트-숙소메모수정-권한없음-실패.adoc[]
+
+include::{generated}/위시리스트-숙소메모수정-길이초과-실패.adoc[]
+
+include::{generated}/위시리스트-숙소메모수정-빈메모-실패.adoc[]
+
+include::{generated}/위시리스트-숙소메모수정-성공.adoc[]
+
+include::{generated}/위시리스트-숙소메모수정-연속수정-1.adoc[]
+
+include::{generated}/위시리스트-숙소메모수정-연속수정-2.adoc[]
+
+include::{generated}/위시리스트-숙소메모수정-연속수정-3.adoc[]
+
+include::{generated}/위시리스트-숙소메모수정-연속수정-4.adoc[]
+
+include::{generated}/위시리스트-숙소메모수정-연속수정-5.adoc[]
+
+include::{generated}/위시리스트-숙소메모수정-위시리스트없음-실패.adoc[]
+
+include::{generated}/위시리스트-숙소메모수정-최대길이-성공.adoc[]
+
+include::{generated}/위시리스트-숙소메모수정-특수문자-성공.adoc[]
+
+include::{generated}/위시리스트-숙소메모수정-항목불일치-실패.adoc[]
+
+include::{generated}/위시리스트-숙소메모수정-항목없음-실패.adoc[]
+
+include::{generated}/위시리스트-숙소목록조회-권한없음-실패.adoc[]
+
+include::{generated}/위시리스트-숙소목록조회-기본크기.adoc[]
+
+include::{generated}/위시리스트-숙소목록조회-단일숙소.adoc[]
+
+include::{generated}/위시리스트-숙소목록조회-빈목록.adoc[]
+
+include::{generated}/위시리스트-숙소목록조회-성공.adoc[]
+
+include::{generated}/위시리스트-숙소목록조회-위시리스트없음-실패.adoc[]
+
+include::{generated}/위시리스트-숙소목록조회-잘못된ID-0.adoc[]
+
+include::{generated}/위시리스트-숙소목록조회-잘못된ID-1.adoc[]
+
+include::{generated}/위시리스트-숙소목록조회-잘못된커서-첫페이지처리.adoc[]
+
+include::{generated}/위시리스트-숙소목록조회-잘못된페이지크기-실패.adoc[]
+
+include::{generated}/위시리스트-숙소목록조회-최대ID-실패.adoc[]
+
+include::{generated}/위시리스트-숙소목록조회-최대크기.adoc[]
+
+include::{generated}/위시리스트-숙소목록조회-페이징.adoc[]
+
+include::{generated}/위시리스트-숙소삭제-권한없음-실패.adoc[]
+
+include::{generated}/위시리스트-숙소삭제-빈위시리스트-실패.adoc[]
+
+include::{generated}/위시리스트-숙소삭제-성공.adoc[]
+
+include::{generated}/위시리스트-숙소삭제-연속삭제-1.adoc[]
+
+include::{generated}/위시리스트-숙소삭제-연속삭제-2.adoc[]
+
+include::{generated}/위시리스트-숙소삭제-연속삭제-3.adoc[]
+
+include::{generated}/위시리스트-숙소삭제-연속삭제-4.adoc[]
+
+include::{generated}/위시리스트-숙소삭제-연속삭제-5.adoc[]
+
+include::{generated}/위시리스트-숙소삭제-위시리스트없음-실패.adoc[]
+
+include::{generated}/위시리스트-숙소삭제-잘못된ID-0.adoc[]
+
+include::{generated}/위시리스트-숙소삭제-잘못된ID-1.adoc[]
+
+include::{generated}/위시리스트-숙소삭제-중복삭제-실패.adoc[]
+
+include::{generated}/위시리스트-숙소삭제-최대값ID-성공.adoc[]
+
+include::{generated}/위시리스트-숙소삭제-항목불일치-실패.adoc[]
+
+include::{generated}/위시리스트-숙소삭제-항목없음-실패.adoc[]
+
+include::{generated}/위시리스트-숙소추가-0ID-실패.adoc[]
+
+include::{generated}/위시리스트-숙소추가-nullID-실패.adoc[]
+
+include::{generated}/위시리스트-숙소추가-권한없음-실패.adoc[]
+
+include::{generated}/위시리스트-숙소추가-성공.adoc[]
+
+include::{generated}/위시리스트-숙소추가-숙소없음-실패.adoc[]
+
+include::{generated}/위시리스트-숙소추가-연속생성-1.adoc[]
+
+include::{generated}/위시리스트-숙소추가-연속생성-2.adoc[]
+
+include::{generated}/위시리스트-숙소추가-연속생성-3.adoc[]
+
+include::{generated}/위시리스트-숙소추가-연속생성-4.adoc[]
+
+include::{generated}/위시리스트-숙소추가-연속생성-5.adoc[]
+
+include::{generated}/위시리스트-숙소추가-위시리스트없음-실패.adoc[]
+
+include::{generated}/위시리스트-숙소추가-음수ID-실패.adoc[]
+
+include::{generated}/위시리스트-숙소추가-중복-실패.adoc[]
+
+include::{generated}/위시리스트-숙소추가-최대값ID-성공.adoc[]
+
+include::{generated}/위시리스트-연속삭제-1.adoc[]
+
 include::{generated}/위시리스트-연속삭제-2.adoc[]
+
+include::{generated}/위시리스트-연속삭제-3.adoc[]
+
+include::{generated}/위시리스트-연속삭제-4.adoc[]
 
 include::{generated}/위시리스트-연속삭제-5.adoc[]
 
 include::{generated}/위시리스트-연속생성-1.adoc[]
 
-include::{generated}/logout.adoc[]
+include::{generated}/위시리스트-연속생성-2.adoc[]
 
-include::{generated}/update-discount-policy.adoc[]
+include::{generated}/위시리스트-연속생성-3.adoc[]
 
-include::{generated}/위시리스트-삭제-존재하지않음-실패.adoc[]
+include::{generated}/위시리스트-연속생성-4.adoc[]
 
-include::{generated}/회원가입-성공.adoc[]
+include::{generated}/위시리스트-연속생성-5.adoc[]
 
-include::{generated}/위시리스트-생성-빈이름-실패.adoc[]
+include::{generated}/위시리스트-조회-잘못된커서-정상처리.adoc[]
 
-include::{generated}/위시리스트-수정-빈이름-실패.adoc[]
+include::{generated}/위시리스트-중복이름-허용.adoc[]
+
+include::{generated}/위시리스트-페이징조회-성공.adoc[]
+
+== 숙소 API
+
+include::{generated}/숙소 등록.adoc[]
 
 include::{generated}/숙소 삭제.adoc[]
 
 include::{generated}/숙소 정보 수정.adoc[]
 
-include::{generated}/위시리스트-수정-권한없음-실패.adoc[]
+include::{generated}/숙소 조건 검색.adoc[]
 
-include::{generated}/위시리스트-수정-null-실패.adoc[]
+== 할인 API
 
-include::{generated}/위시리스트-삭제-성공.adoc[]
+include::{generated}/create-discount-policy.adoc[]
 
-include::{generated}/위시리스트-수정-성공.adoc[]
+include::{generated}/delete-discount-policy.adoc[]
 
-include::{generated}/위시리스트-연속삭제-1.adoc[]
+include::{generated}/find-valid-discount-policies.adoc[]
 
-include::{generated}/위시리스트-수정-길이초과-실패.adoc[]
+include::{generated}/update-discount-policy.adoc[]
 
-include::{generated}/위시리스트-연속생성-2.adoc[]
+== 회원 API
 
-include::{generated}/위시리스트-연속생성-5.adoc[]
+include::{generated}/회원가입-성공.adoc[]
+
+== 기타 API
 
 include::{generated}/login.adoc[]
 
-include::{generated}/위시리스트-중복이름-허용.adoc[]
+include::{generated}/logout.adoc[]
 
-include::{generated}/숙소 등록.adoc[]
+include::{generated}/recently-viewed-add.adoc[]
 
-include::{generated}/위시리스트-페이징조회-성공.adoc[]
+include::{generated}/recently-viewed-get.adoc[]
 
-include::{generated}/위시리스트-연속생성-4.adoc[]
+include::{generated}/recently-viewed-remove.adoc[]
 
-include::{generated}/위시리스트-연속생성-3.adoc[]
-
-include::{generated}/위시리스트-삭제-권한없음-실패.adoc[]
-
-include::{generated}/위시리스트-목록조회-성공.adoc[]
+include::{generated}/reservation-create.adoc[]
 
