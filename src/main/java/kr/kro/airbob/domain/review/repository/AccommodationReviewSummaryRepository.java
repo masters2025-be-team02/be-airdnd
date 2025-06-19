@@ -9,6 +9,8 @@ import kr.kro.airbob.domain.review.AccommodationReviewSummary;
 
 public interface AccommodationReviewSummaryRepository extends JpaRepository<AccommodationReviewSummary, Long> {
 
-	List<AccommodationReviewSummary> findByAccommodationIdIn(List<Long> accommodationIds);
+	Optional<AccommodationReviewSummary> findByAccommodationId(Long accommodationId);
+
+	List<AccommodationReviewSummary> findByAccommodationIdIn(List<Long> accommodationId);
 
 }

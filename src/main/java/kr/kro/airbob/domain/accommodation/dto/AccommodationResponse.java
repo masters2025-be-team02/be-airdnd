@@ -58,7 +58,7 @@ public class AccommodationResponse {
 		String accommodationName,
 		String thumbnailUrl,
 		List<AmenityInfoResponse> amenities,
-		Double averageRating,
+		BigDecimal averageRating,
 		Boolean isInWishlist
 	) {
 	}
