@@ -83,7 +83,7 @@ tasks.register('copyDocument', Copy) {
 	dependsOn asciidoctor
 
 	from file("build/docs/asciidoc/")
-	into file("src/main/resources/static/docs")
+	into file("build/resources/main/static/docs")
 }
 
 build {
@@ -270,24 +270,18 @@ asciidoctor {
 			'source-highlighter': 'highlightjs',
 			'highlightjs-theme': 'github'
 	)
-
-	tasks.register('packageZip', Zip) {
-		dependsOn build
-		archiveFileName = 'airbob-deploy.zip'
-		destinationDirectory = file("$buildDir/distributions")
-
-		from('build/libs') {
-			include '*.jar'
-		}
-		from('scripts') {
-			into 'scripts'
-		}
-		from('appspec.yml')
-	}
-
-	tasks.named('processResources') {
-		dependsOn(tasks.named('copyDocument'))
-	}
 }
 
+tasks.register('packageZip', Zip) {
+	dependsOn build
+	archiveFileName = 'airbob-deploy.zip'
+	destinationDirectory = file("$buildDir/distributions")
 
+	from('build/libs') {
+		include '*.jar'
+	}
+	from('scripts') {
+		into 'scripts'
+	}
+	from('appspec.yml')
+}
