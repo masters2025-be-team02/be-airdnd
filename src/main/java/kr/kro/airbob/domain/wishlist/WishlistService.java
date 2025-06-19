@@ -1,5 +1,6 @@
 package kr.kro.airbob.domain.wishlist;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -15,19 +16,18 @@ import kr.kro.airbob.cursor.dto.CursorResponse;
 import kr.kro.airbob.cursor.util.CursorPageInfoCreator;
 import kr.kro.airbob.domain.accommodation.dto.AccommodationResponse;
 import kr.kro.airbob.domain.accommodation.entity.Accommodation;
+import kr.kro.airbob.domain.accommodation.entity.AccommodationAmenity;
 import kr.kro.airbob.domain.accommodation.exception.AccommodationNotFoundException;
+import kr.kro.airbob.domain.accommodation.repository.AccommodationAmenityRepository;
 import kr.kro.airbob.domain.accommodation.repository.AccommodationRepository;
+import kr.kro.airbob.domain.image.AccommodationImage;
 import kr.kro.airbob.domain.member.Member;
 import kr.kro.airbob.domain.member.MemberRepository;
-import kr.kro.airbob.domain.member.common.MemberRole;
 import kr.kro.airbob.domain.member.exception.MemberNotFoundException;
+import kr.kro.airbob.domain.review.AccommodationReviewSummary;
+import kr.kro.airbob.domain.review.repository.AccommodationReviewSummaryRepository;
 import kr.kro.airbob.domain.wishlist.dto.WishlistRequest;
 import kr.kro.airbob.domain.wishlist.dto.WishlistResponse;
-import kr.kro.airbob.domain.wishlist.dto.projection.WishlistAmenityProjection;
-import kr.kro.airbob.domain.wishlist.dto.projection.WishlistImageProjection;
-import kr.kro.airbob.domain.wishlist.dto.projection.WishlistRatingProjection;
-import kr.kro.airbob.domain.wishlist.exception.WishlistAccessDeniedException;
-import kr.kro.airbob.domain.wishlist.exception.WishlistAccommodationAccessDeniedException;
 import kr.kro.airbob.domain.wishlist.exception.WishlistAccommodationDuplicateException;
 import kr.kro.airbob.domain.wishlist.exception.WishlistAccommodationNotFoundException;
 import kr.kro.airbob.domain.wishlist.exception.WishlistNotFoundException;
@@ -44,6 +44,8 @@ public class WishlistService {
 	private final MemberRepository memberRepository;
 	private final WishlistRepository wishlistRepository;
 	private final AccommodationRepository accommodationRepository;
+	private final AccommodationAmenityRepository amenityRepository;
+	private final AccommodationReviewSummaryRepository summaryRepository;
 	private final WishlistAccommodationRepository wishlistAccommodationRepository;
 
 	private final CursorPageInfoCreator cursorPageInfoCreator;
@@ -52,7 +54,6 @@ public class WishlistService {
 	public WishlistResponse.CreateResponse createWishlist(WishlistRequest.createRequest request, Long loggedInMemberId) {
 
 		Member member = findMemberById(loggedInMemberId);
-		log.info("{} 사용자 조회 성공", member.getId());
 
 		Wishlist wishlist = Wishlist.builder()
 			.name(request.name())
@@ -67,9 +68,7 @@ public class WishlistService {
 	public WishlistResponse.UpdateResponse updateWishlist(Long wishlistId, WishlistRequest.updateRequest request) {
 
 		Wishlist wishlist = findWishlistById(wishlistId);
-		log.info("{} 위시리스트 조회 성공", wishlist.getId());
 
-		log.info("위시리스트 이름 {} -> {} 변경", wishlist.getName(), request.name());
 		wishlist.updateName(request.name());
 
 		return new WishlistResponse.UpdateResponse(wishlist.getId());
@@ -79,7 +78,6 @@ public class WishlistService {
 	public void deleteWishlist(Long wishlistId) {
 		// 위시리스트 존재, 작성자 id 검증을 위한 조회
 		Wishlist wishlist = findWishlistById(wishlistId);
-		log.info("{} 위시리스트 조회 성공", wishlist.getId());
 
 		// 위시리스트에 속한 숙소 삭제
 		wishlistAccommodationRepository.deleteAllByWishlistId(wishlist.getId());
@@ -91,14 +89,13 @@ public class WishlistService {
 
 		Long lastId = request.lastId();
 		LocalDateTime lastCreatedAt = request.lastCreatedAt();
-		// todo: projection으로 조회 고려
+
 		Slice<Wishlist> wishlistSlice = wishlistRepository.findByMemberIdWithCursor(
 			loggedInMemberId,
 			lastId,
 			lastCreatedAt,
 			PageRequest.of(0, request.size())
 		);
-		log.info("위시리스크 목록 조회: {} 개, 다음 페이지 여부: {}", wishlistSlice.getContent().size(), wishlistSlice.hasNext());
 
 		List<Long> wishlistIds = wishlistSlice.getContent().stream()
 			.map(Wishlist::getId)
@@ -181,8 +178,6 @@ public class WishlistService {
 			lastCreatedAt,
 			PageRequest.of(0, request.size())
 		);
-		log.info("{} 위시리스크 항목 목록 조회: {} 개, 다음 페이지 여부: {}",
-			wishlistId, wishlistAccommodationSlice.getContent().size(), wishlistAccommodationSlice.hasNext());
 
 		List<WishlistAccommodation> wishlistAccommodations = wishlistAccommodationSlice.getContent();
 
@@ -196,30 +191,29 @@ public class WishlistService {
 			return new WishlistResponse.WishlistAccommodationInfos(List.of(), pageInfo);
 		}
 
-		List<Long> wishlistAccommodationIds = wishlistAccommodations.stream()
-			.map(WishlistAccommodation::getId)
-			.toList();
+		List<Long> accommodationIds = wishlistAccommodations.stream().map(wa -> wa.getAccommodation().getId()).toList();
 
 		// 숙소 이미지
-		Map<Long, List<String>> imageUrlsMap = getAccommodationImageUrls(wishlistAccommodationIds);
+		Map<Long, List<String>> imageUrlsMap = getAccommodationImageUrls(accommodationIds);
 
 		// 숙소 편의시설
-		Map<Long, List<AccommodationResponse.AmenityInfoResponse>> amenitiesMap = getAccommodationAmenities(wishlistAccommodationIds);
+		Map<Long, List<AccommodationResponse.AmenityInfoResponse>> amenitiesMap = getAccommodationAmenities(accommodationIds);
 
 		// 숙소 리뷰 평점
-		Map<Long, Double> ratingMap = getAccommodationRatings(wishlistAccommodationIds);
+		Map<Long, BigDecimal> ratingMap = getAccommodationRatings(accommodationIds);
 
 		List<WishlistResponse.WishlistAccommodationInfo> wishlistAccommodationInfos = wishlistAccommodations.stream()
 			.map(wa -> {
 				Accommodation accommodation = wa.getAccommodation();
+				Long accommodationId = accommodation.getId();
 
 				AccommodationResponse.WishlistAccommodationInfo accommodationInfo =
 					new AccommodationResponse.WishlistAccommodationInfo(
-						accommodation.getId(),
+						accommodationId,
 						accommodation.getName(),
-						imageUrlsMap.getOrDefault(wa.getId(), List.of()),
-						amenitiesMap.getOrDefault(wa.getId(), List.of()),
-						ratingMap.get(wa.getId())
+						imageUrlsMap.getOrDefault(accommodationId, List.of()),
+						amenitiesMap.getOrDefault(accommodationId, List.of()),
+						ratingMap.get(accommodationId)
 					);
 
 				return new WishlistResponse.WishlistAccommodationInfo(
@@ -239,47 +233,47 @@ public class WishlistService {
 		return new WishlistResponse.WishlistAccommodationInfos(wishlistAccommodationInfos, pageInfo);
 	}
 
-	private Map<Long, List<String>> getAccommodationImageUrls(List<Long> wishlistAccommodationIds) {
-		List<WishlistImageProjection> results = wishlistAccommodationRepository
-			.findAccommodationImagesByWishlistAccommodationIds(wishlistAccommodationIds);
+	private Map<Long, List<String>> getAccommodationImageUrls(List<Long> accommodationIds) {
+		List<AccommodationImage> results = accommodationRepository
+			.findAccommodationImagesByAccommodationIds(accommodationIds);
 
 		return results .stream()
 			.collect(Collectors.groupingBy(
-				WishlistImageProjection::wishlistAccommodationId,
+				ai -> ai.getAccommodation().getId(),
 				Collectors.mapping(
-					WishlistImageProjection::url,
+					AccommodationImage::getImageUrl,
 					Collectors.toList()
 				)
 			));
 	}
 
 	private Map<Long, List<AccommodationResponse.AmenityInfoResponse>> getAccommodationAmenities(
-		List<Long> wishlistAccommodationIds) {
+		List<Long> accommodationIds) {
 
-		List<WishlistAmenityProjection> results
-			= wishlistAccommodationRepository.findAccommodationAmenitiesByWishlistAccommodationIds(wishlistAccommodationIds);
+		List<AccommodationAmenity> results
+			= amenityRepository.findAccommodationAmenitiesByAccommodationIds(accommodationIds);
 
 		return results.stream()
 			.collect(Collectors.groupingBy(
-				WishlistAmenityProjection::wishlistAccommodationId,
+				aa -> aa.getAccommodation().getId(),
 				Collectors.mapping(
 					result -> new AccommodationResponse.AmenityInfoResponse(
-						result.type(),
-						result.count()
+						result.getAmenity().getName(),
+						result.getCount()
 					),
 					Collectors.toList()
 				)
 			));
 	}
 
-	private Map<Long, Double> getAccommodationRatings(List<Long> wishlistAccommodationIds) {
-		List<WishlistRatingProjection> results
-			= wishlistAccommodationRepository.findAccommodationRatingsByWishlistAccommodationIds(wishlistAccommodationIds);
+	private Map<Long, BigDecimal> getAccommodationRatings(List<Long> accommodationIds) {
+		List<AccommodationReviewSummary> results
+			= summaryRepository.findByAccommodationIdIn(accommodationIds);
 
 		return results.stream()
 			.collect(Collectors.toMap(
-				WishlistRatingProjection::wishlistAccommodationId,
-				WishlistRatingProjection::averageRating
+				AccommodationReviewSummary::getAccommodationId,
+				AccommodationReviewSummary::getAverageRating
 			));
 	}
 

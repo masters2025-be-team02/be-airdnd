@@ -54,9 +54,7 @@ public class WishlistController {
 
 	@DeleteMapping("/{wishlistId}")
 	public ResponseEntity<Void> deleteWishlist(@PathVariable Long wishlistId) {
-		log.info("{} 위시리스트 삭제 요청", wishlistId);
 		wishlistService.deleteWishlist(wishlistId);
-		log.info("{} 위시리스트 삭제 요청 완료", wishlistId);
 		return ResponseEntity.noContent().build();
 	}
 
@@ -76,7 +74,6 @@ public class WishlistController {
 	public ResponseEntity<WishlistResponse.CreateWishlistAccommodationResponse> createWishlistAccommodation(
 		@PathVariable Long wishlistId,
 		@Valid @RequestBody WishlistRequest.CreateWishlistAccommodationRequest requestDto) {
-		log.info("{} 위시리스트에 {} 숙소 추가 요청", wishlistId, requestDto.accommodationId());
 		WishlistResponse.CreateWishlistAccommodationResponse response =
 			wishlistService.createWishlistAccommodation(wishlistId, requestDto);
 		return ResponseEntity.ok(response);
@@ -84,12 +81,8 @@ public class WishlistController {
 
 	@PatchMapping("/{wishlistId}/accommodations/{wishlistAccommodationId}")
 	public ResponseEntity<WishlistResponse.UpdateWishlistAccommodationResponse> updateWishlistAccommodation(
-		@PathVariable Long wishlistId,
 		@PathVariable Long wishlistAccommodationId,
 		@Valid @RequestBody WishlistRequest.UpdateWishlistAccommodationRequest requestDto) {
-
-		log.info("위시리스트 {} 안의 항목 {}의 메모 수정 요청 내용: {}"
-			, wishlistId, wishlistAccommodationId, requestDto.toString());
 
 		WishlistResponse.UpdateWishlistAccommodationResponse response =
 			wishlistService.updateWishlistAccommodation(wishlistAccommodationId, requestDto);
@@ -99,10 +92,7 @@ public class WishlistController {
 
 	@DeleteMapping("/{wishlistId}/accommodations/{wishlistAccommodationId}")
 	public ResponseEntity<Void> deleteWishlistAccommodation(
-		@PathVariable Long wishlistId,
 		@PathVariable Long wishlistAccommodationId) {
-
-		log.info("위시리스트 {} 안의 항목 {} 삭제 요청", wishlistId, wishlistAccommodationId);
 
 		wishlistService.deleteWishlistAccommodation(wishlistAccommodationId);
 
@@ -115,8 +105,6 @@ public class WishlistController {
 		@CursorParam CursorRequest.CursorPageRequest requestDto,
 		@PathVariable Long wishlistId
 	) {
-
-		log.info("위시리스트: {} 조회 요청. cursor: {}", wishlistId, requestDto.toString());
 
 		WishlistResponse.WishlistAccommodationInfos response
 			= wishlistService.findWishlistAccommodations(wishlistId, requestDto);

@@ -2,15 +2,16 @@ package kr.kro.airbob.domain.accommodation.repository;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalLong;
-import kr.kro.airbob.domain.accommodation.entity.Accommodation;
-import kr.kro.airbob.domain.accommodation.entity.Address;
-import kr.kro.airbob.domain.accommodation.repository.querydsl.AccommodationRepositoryCustom;
-import kr.kro.airbob.domain.recentlyViewed.projection.RecentlyViewedProjection;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import kr.kro.airbob.domain.accommodation.entity.Accommodation;
+import kr.kro.airbob.domain.accommodation.entity.Address;
+import kr.kro.airbob.domain.accommodation.repository.querydsl.AccommodationRepositoryCustom;
+import kr.kro.airbob.domain.image.AccommodationImage;
+import kr.kro.airbob.domain.recentlyViewed.projection.RecentlyViewedProjection;
 
 public interface AccommodationRepository extends JpaRepository<Accommodation, Long>, AccommodationRepositoryCustom {
     Optional<Address> findAddressById(Long accommodationId);
@@ -27,5 +28,15 @@ public interface AccommodationRepository extends JpaRepository<Accommodation, Lo
 	GROUP BY a.id
 	""")
 	List<RecentlyViewedProjection> findRecentlyViewedProjectionByIds(
+		@Param("accommodationIds") List<Long> accommodationIds);
+
+	@Query("""
+	SELECT 
+		ai
+	FROM AccommodationImage ai
+	WHERE ai.accommodation.id IN :accommodationIds
+	ORDER BY ai.accommodation.id
+	""")
+	List<AccommodationImage> findAccommodationImagesByAccommodationIds(
 		@Param("accommodationIds") List<Long> accommodationIds);
 }

@@ -1163,7 +1163,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 					pathParameters(
 						parameterWithName("wishlistId")
 							.description("위시리스트의 고유 식별자"),
-						parameterWithName("wishlistAccommodationId")
+						parameterWithName("accommodationId")
 							.description("수정할 위시리스트 항목의 고유 식별자")
 					),
 					requestFields(
@@ -1209,7 +1209,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 					pathParameters(
 						parameterWithName("wishlistId")
 							.description("존재하지 않는 위시리스트 ID"),
-						parameterWithName("wishlistAccommodationId")
+						parameterWithName("accommodationId")
 							.description("위시리스트 항목 ID")
 					),
 					requestFields(
@@ -1250,7 +1250,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 					pathParameters(
 						parameterWithName("wishlistId")
 							.description("위시리스트 ID"),
-						parameterWithName("wishlistAccommodationId")
+						parameterWithName("accommodationId")
 							.description("존재하지 않는 위시리스트 항목 ID")
 					),
 					requestFields(
@@ -1291,7 +1291,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 					pathParameters(
 						parameterWithName("wishlistId")
 							.description("다른 사용자 소유의 위시리스트 ID"),
-						parameterWithName("wishlistAccommodationId")
+						parameterWithName("accommodationId")
 							.description("위시리스트 항목 ID")
 					),
 					requestFields(
@@ -1332,7 +1332,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 					pathParameters(
 						parameterWithName("wishlistId")
 							.description("위시리스트 ID"),
-						parameterWithName("wishlistAccommodationId")
+						parameterWithName("accommodationId")
 							.description("다른 위시리스트에 속한 항목 ID")
 					),
 					requestFields(
@@ -1375,7 +1375,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 					pathParameters(
 						parameterWithName("wishlistId")
 							.description("위시리스트 ID"),
-						parameterWithName("wishlistAccommodationId")
+						parameterWithName("accommodationId")
 							.description("위시리스트 항목 ID")
 					),
 					requestFields(
@@ -1457,7 +1457,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 						pathParameters(
 							parameterWithName("wishlistId")
 								.description("위시리스트 ID"),
-							parameterWithName("wishlistAccommodationId")
+							parameterWithName("accommodationId")
 								.description("위시리스트 항목 ID: " + wishlistAccommodationIds[i])
 						),
 						requestFields(
@@ -1504,7 +1504,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 					pathParameters(
 						parameterWithName("wishlistId")
 							.description("위시리스트 ID"),
-						parameterWithName("wishlistAccommodationId")
+						parameterWithName("accommodationId")
 							.description("위시리스트 항목 ID")
 					),
 					requestFields(
@@ -1553,7 +1553,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 					pathParameters(
 						parameterWithName("wishlistId")
 							.description("위시리스트 ID"),
-						parameterWithName("wishlistAccommodationId")
+						parameterWithName("accommodationId")
 							.description("위시리스트 항목 ID")
 					),
 					requestFields(
@@ -1598,7 +1598,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 					pathParameters(
 						parameterWithName("wishlistId")
 							.description("위시리스트의 고유 식별자"),
-						parameterWithName("wishlistAccommodationId")
+						parameterWithName("accommodationId")
 							.description("삭제할 위시리스트 항목의 고유 식별자")
 					)));
 
@@ -1628,7 +1628,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 					pathParameters(
 						parameterWithName("wishlistId")
 							.description("존재하지 않는 위시리스트 ID"),
-						parameterWithName("wishlistAccommodationId")
+						parameterWithName("accommodationId")
 							.description("삭제하려는 위시리스트 항목 ID")
 					)));
 
@@ -1658,7 +1658,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 					pathParameters(
 						parameterWithName("wishlistId")
 							.description("위시리스트 ID"),
-						parameterWithName("wishlistAccommodationId")
+						parameterWithName("accommodationId")
 							.description("존재하지 않는 위시리스트 항목 ID")
 					)));
 
@@ -1688,7 +1688,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 					pathParameters(
 						parameterWithName("wishlistId")
 							.description("다른 사용자 소유의 위시리스트 ID"),
-						parameterWithName("wishlistAccommodationId")
+						parameterWithName("accommodationId")
 							.description("삭제하려는 위시리스트 항목 ID")
 					)));
 
@@ -1718,7 +1718,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 					pathParameters(
 						parameterWithName("wishlistId")
 							.description("위시리스트 ID"),
-						parameterWithName("wishlistAccommodationId")
+						parameterWithName("accommodationId")
 							.description("다른 위시리스트에 속한 항목 ID")
 					)));
 
@@ -1748,7 +1748,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 						pathParameters(
 							parameterWithName("wishlistId")
 								.description("위시리스트 ID"),
-							parameterWithName("wishlistAccommodationId")
+							parameterWithName("accommodationId")
 								.description("삭제할 위시리스트 항목 ID: " + wishlistAccommodationIds[i])
 						)));
 
@@ -1778,7 +1778,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 					pathParameters(
 						parameterWithName("wishlistId")
 							.description("매우 큰 위시리스트 ID (Long.MAX_VALUE)"),
-						parameterWithName("wishlistAccommodationId")
+						parameterWithName("accommodationId")
 							.description("매우 큰 위시리스트 항목 ID (Long.MAX_VALUE - 1)")
 					)));
 
@@ -1818,7 +1818,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 					pathParameters(
 						parameterWithName("wishlistId")
 							.description("위시리스트 ID"),
-						parameterWithName("wishlistAccommodationId")
+						parameterWithName("accommodationId")
 							.description("이미 삭제된 위시리스트 항목 ID")
 					)));
 
@@ -1849,7 +1849,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 					pathParameters(
 						parameterWithName("wishlistId")
 							.description("빈 위시리스트 ID"),
-						parameterWithName("wishlistAccommodationId")
+						parameterWithName("accommodationId")
 							.description("존재하지 않는 위시리스트 항목 ID")
 					)));
 
@@ -1878,7 +1878,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 					pathParameters(
 						parameterWithName("wishlistId")
 							.description("위시리스트 ID"),
-						parameterWithName("wishlistAccommodationId")
+						parameterWithName("accommodationId")
 							.description("위시리스트의 마지막 남은 숙소 ID")
 					)));
 
@@ -1907,7 +1907,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 					pathParameters(
 						parameterWithName("wishlistId")
 							.description("위시리스트 ID"),
-						parameterWithName("wishlistAccommodationId")
+						parameterWithName("accommodationId")
 							.description("잘못된 위시리스트 항목 ID: " + invalidId)
 					)));
 		}

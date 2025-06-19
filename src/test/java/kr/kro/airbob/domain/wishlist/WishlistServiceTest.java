@@ -38,11 +38,9 @@ import kr.kro.airbob.domain.member.common.MemberRole;
 import kr.kro.airbob.domain.member.exception.MemberNotFoundException;
 import kr.kro.airbob.domain.wishlist.dto.WishlistRequest;
 import kr.kro.airbob.domain.wishlist.dto.WishlistResponse;
-import kr.kro.airbob.domain.wishlist.dto.projection.WishlistAmenityProjection;
-import kr.kro.airbob.domain.wishlist.dto.projection.WishlistImageProjection;
-import kr.kro.airbob.domain.wishlist.dto.projection.WishlistRatingProjection;
-import kr.kro.airbob.domain.wishlist.exception.WishlistAccessDeniedException;
-import kr.kro.airbob.domain.wishlist.exception.WishlistAccommodationAccessDeniedException;
+import kr.kro.airbob.domain.wishlist.dto.projection.AccommodationAmenityProjection;
+import kr.kro.airbob.domain.wishlist.dto.projection.AccommodationImageProjection;
+import kr.kro.airbob.domain.wishlist.dto.projection.AccommodationRatingProjection;
 import kr.kro.airbob.domain.wishlist.exception.WishlistAccommodationDuplicateException;
 import kr.kro.airbob.domain.wishlist.exception.WishlistAccommodationNotFoundException;
 import kr.kro.airbob.domain.wishlist.exception.WishlistNotFoundException;
@@ -2186,24 +2184,24 @@ class WishlistServiceTest {
 		}
 
 		// Helper 메서드들 (기존과 동일)
-		private List<WishlistImageProjection> createMockImageProjections() {
+		private List<AccommodationImageProjection> createMockImageProjections() {
 			return List.of(
-				new WishlistImageProjection(10L, "image1.jpg"),
-				new WishlistImageProjection(20L, "image2.jpg")
+				new AccommodationImageProjection(10L, "image1.jpg"),
+				new AccommodationImageProjection(20L, "image2.jpg")
 			);
 		}
 
-		private List<WishlistAmenityProjection> createMockAmenityProjections() {
+		private List<AccommodationAmenityProjection> createMockAmenityProjections() {
 			return List.of(
-				new WishlistAmenityProjection(10L, AmenityType.WIFI, 1) ,
-				new WishlistAmenityProjection(20L, AmenityType.TV, 2)
+				new AccommodationAmenityProjection(10L, AmenityType.WIFI, 1) ,
+				new AccommodationAmenityProjection(20L, AmenityType.TV, 2)
 			);
 		}
 
-		private List<WishlistRatingProjection> createMockRatingProjections() {
+		private List<AccommodationRatingProjection> createMockRatingProjections() {
 			return List.of(
-				new WishlistRatingProjection(10L, 4.5) ,
-				new WishlistRatingProjection(20L, 4.3)
+				new AccommodationRatingProjection(10L, 4.5) ,
+				new AccommodationRatingProjection(20L, 4.3)
 			);
 		}
 	}
