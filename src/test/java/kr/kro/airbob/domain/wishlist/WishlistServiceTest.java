@@ -4,7 +4,9 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,19 +32,20 @@ import kr.kro.airbob.cursor.dto.CursorResponse;
 import kr.kro.airbob.cursor.util.CursorPageInfoCreator;
 import kr.kro.airbob.domain.accommodation.common.AmenityType;
 import kr.kro.airbob.domain.accommodation.entity.Accommodation;
+import kr.kro.airbob.domain.accommodation.entity.AccommodationAmenity;
+import kr.kro.airbob.domain.accommodation.entity.Amenity;
 import kr.kro.airbob.domain.accommodation.exception.AccommodationNotFoundException;
+import kr.kro.airbob.domain.accommodation.repository.AccommodationAmenityRepository;
 import kr.kro.airbob.domain.accommodation.repository.AccommodationRepository;
+import kr.kro.airbob.domain.image.AccommodationImage;
 import kr.kro.airbob.domain.member.Member;
 import kr.kro.airbob.domain.member.MemberRepository;
 import kr.kro.airbob.domain.member.common.MemberRole;
 import kr.kro.airbob.domain.member.exception.MemberNotFoundException;
+import kr.kro.airbob.domain.review.AccommodationReviewSummary;
+import kr.kro.airbob.domain.review.repository.AccommodationReviewSummaryRepository;
 import kr.kro.airbob.domain.wishlist.dto.WishlistRequest;
 import kr.kro.airbob.domain.wishlist.dto.WishlistResponse;
-import kr.kro.airbob.domain.wishlist.dto.projection.WishlistAmenityProjection;
-import kr.kro.airbob.domain.wishlist.dto.projection.WishlistImageProjection;
-import kr.kro.airbob.domain.wishlist.dto.projection.WishlistRatingProjection;
-import kr.kro.airbob.domain.wishlist.exception.WishlistAccessDeniedException;
-import kr.kro.airbob.domain.wishlist.exception.WishlistAccommodationAccessDeniedException;
 import kr.kro.airbob.domain.wishlist.exception.WishlistAccommodationDuplicateException;
 import kr.kro.airbob.domain.wishlist.exception.WishlistAccommodationNotFoundException;
 import kr.kro.airbob.domain.wishlist.exception.WishlistNotFoundException;
@@ -63,10 +66,17 @@ class WishlistServiceTest {
 	private WishlistAccommodationRepository wishlistAccommodationRepository;
 
 	@Mock
+	private AccommodationRepository accommodationRepository;
+
+	@Mock
+	private AccommodationReviewSummaryRepository summaryRepository;
+
+
+	@Mock
 	private CursorPageInfoCreator cursorPageInfoCreator;
 
 	@Mock
-	private AccommodationRepository accommodationRepository;
+	private AccommodationAmenityRepository amenityRepository;
 
 	@InjectMocks
 	private WishlistService wishlistService;
@@ -1850,21 +1860,10 @@ class WishlistServiceTest {
 
 		@BeforeEach
 		void setUpAccommodations() {
-			// 숙소 엔티티들
-			firstAccommodation = Accommodation.builder()
-				.id(100L)
-				.name("신라호텔")
-				.build();
-
-			secondAccommodation = Accommodation.builder()
-				.id(200L)
-				.name("롯데호텔")
-				.build();
-
-			thirdAccommodation = Accommodation.builder()
-				.id(300L)
-				.name("게스트하우스")
-				.build();
+			// 기본 엔티티들만 생성 (Mock 설정은 각 테스트에서 개별적으로)
+			firstAccommodation = mock(Accommodation.class);
+			secondAccommodation = mock(Accommodation.class);
+			thirdAccommodation = mock(Accommodation.class);
 
 			// 위시리스트 항목들
 			firstWishlistAccommodation = WishlistAccommodation.builder()
@@ -1889,10 +1888,105 @@ class WishlistServiceTest {
 				.build();
 		}
 
+		// 테스트별로 필요한 Mock 데이터를 생성하는 헬퍼 메서드들
+		private void setupAccommodationMocks() {
+			given(firstAccommodation.getId()).willReturn(100L);
+			given(firstAccommodation.getName()).willReturn("신라호텔");
+
+			given(secondAccommodation.getId()).willReturn(200L);
+			given(secondAccommodation.getName()).willReturn("롯데호텔");
+
+			given(thirdAccommodation.getId()).willReturn(300L);
+			given(thirdAccommodation.getName()).willReturn("게스트하우스");
+		}
+
+		private List<AccommodationImage> createMockImages(List<Accommodation> accommodations) {
+			List<AccommodationImage> images = new ArrayList<>();
+
+			for (Accommodation accommodation : accommodations) {
+				if (accommodation.getId().equals(100L)) {
+					AccommodationImage image1 = mock(AccommodationImage.class);
+					given(image1.getAccommodation()).willReturn(accommodation);
+					given(image1.getImageUrl()).willReturn("hotel1_image1.jpg");
+
+					AccommodationImage image2 = mock(AccommodationImage.class);
+					given(image2.getAccommodation()).willReturn(accommodation);
+					given(image2.getImageUrl()).willReturn("hotel1_image2.jpg");
+
+					images.addAll(List.of(image1, image2));
+				} else if (accommodation.getId().equals(200L)) {
+					AccommodationImage image3 = mock(AccommodationImage.class);
+					given(image3.getAccommodation()).willReturn(accommodation);
+					given(image3.getImageUrl()).willReturn("hotel2_image1.jpg");
+
+					images.add(image3);
+				}
+			}
+			return images;
+		}
+
+		private List<AccommodationAmenity> createMockAmenities(List<Accommodation> accommodations) {
+			List<AccommodationAmenity> amenities = new ArrayList<>();
+
+			for (Accommodation accommodation : accommodations) {
+				if (accommodation.getId().equals(100L)) {
+					Amenity wifiAmenity = mock(Amenity.class);
+					given(wifiAmenity.getName()).willReturn(AmenityType.WIFI);
+
+					Amenity tvAmenity = mock(Amenity.class);
+					given(tvAmenity.getName()).willReturn(AmenityType.TV);
+
+					AccommodationAmenity amenity1 = mock(AccommodationAmenity.class);
+					given(amenity1.getAccommodation()).willReturn(accommodation);
+					given(amenity1.getAmenity()).willReturn(wifiAmenity);
+					given(amenity1.getCount()).willReturn(1);
+
+					AccommodationAmenity amenity2 = mock(AccommodationAmenity.class);
+					given(amenity2.getAccommodation()).willReturn(accommodation);
+					given(amenity2.getAmenity()).willReturn(tvAmenity);
+					given(amenity2.getCount()).willReturn(1);
+
+					amenities.addAll(List.of(amenity1, amenity2));
+				} else if (accommodation.getId().equals(200L)) {
+					Amenity parkingAmenity = mock(Amenity.class);
+					given(parkingAmenity.getName()).willReturn(AmenityType.PARKING);
+
+					AccommodationAmenity amenity3 = mock(AccommodationAmenity.class);
+					given(amenity3.getAccommodation()).willReturn(accommodation);
+					given(amenity3.getAmenity()).willReturn(parkingAmenity);
+					given(amenity3.getCount()).willReturn(1);
+
+					amenities.add(amenity3);
+				}
+			}
+			return amenities;
+		}
+
+		private List<AccommodationReviewSummary> createMockSummaries(List<Long> accommodationIds) {
+			List<AccommodationReviewSummary> summaries = new ArrayList<>();
+
+			for (Long accommodationId : accommodationIds) {
+				if (accommodationId.equals(100L)) {
+					AccommodationReviewSummary summary1 = mock(AccommodationReviewSummary.class);
+					given(summary1.getAccommodationId()).willReturn(100L);
+					given(summary1.getAverageRating()).willReturn(new BigDecimal("4.5"));
+					summaries.add(summary1);
+				} else if (accommodationId.equals(200L)) {
+					AccommodationReviewSummary summary2 = mock(AccommodationReviewSummary.class);
+					given(summary2.getAccommodationId()).willReturn(200L);
+					given(summary2.getAverageRating()).willReturn(new BigDecimal("4.3"));
+					summaries.add(summary2);
+				}
+			}
+			return summaries;
+		}
+
 		@Test
 		@DisplayName("정상적으로 위시리스트 숙소 목록을 조회한다")
 		void findWishlistAccommodations_Success() {
 			// Given
+			setupAccommodationMocks(); // Mock 설정
+
 			Long wishlistId = 1L;
 			CursorRequest.CursorPageRequest request = CursorRequest.CursorPageRequest.builder()
 				.size(20)
@@ -1909,20 +2003,26 @@ class WishlistServiceTest {
 			Slice<WishlistAccommodation> wishlistAccommodationSlice =
 				new SliceImpl<>(wishlistAccommodations, PageRequest.of(0, 20), false);
 
-			List<Long> wishlistAccommodationIds = List.of(10L, 20L, 30L);
+			List<Long> accommodationIds = List.of(100L, 200L, 300L);
 
 			// Mock 설정
 			given(wishlistAccommodationRepository.findByWishlistIdWithCursor(
 				eq(wishlistId), eq(null), eq(null), any(PageRequest.class)))
 				.willReturn(wishlistAccommodationSlice);
 
-			// 이미지, 편의시설, 평점 Mock 설정
-			given(wishlistAccommodationRepository.findAccommodationImagesByWishlistAccommodationIds(wishlistAccommodationIds))
-				.willReturn(createMockImageProjections());
-			given(wishlistAccommodationRepository.findAccommodationAmenitiesByWishlistAccommodationIds(wishlistAccommodationIds))
-				.willReturn(createMockAmenityProjections());
-			given(wishlistAccommodationRepository.findAccommodationRatingsByWishlistAccommodationIds(wishlistAccommodationIds))
-				.willReturn(createMockRatingProjections());
+			// 해당 테스트에 필요한 Mock 데이터 생성
+			List<Accommodation> accommodations = List.of(firstAccommodation, secondAccommodation, thirdAccommodation);
+			List<AccommodationImage> images = createMockImages(accommodations);
+			List<AccommodationAmenity> amenities = createMockAmenities(accommodations);
+			List<AccommodationReviewSummary> summaries = createMockSummaries(accommodationIds);
+
+			// Entity 기반 조회 Mock 설정
+			given(accommodationRepository.findAccommodationImagesByAccommodationIds(accommodationIds))
+				.willReturn(images);
+			given(amenityRepository.findAccommodationAmenitiesByAccommodationIds(accommodationIds))
+				.willReturn(amenities);
+			given(summaryRepository.findByAccommodationIdIn(accommodationIds))
+				.willReturn(summaries);
 
 			CursorResponse.PageInfo pageInfo = CursorResponse.PageInfo.builder()
 				.hasNext(false)
@@ -1948,135 +2048,25 @@ class WishlistServiceTest {
 			assertThat(firstItem.name()).isEqualTo("신라호텔 메모");
 			assertThat(firstItem.accommodationInfo().accommodationId()).isEqualTo(100L);
 			assertThat(firstItem.accommodationInfo().name()).isEqualTo("신라호텔");
+			assertThat(firstItem.accommodationInfo().accommodationImageUrls()).hasSize(2);
+			assertThat(firstItem.accommodationInfo().amenities()).hasSize(2);
+			assertThat(firstItem.accommodationInfo().averageRating()).isEqualByComparingTo(new BigDecimal("4.5"));
 
-			// 검증: 권한 검증 메서드는 더 이상 호출되지 않음
-			verify(wishlistRepository, never()).findById(any());
-			verify(memberRepository, never()).findById(any());
-
-			// 실제 호출되는 메서드들만 검증
+			// Repository 호출 검증
 			verify(wishlistAccommodationRepository).findByWishlistIdWithCursor(
 				eq(wishlistId), eq(null), eq(null), any(PageRequest.class));
-			verify(wishlistAccommodationRepository).findAccommodationImagesByWishlistAccommodationIds(wishlistAccommodationIds);
-			verify(wishlistAccommodationRepository).findAccommodationAmenitiesByWishlistAccommodationIds(wishlistAccommodationIds);
-			verify(wishlistAccommodationRepository).findAccommodationRatingsByWishlistAccommodationIds(wishlistAccommodationIds);
-		}
-
-		@Test
-		@DisplayName("빈 위시리스트의 숙소 목록을 조회한다")
-		void findWishlistAccommodations_EmptyWishlist() {
-			// Given
-			Long emptyWishlistId = 1L;
-			CursorRequest.CursorPageRequest request = CursorRequest.CursorPageRequest.builder()
-				.size(20)
-				.lastId(null)
-				.lastCreatedAt(null)
-				.build();
-
-			Slice<WishlistAccommodation> emptySlice =
-				new SliceImpl<>(List.of(), PageRequest.of(0, 20), false);
-
-			CursorResponse.PageInfo pageInfo = CursorResponse.PageInfo.builder()
-				.hasNext(false)
-				.nextCursor(null)
-				.currentSize(0)
-				.build();
-
-			// Mock 설정
-			given(wishlistAccommodationRepository.findByWishlistIdWithCursor(
-				eq(emptyWishlistId), eq(null), eq(null), any(PageRequest.class)))
-				.willReturn(emptySlice);
-			given(cursorPageInfoCreator.createPageInfo(eq(List.of()), eq(false), any(), any()))
-				.willReturn(pageInfo);
-
-			// When
-			WishlistResponse.WishlistAccommodationInfos response =
-				wishlistService.findWishlistAccommodations(emptyWishlistId, request);
-
-			// Then
-			assertThat(response.wishlistAccommodations()).isEmpty();
-			assertThat(response.pageInfo().hasNext()).isFalse();
-			assertThat(response.pageInfo().currentSize()).isZero();
-
-			// 권한 검증 메서드는 호출되지 않음
-			verify(wishlistRepository, never()).findById(any());
-			verify(memberRepository, never()).findById(any());
-
-			// 실제 호출되는 메서드만 검증
-			verify(wishlistAccommodationRepository).findByWishlistIdWithCursor(
-				eq(emptyWishlistId), eq(null), eq(null), any(PageRequest.class));
-
-			// 빈 리스트일 때는 이미지, 편의시설, 평점 조회하지 않음
-			verify(wishlistAccommodationRepository, never()).findAccommodationImagesByWishlistAccommodationIds(any());
-			verify(wishlistAccommodationRepository, never()).findAccommodationAmenitiesByWishlistAccommodationIds(any());
-			verify(wishlistAccommodationRepository, never()).findAccommodationRatingsByWishlistAccommodationIds(any());
-		}
-
-		@Test
-		@DisplayName("커서 기반 페이징으로 위시리스트 숙소 목록을 조회한다")
-		void findWishlistAccommodations_WithCursor() {
-			// Given
-			Long wishlistId = 1L;
-			Long lastId = 20L;
-			LocalDateTime lastCreatedAt = LocalDateTime.now().minusDays(1);
-
-			CursorRequest.CursorPageRequest request = CursorRequest.CursorPageRequest.builder()
-				.size(2)
-				.lastId(lastId)
-				.lastCreatedAt(lastCreatedAt)
-				.build();
-
-			List<WishlistAccommodation> pagedAccommodations = List.of(
-				secondWishlistAccommodation,
-				thirdWishlistAccommodation
-			);
-
-			Slice<WishlistAccommodation> wishlistAccommodationSlice =
-				new SliceImpl<>(pagedAccommodations, PageRequest.of(0, 2), true);
-
-			List<Long> wishlistAccommodationIds = List.of(20L, 30L);
-
-			given(wishlistAccommodationRepository.findByWishlistIdWithCursor(
-				eq(wishlistId), eq(lastId), eq(lastCreatedAt), any(PageRequest.class)))
-				.willReturn(wishlistAccommodationSlice);
-
-			given(wishlistAccommodationRepository.findAccommodationImagesByWishlistAccommodationIds(wishlistAccommodationIds))
-				.willReturn(createMockImageProjections());
-			given(wishlistAccommodationRepository.findAccommodationAmenitiesByWishlistAccommodationIds(wishlistAccommodationIds))
-				.willReturn(createMockAmenityProjections());
-			given(wishlistAccommodationRepository.findAccommodationRatingsByWishlistAccommodationIds(wishlistAccommodationIds))
-				.willReturn(createMockRatingProjections());
-
-			CursorResponse.PageInfo pageInfo = CursorResponse.PageInfo.builder()
-				.hasNext(true)
-				.nextCursor("encoded_cursor")
-				.currentSize(2)
-				.build();
-
-			given(cursorPageInfoCreator.createPageInfo(eq(pagedAccommodations), eq(true), any(), any()))
-				.willReturn(pageInfo);
-
-			// When
-			WishlistResponse.WishlistAccommodationInfos response =
-				wishlistService.findWishlistAccommodations(wishlistId, request);
-
-			// Then
-			assertThat(response.wishlistAccommodations()).hasSize(2);
-			assertThat(response.pageInfo().hasNext()).isTrue();
-			assertThat(response.pageInfo().nextCursor()).isEqualTo("encoded_cursor");
-			assertThat(response.pageInfo().currentSize()).isEqualTo(2);
-
-			// 권한 검증 메서드는 호출되지 않음
-			verify(wishlistRepository, never()).findById(any());
-			verify(memberRepository, never()).findById(any());
-
-			verify(wishlistAccommodationRepository).findByWishlistIdWithCursor(
-				eq(wishlistId), eq(lastId), eq(lastCreatedAt), any(PageRequest.class));
+			verify(accommodationRepository).findAccommodationImagesByAccommodationIds(accommodationIds);
+			verify(amenityRepository).findAccommodationAmenitiesByAccommodationIds(accommodationIds);
+			verify(summaryRepository).findByAccommodationIdIn(accommodationIds);
 		}
 
 		@Test
 		@DisplayName("한 개의 숙소만 있는 위시리스트를 조회한다")
 		void findWishlistAccommodations_SingleItem() {
 			// Given
+			given(firstAccommodation.getId()).willReturn(100L);
+			given(firstAccommodation.getName()).willReturn("신라호텔");
+
 			Long wishlistId = 1L;
 			CursorRequest.CursorPageRequest request = CursorRequest.CursorPageRequest.builder()
 				.size(20)
@@ -2086,18 +2076,24 @@ class WishlistServiceTest {
 			Slice<WishlistAccommodation> wishlistAccommodationSlice =
 				new SliceImpl<>(singleAccommodation, PageRequest.of(0, 20), false);
 
-			List<Long> wishlistAccommodationIds = List.of(10L);
+			List<Long> accommodationIds = List.of(100L);
 
 			given(wishlistAccommodationRepository.findByWishlistIdWithCursor(
 				eq(wishlistId), eq(null), eq(null), any(PageRequest.class)))
 				.willReturn(wishlistAccommodationSlice);
 
-			given(wishlistAccommodationRepository.findAccommodationImagesByWishlistAccommodationIds(wishlistAccommodationIds))
-				.willReturn(createMockImageProjections());
-			given(wishlistAccommodationRepository.findAccommodationAmenitiesByWishlistAccommodationIds(wishlistAccommodationIds))
-				.willReturn(createMockAmenityProjections());
-			given(wishlistAccommodationRepository.findAccommodationRatingsByWishlistAccommodationIds(wishlistAccommodationIds))
-				.willReturn(createMockRatingProjections());
+			// 단일 숙소에 대한 데이터
+			List<Accommodation> accommodations = List.of(firstAccommodation);
+			List<AccommodationImage> images = createMockImages(accommodations);
+			List<AccommodationAmenity> amenities = createMockAmenities(accommodations);
+			List<AccommodationReviewSummary> summaries = createMockSummaries(accommodationIds);
+
+			given(accommodationRepository.findAccommodationImagesByAccommodationIds(accommodationIds))
+				.willReturn(images);
+			given(amenityRepository.findAccommodationAmenitiesByAccommodationIds(accommodationIds))
+				.willReturn(amenities);
+			given(summaryRepository.findByAccommodationIdIn(accommodationIds))
+				.willReturn(summaries);
 
 			CursorResponse.PageInfo pageInfo = CursorResponse.PageInfo.builder()
 				.hasNext(false)
@@ -2123,37 +2119,151 @@ class WishlistServiceTest {
 			assertThat(item.accommodationInfo().accommodationId()).isEqualTo(100L);
 			assertThat(item.accommodationInfo().name()).isEqualTo("신라호텔");
 
-			// 권한 검증 메서드는 호출되지 않음
-			verify(wishlistRepository, never()).findById(any());
-			verify(memberRepository, never()).findById(any());
-
 			verify(wishlistAccommodationRepository).findByWishlistIdWithCursor(
 				eq(wishlistId), eq(null), eq(null), any(PageRequest.class));
+			verify(accommodationRepository).findAccommodationImagesByAccommodationIds(accommodationIds);
+			verify(amenityRepository).findAccommodationAmenitiesByAccommodationIds(accommodationIds);
+			verify(summaryRepository).findByAccommodationIdIn(accommodationIds);
 		}
 
 		@Test
-		@DisplayName("이미지, 편의시설, 평점이 없는 숙소도 조회된다")
-		void findWishlistAccommodations_WithoutImageAmenityRating() {
+		@DisplayName("빈 위시리스트의 숙소 목록을 조회한다")
+		void findWishlistAccommodations_EmptyWishlist() {
 			// Given
+			Long emptyWishlistId = 1L;
+			CursorRequest.CursorPageRequest request = CursorRequest.CursorPageRequest.builder()
+				.size(20)
+				.lastId(null)
+				.lastCreatedAt(null)
+				.build();
+
+			Slice<WishlistAccommodation> emptySlice =
+				new SliceImpl<>(List.of(), PageRequest.of(0, 20), false);
+
+			given(wishlistAccommodationRepository.findByWishlistIdWithCursor(
+				eq(emptyWishlistId), eq(null), eq(null), any(PageRequest.class)))
+				.willReturn(emptySlice);
+
+			CursorResponse.PageInfo pageInfo = CursorResponse.PageInfo.builder()
+				.hasNext(false)
+				.nextCursor(null)
+				.currentSize(0)
+				.build();
+
+			given(cursorPageInfoCreator.createPageInfo(eq(List.of()), eq(false), any(), any()))
+				.willReturn(pageInfo);
+
+			// When
+			WishlistResponse.WishlistAccommodationInfos response =
+				wishlistService.findWishlistAccommodations(emptyWishlistId, request);
+
+			// Then
+			assertThat(response.wishlistAccommodations()).isEmpty();
+			assertThat(response.pageInfo().hasNext()).isFalse();
+			assertThat(response.pageInfo().currentSize()).isEqualTo(0);
+
+			verify(wishlistAccommodationRepository).findByWishlistIdWithCursor(
+				eq(emptyWishlistId), eq(null), eq(null), any(PageRequest.class));
+		}
+
+		@Test
+		@DisplayName("커서 기반 페이징으로 위시리스트 숙소 목록을 조회한다")
+		void findWishlistAccommodations_WithCursor() {
+			// Given
+			given(firstAccommodation.getId()).willReturn(100L);
+			given(firstAccommodation.getName()).willReturn("신라호텔");
+			given(secondAccommodation.getId()).willReturn(200L);
+			given(secondAccommodation.getName()).willReturn("롯데호텔");
+
+			Long wishlistId = 1L;
+			Long lastId = 30L;
+			LocalDateTime lastCreatedAt = LocalDateTime.now().minusDays(1);
+
+			CursorRequest.CursorPageRequest request = CursorRequest.CursorPageRequest.builder()
+				.size(2)
+				.lastId(lastId)
+				.lastCreatedAt(lastCreatedAt)
+				.build();
+
+			List<WishlistAccommodation> pagedAccommodations = List.of(
+				firstWishlistAccommodation,
+				secondWishlistAccommodation
+			);
+
+			Slice<WishlistAccommodation> wishlistAccommodationSlice =
+				new SliceImpl<>(pagedAccommodations, PageRequest.of(0, 2), true);
+
+			List<Long> accommodationIds = List.of(100L, 200L);
+
+			given(wishlistAccommodationRepository.findByWishlistIdWithCursor(
+				eq(wishlistId), eq(lastId), eq(lastCreatedAt), any(PageRequest.class)))
+				.willReturn(wishlistAccommodationSlice);
+
+			// 페이지에 해당하는 데이터만 생성
+			List<Accommodation> accommodations = List.of(firstAccommodation, secondAccommodation);
+			List<AccommodationImage> images = createMockImages(accommodations);
+			List<AccommodationAmenity> amenities = createMockAmenities(accommodations);
+			List<AccommodationReviewSummary> summaries = createMockSummaries(accommodationIds);
+
+			given(accommodationRepository.findAccommodationImagesByAccommodationIds(accommodationIds))
+				.willReturn(images);
+			given(amenityRepository.findAccommodationAmenitiesByAccommodationIds(accommodationIds))
+				.willReturn(amenities);
+			given(summaryRepository.findByAccommodationIdIn(accommodationIds))
+				.willReturn(summaries);
+
+			CursorResponse.PageInfo pageInfo = CursorResponse.PageInfo.builder()
+				.hasNext(true)
+				.nextCursor("encoded_cursor")
+				.currentSize(2)
+				.build();
+
+			given(cursorPageInfoCreator.createPageInfo(eq(pagedAccommodations), eq(true), any(), any()))
+				.willReturn(pageInfo);
+
+			// When
+			WishlistResponse.WishlistAccommodationInfos response =
+				wishlistService.findWishlistAccommodations(wishlistId, request);
+
+			// Then
+			assertThat(response.wishlistAccommodations()).hasSize(2);
+			assertThat(response.pageInfo().hasNext()).isTrue();
+			assertThat(response.pageInfo().nextCursor()).isEqualTo("encoded_cursor");
+			assertThat(response.pageInfo().currentSize()).isEqualTo(2);
+
+			verify(wishlistAccommodationRepository).findByWishlistIdWithCursor(
+				eq(wishlistId), eq(lastId), eq(lastCreatedAt), any(PageRequest.class));
+			verify(accommodationRepository).findAccommodationImagesByAccommodationIds(accommodationIds);
+			verify(amenityRepository).findAccommodationAmenitiesByAccommodationIds(accommodationIds);
+			verify(summaryRepository).findByAccommodationIdIn(accommodationIds);
+		}
+
+		@Test
+		@DisplayName("숙소에 이미지나 편의시설이 없는 경우를 처리한다")
+		void findWishlistAccommodations_WithMissingData() {
+			// Given
+			given(thirdAccommodation.getId()).willReturn(300L);
+			given(thirdAccommodation.getName()).willReturn("게스트하우스");
+
 			Long wishlistId = 1L;
 			CursorRequest.CursorPageRequest request = CursorRequest.CursorPageRequest.builder()
 				.size(20)
 				.build();
 
-			List<WishlistAccommodation> accommodations = List.of(firstWishlistAccommodation);
+			List<WishlistAccommodation> wishlistAccommodations = List.of(thirdWishlistAccommodation);
 			Slice<WishlistAccommodation> wishlistAccommodationSlice =
-				new SliceImpl<>(accommodations, PageRequest.of(0, 20), false);
+				new SliceImpl<>(wishlistAccommodations, PageRequest.of(0, 20), false);
 
 			given(wishlistAccommodationRepository.findByWishlistIdWithCursor(
 				eq(wishlistId), eq(null), eq(null), any(PageRequest.class)))
 				.willReturn(wishlistAccommodationSlice);
 
-			// 빈 리스트 반환 (이미지, 편의시설, 평점 없음)
-			given(wishlistAccommodationRepository.findAccommodationImagesByWishlistAccommodationIds(List.of(10L)))
+			// 실제 서비스에서 [300]으로 호출하므로 그에 맞춰 stubbing
+			given(accommodationRepository.findAccommodationImagesByAccommodationIds(eq(List.of(300L))))
 				.willReturn(List.of());
-			given(wishlistAccommodationRepository.findAccommodationAmenitiesByWishlistAccommodationIds(List.of(10L)))
+			given(amenityRepository.findAccommodationAmenitiesByAccommodationIds(eq(List.of(300L))))
 				.willReturn(List.of());
-			given(wishlistAccommodationRepository.findAccommodationRatingsByWishlistAccommodationIds(List.of(10L)))
+			given(summaryRepository.findByAccommodationIdIn(eq(List.of(300L))))
 				.willReturn(List.of());
 
 			CursorResponse.PageInfo pageInfo = CursorResponse.PageInfo.builder()
@@ -2162,7 +2272,7 @@ class WishlistServiceTest {
 				.currentSize(1)
 				.build();
 
-			given(cursorPageInfoCreator.createPageInfo(eq(accommodations), eq(false), any(), any()))
+			given(cursorPageInfoCreator.createPageInfo(eq(wishlistAccommodations), eq(false), any(), any()))
 				.willReturn(pageInfo);
 
 			// When
@@ -2172,39 +2282,19 @@ class WishlistServiceTest {
 			// Then
 			assertThat(response.wishlistAccommodations()).hasSize(1);
 
-			WishlistResponse.WishlistAccommodationInfo item = response.wishlistAccommodations().get(0);
+			WishlistResponse.WishlistAccommodationInfo item = response.wishlistAccommodations().getFirst();
+			assertThat(item.id()).isEqualTo(30L);
+			assertThat(item.name()).isEqualTo("게스트하우스 메모");
+			assertThat(item.accommodationInfo().accommodationId()).isEqualTo(300L);
+			assertThat(item.accommodationInfo().name()).isEqualTo("게스트하우스");
 			assertThat(item.accommodationInfo().accommodationImageUrls()).isEmpty();
 			assertThat(item.accommodationInfo().amenities()).isEmpty();
 			assertThat(item.accommodationInfo().averageRating()).isNull();
 
-			// 권한 검증 메서드는 호출되지 않음
-			verify(wishlistRepository, never()).findById(any());
-			verify(memberRepository, never()).findById(any());
-
-			verify(wishlistAccommodationRepository).findByWishlistIdWithCursor(
-				eq(wishlistId), eq(null), eq(null), any(PageRequest.class));
-		}
-
-		// Helper 메서드들 (기존과 동일)
-		private List<WishlistImageProjection> createMockImageProjections() {
-			return List.of(
-				new WishlistImageProjection(10L, "image1.jpg"),
-				new WishlistImageProjection(20L, "image2.jpg")
-			);
-		}
-
-		private List<WishlistAmenityProjection> createMockAmenityProjections() {
-			return List.of(
-				new WishlistAmenityProjection(10L, AmenityType.WIFI, 1) ,
-				new WishlistAmenityProjection(20L, AmenityType.TV, 2)
-			);
-		}
-
-		private List<WishlistRatingProjection> createMockRatingProjections() {
-			return List.of(
-				new WishlistRatingProjection(10L, 4.5) ,
-				new WishlistRatingProjection(20L, 4.3)
-			);
+			// verify도 [300]으로 변경
+			verify(accommodationRepository).findAccommodationImagesByAccommodationIds(eq(List.of(300L)));
+			verify(amenityRepository).findAccommodationAmenitiesByAccommodationIds(eq(List.of(300L)));
+			verify(summaryRepository).findByAccommodationIdIn(eq(List.of(300L)));
 		}
 	}
 }

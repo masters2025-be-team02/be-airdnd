@@ -12,11 +12,15 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import kr.kro.airbob.cursor.exception.CursorEncodingException;
 import kr.kro.airbob.cursor.exception.CursorPageSizeException;
 import kr.kro.airbob.domain.accommodation.exception.AccommodationNotFoundException;
 import kr.kro.airbob.domain.member.exception.MemberNotFoundException;
+import kr.kro.airbob.domain.review.ReviewSortType;
+import kr.kro.airbob.domain.review.exception.ReviewSummaryNotFoundException;
+import kr.kro.airbob.domain.review.ReviewSortType;
 import kr.kro.airbob.domain.wishlist.exception.WishlistAccessDeniedException;
 import kr.kro.airbob.domain.wishlist.exception.WishlistAccommodationAccessDeniedException;
 import kr.kro.airbob.domain.wishlist.exception.WishlistAccommodationNotFoundException;
@@ -27,9 +31,21 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GlobalExceptionHandler {
 
+	@ExceptionHandler(MethodArgumentTypeMismatchException.class)
+	public ResponseEntity<Void> handleEnumBindingError(MethodArgumentTypeMismatchException e) {
+		return ResponseEntity.badRequest().build();
+	}
+
 	@ExceptionHandler(AccommodationNotFoundException.class)
 	public ResponseEntity<Void> handleAccommodationNotFoundException(AccommodationNotFoundException e) {
 		log.error("AccommodationNotFoundException: {}", e.getMessage());
+		return ResponseEntity.status(HttpStatus.NOT_FOUND)
+			.build();
+	}
+
+	@ExceptionHandler(ReviewSummaryNotFoundException.class)
+	public ResponseEntity<Void> handleReviewSummaryNotFoundException(ReviewSummaryNotFoundException e) {
+		log.error("ReviewSummaryNotFoundException: {}", e.getMessage());
 		return ResponseEntity.status(HttpStatus.NOT_FOUND)
 			.build();
 	}

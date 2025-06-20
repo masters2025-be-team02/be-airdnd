@@ -7,6 +7,7 @@ import static org.springframework.restdocs.request.RequestDocumentation.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -86,7 +87,7 @@ class RecentlyViewedControllerTest extends BaseControllerDocumentationTest {
 				.accommodationName("서울 중심가 아늑한 원룸")
 				.thumbnailUrl("https://example.com/image1.jpg")
 				.viewedAt(now.minusHours(1))
-				.averageRating(4.5)
+				.averageRating(new BigDecimal("4.5"))
 				.isInWishlist(true)
 				.amenities(List.of(
 					new AccommodationResponse.AmenityInfoResponse(AmenityType.WIFI, 1),
@@ -100,7 +101,7 @@ class RecentlyViewedControllerTest extends BaseControllerDocumentationTest {
 				.accommodationName("강남역 도보 5분 스튜디오")
 				.thumbnailUrl("https://example.com/image2.jpg")
 				.viewedAt(now.minusHours(3))
-				.averageRating(4.2)
+				.averageRating(new BigDecimal("4.2"))
 				.isInWishlist(false)
 				.amenities(List.of(
 					new AccommodationResponse.AmenityInfoResponse(AmenityType.KITCHEN, 1)

@@ -29,7 +29,7 @@ public class Review extends BaseEntity {
 
 	private String content;
 
-	private Double rating;
+	private Integer rating;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "accommodation_id")
@@ -38,5 +38,14 @@ public class Review extends BaseEntity {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "member_id")
 	private Member author;
+
+	public void updateContent(String content) {
+		this.content = content;
+	}
+
+	public void updateRating(Integer rating) {
+		this.rating = rating;
+	}
+
 
 }

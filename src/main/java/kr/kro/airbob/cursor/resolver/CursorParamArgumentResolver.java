@@ -13,14 +13,12 @@ import kr.kro.airbob.cursor.dto.CursorResponse;
 import kr.kro.airbob.cursor.exception.CursorPageSizeException;
 import kr.kro.airbob.cursor.util.CursorDecoder;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
-@RequiredArgsConstructor
 @Component
+@RequiredArgsConstructor
 public class CursorParamArgumentResolver implements HandlerMethodArgumentResolver {
 
-	private final CursorDecoder cursorDecoder;
+	protected final CursorDecoder cursorDecoder;
 
 	@Override
 	public boolean supportsParameter(MethodParameter parameter) {
@@ -30,11 +28,30 @@ public class CursorParamArgumentResolver implements HandlerMethodArgumentResolve
 
 	@Override
 	public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
-		NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
+		NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
 
 		CursorParam annotation = parameter.getParameterAnnotation(CursorParam.class);
 
-		// size
+		int size = parseSize(webRequest, annotation);
+		CursorResponse.CursorData cursorData = parseCursorData(webRequest, annotation);
+
+		return CursorRequest.CursorPageRequest.builder()
+			.size(size)
+			.lastId(cursorData != null ? cursorData.getId() : null)
+			.lastCreatedAt(cursorData != null ? cursorData.getLastCreatedAt() : null)
+			.build();
+	}
+
+	protected CursorResponse.CursorData parseCursorData(NativeWebRequest webRequest, CursorParam annotation) {
+
+		// 커서 디코딩
+		String cursorParam = webRequest.getParameter(annotation.cursorParam());
+		return cursorDecoder.decode(cursorParam);
+	}
+
+	protected int parseSize(NativeWebRequest webRequest, CursorParam annotation){
+
+		// size 처리
 		String sizeParam = webRequest.getParameter(annotation.sizeParam());
 		int size = sizeParam != null ? Integer.parseInt(sizeParam) : annotation.defaultSize();
 
@@ -42,13 +59,6 @@ public class CursorParamArgumentResolver implements HandlerMethodArgumentResolve
 			throw new CursorPageSizeException("커서 페이지 크기는 1 이상이여야 합니다.");
 		}
 
-		String cursorParam = webRequest.getParameter(annotation.cursorParam());
-		CursorResponse.CursorData cursorData = cursorDecoder.decode(cursorParam);
-
-		return CursorRequest.CursorPageRequest.builder()
-			.size(size)
-			.lastId(cursorData != null ? cursorData.id() : null)
-			.lastCreatedAt(cursorData != null ? cursorData.lastCreatedAt() : null)
-			.build();
+		return size;
 	}
 }
