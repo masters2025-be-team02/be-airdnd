@@ -53,7 +53,7 @@ public class WishlistService {
 	@Transactional
 	public WishlistResponse.CreateResponse createWishlist(WishlistRequest.createRequest request, Long loggedInMemberId) {
 
-		Member member = findMemberById(loggedInMemberId);
+		final Member member = findMemberById(loggedInMemberId);
 
 		Wishlist wishlist = Wishlist.builder()
 			.name(request.name())

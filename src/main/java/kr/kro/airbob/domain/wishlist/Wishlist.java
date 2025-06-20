@@ -1,7 +1,5 @@
 package kr.kro.airbob.domain.wishlist;
 
-import java.util.Objects;
-
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -36,9 +34,5 @@ public class Wishlist extends BaseEntity {
 
 	public void updateName(String name) {
 		this.name = name;
-	}
-
-	public boolean isOwnedBy(Long memberId) {
-		return Objects.equals(member.getId(), memberId);
 	}
 }
