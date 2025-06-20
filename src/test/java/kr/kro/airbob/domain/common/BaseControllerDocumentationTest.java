@@ -22,6 +22,7 @@ import kr.kro.airbob.cursor.util.CursorEncoder;
 import kr.kro.airbob.cursor.util.CursorPageInfoCreator;
 import kr.kro.airbob.domain.accommodation.interceptor.AccommodationAuthorizationInterceptor;
 import kr.kro.airbob.domain.recentlyViewed.interceptor.RecentlyViewedAuthorizationInterceptor;
+import kr.kro.airbob.domain.review.interceptor.ReviewAuthorizationInterceptor;
 import kr.kro.airbob.domain.wishlist.interceptor.WishlistAuthorizationInterceptor;
 
 @ExtendWith(RestDocumentationExtension.class)
@@ -52,6 +53,9 @@ public abstract class BaseControllerDocumentationTest {
 
 	@MockitoBean
 	private RecentlyViewedAuthorizationInterceptor recentlyViewedAuthorizationInterceptor;
+
+	@MockitoBean
+	private ReviewAuthorizationInterceptor reviewAuthorizationInterceptor;
 
 	@Autowired
 	protected ObjectMapper objectMapper;

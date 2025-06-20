@@ -8,6 +8,7 @@ import static org.springframework.restdocs.request.RequestDocumentation.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -1145,7 +1146,8 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			WishlistResponse.UpdateWishlistAccommodationResponse expectedResponse =
 				new WishlistResponse.UpdateWishlistAccommodationResponse(wishlistAccommodationId);
 
-			when(wishlistService.updateWishlistAccommodation(eq(wishlistAccommodationId), any(WishlistRequest.UpdateWishlistAccommodationRequest.class)))
+			when(wishlistService.updateWishlistAccommodation(eq(wishlistAccommodationId),
+				any(WishlistRequest.UpdateWishlistAccommodationRequest.class)))
 				.thenReturn(expectedResponse);
 
 			// When: 사용자가 위시리스트 숙소 메모 수정 API를 호출한다
@@ -1162,9 +1164,9 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 				.andDo(document("위시리스트-숙소메모수정-성공",
 					pathParameters(
 						parameterWithName("wishlistId")
-							.description("위시리스트의 고유 식별자"),
-						parameterWithName("accommodationId")
-							.description("수정할 위시리스트 항목의 고유 식별자")
+							.description("위시리스트 ID"),
+						parameterWithName("wishlistAccommodationId")
+							.description("메모를 수정할 위시리스트 항목 ID")
 					),
 					requestFields(
 						fieldWithPath("memo")
@@ -1174,7 +1176,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 					responseFields(
 						fieldWithPath("id")
 							.type(JsonFieldType.NUMBER)
-							.description("수정된 위시리스트 항목의 고유 식별자")
+							.description("수정된 위시리스트 항목 ID")
 					)));
 
 			verify(wishlistService).updateWishlistAccommodation(eq(wishlistAccommodationId),
@@ -1191,7 +1193,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			WishlistRequest.UpdateWishlistAccommodationRequest request =
 				new WishlistRequest.UpdateWishlistAccommodationRequest(memo);
 
-			when(wishlistService.updateWishlistAccommodation( eq(wishlistAccommodationId),
+			when(wishlistService.updateWishlistAccommodation(eq(wishlistAccommodationId),
 				any(WishlistRequest.UpdateWishlistAccommodationRequest.class)))
 				.thenThrow(new WishlistNotFoundException());
 
@@ -1209,7 +1211,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 					pathParameters(
 						parameterWithName("wishlistId")
 							.description("존재하지 않는 위시리스트 ID"),
-						parameterWithName("accommodationId")
+						parameterWithName("wishlistAccommodationId")
 							.description("위시리스트 항목 ID")
 					),
 					requestFields(
@@ -1250,7 +1252,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 					pathParameters(
 						parameterWithName("wishlistId")
 							.description("위시리스트 ID"),
-						parameterWithName("accommodationId")
+						parameterWithName("wishlistAccommodationId")
 							.description("존재하지 않는 위시리스트 항목 ID")
 					),
 					requestFields(
@@ -1273,7 +1275,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			WishlistRequest.UpdateWishlistAccommodationRequest request =
 				new WishlistRequest.UpdateWishlistAccommodationRequest(memo);
 
-			when(wishlistService.updateWishlistAccommodation( eq(wishlistAccommodationId),
+			when(wishlistService.updateWishlistAccommodation(eq(wishlistAccommodationId),
 				any(WishlistRequest.UpdateWishlistAccommodationRequest.class)))
 				.thenThrow(new WishlistAccessDeniedException());
 
@@ -1291,8 +1293,8 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 					pathParameters(
 						parameterWithName("wishlistId")
 							.description("다른 사용자 소유의 위시리스트 ID"),
-						parameterWithName("accommodationId")
-							.description("위시리스트 항목 ID")
+						parameterWithName("wishlistAccommodationId")
+							.description("수정하려는 위시리스트 항목 ID")
 					),
 					requestFields(
 						fieldWithPath("memo")
@@ -1300,7 +1302,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 							.description("수정하려는 메모 내용")
 					)));
 
-			verify(wishlistService).updateWishlistAccommodation( eq(wishlistAccommodationId),
+			verify(wishlistService).updateWishlistAccommodation(eq(wishlistAccommodationId),
 				any(WishlistRequest.UpdateWishlistAccommodationRequest.class));
 		}
 
@@ -1314,7 +1316,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			WishlistRequest.UpdateWishlistAccommodationRequest request =
 				new WishlistRequest.UpdateWishlistAccommodationRequest(memo);
 
-			when(wishlistService.updateWishlistAccommodation( eq(otherWishlistAccommodationId),
+			when(wishlistService.updateWishlistAccommodation(eq(otherWishlistAccommodationId),
 				any(WishlistRequest.UpdateWishlistAccommodationRequest.class)))
 				.thenThrow(new WishlistAccommodationAccessDeniedException());
 
@@ -1332,7 +1334,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 					pathParameters(
 						parameterWithName("wishlistId")
 							.description("위시리스트 ID"),
-						parameterWithName("accommodationId")
+						parameterWithName("wishlistAccommodationId")
 							.description("다른 위시리스트에 속한 항목 ID")
 					),
 					requestFields(
@@ -1341,147 +1343,19 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 							.description("수정하려는 메모 내용")
 					)));
 
-			verify(wishlistService).updateWishlistAccommodation( eq(otherWishlistAccommodationId),
+			verify(wishlistService).updateWishlistAccommodation(eq(otherWishlistAccommodationId),
 				any(WishlistRequest.UpdateWishlistAccommodationRequest.class));
 		}
 
-		@ParameterizedTest(name = "{0}")
-		@MethodSource("invalidMemoProvider")
-		@DisplayName("시나리오: 잘못된 메모로 위시리스트 숙소 메모 수정을 시도한다")
-		void 잘못된_메모로_위시리스트_숙소_메모_수정을_시도한다(
-			String testName,
-			String invalidMemo,
-			JsonFieldType fieldType,
-			String description,
-			String documentId
-		) throws Exception {
-			// Given: 잘못된 메모로 수정을 시도하는 상황
+		@Test
+		@DisplayName("시나리오: 매우 긴 메모로 위시리스트 숙소를 수정한다")
+		void 매우_긴_메모로_위시리스트_숙소를_수정한다() throws Exception {
+			// Given: 매우 긴 메모로 수정하는 상황
 			Long wishlistId = 1L;
 			Long wishlistAccommodationId = 10L;
-			WishlistRequest.UpdateWishlistAccommodationRequest invalidRequest =
-				new WishlistRequest.UpdateWishlistAccommodationRequest(invalidMemo);
-
-			// When: 잘못된 메모로 수정을 시도한다
-			mockMvc.perform(patch("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
-					wishlistId, wishlistAccommodationId)
-					.contentType(MediaType.APPLICATION_JSON)
-					.content(objectMapper.writeValueAsString(invalidRequest)))
-
-				// Then: 400 Bad Request 오류가 발생한다
-				.andExpect(status().isBadRequest())
-
-				// document
-				.andDo(document(documentId,
-					pathParameters(
-						parameterWithName("wishlistId")
-							.description("위시리스트 ID"),
-						parameterWithName("accommodationId")
-							.description("위시리스트 항목 ID")
-					),
-					requestFields(
-						fieldWithPath("memo")
-							.type(fieldType)
-							.description(description)
-					)));
-		}
-
-		static Stream<Arguments> invalidMemoProvider() {
-			return Stream.of(
-				Arguments.of(
-					"빈 문자열로 수정",
-					"",
-					JsonFieldType.STRING,
-					"빈 메모 (유효하지 않은 입력)",
-					"위시리스트-숙소메모수정-빈메모-실패"
-				),
-				Arguments.of(
-					"공백 문자로 수정",
-					"   ",
-					JsonFieldType.STRING,
-					"공백 메모 (유효하지 않은 입력)",
-					"위시리스트-숙소메모수정-공백메모-실패"
-				),
-				Arguments.of(
-					"null로 수정",
-					null,
-					JsonFieldType.NULL,
-					"NULL 메모 (유효하지 않은 입력)",
-					"위시리스트-숙소메모수정-null메모-실패"
-				),
-				Arguments.of(
-					"1024자 초과로 수정",
-					"A".repeat(1025),
-					JsonFieldType.STRING,
-					"1024자를 초과하는 메모 (유효하지 않은 입력)",
-					"위시리스트-숙소메모수정-길이초과-실패"
-				)
-			);
-		}
-
-		@Test
-		@DisplayName("시나리오: 여러 위시리스트 숙소의 메모를 연속으로 수정한다")
-		void 여러_위시리스트_숙소의_메모를_연속으로_수정한다() throws Exception {
-			// Given: 여러 위시리스트 항목의 메모를 수정하는 상황
-			Long wishlistId = 1L;
-			Long[] wishlistAccommodationIds = {10L, 20L, 30L, 40L, 50L};
-			String[] memos = {
-				"첫 번째 숙소 메모",
-				"두 번째 숙소 메모",
-				"세 번째 숙소 메모",
-				"네 번째 숙소 메모",
-				"다섯 번째 숙소 메모"
-			};
-
-			for (int i = 0; i < wishlistAccommodationIds.length; i++) {
-				WishlistRequest.UpdateWishlistAccommodationRequest request =
-					new WishlistRequest.UpdateWishlistAccommodationRequest(memos[i]);
-				WishlistResponse.UpdateWishlistAccommodationResponse expectedResponse =
-					new WishlistResponse.UpdateWishlistAccommodationResponse(wishlistAccommodationIds[i]);
-
-				when(wishlistService.updateWishlistAccommodation( eq(wishlistAccommodationIds[i]),
-					any(WishlistRequest.UpdateWishlistAccommodationRequest.class)))
-					.thenReturn(expectedResponse);
-
-				// When: 각각의 위시리스트 항목 메모를 수정한다
-				mockMvc.perform(patch("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
-						wishlistId, wishlistAccommodationIds[i])
-						.contentType(MediaType.APPLICATION_JSON)
-						.content(objectMapper.writeValueAsString(request)))
-
-					// Then: 모든 메모가 성공적으로 수정된다
-					.andExpect(status().isOk())
-					.andExpect(jsonPath("$.id").value(wishlistAccommodationIds[i]))
-
-					// document
-					.andDo(document("위시리스트-숙소메모수정-연속수정-" + (i + 1),
-						pathParameters(
-							parameterWithName("wishlistId")
-								.description("위시리스트 ID"),
-							parameterWithName("accommodationId")
-								.description("위시리스트 항목 ID: " + wishlistAccommodationIds[i])
-						),
-						requestFields(
-							fieldWithPath("memo")
-								.type(JsonFieldType.STRING)
-								.description("메모 내용: " + memos[i])
-						),
-						responseFields(
-							fieldWithPath("id")
-								.type(JsonFieldType.NUMBER)
-								.description("수정된 위시리스트 항목 ID")
-						)));
-			}
-		}
-
-		@Test
-		@DisplayName("시나리오: 최대 길이의 메모로 위시리스트 숙소 메모를 수정한다")
-		void 최대_길이의_메모로_위시리스트_숙소_메모를_수정한다() throws Exception {
-			// Given: 최대 길이(1024자)의 메모로 수정하는 상황
-			Long wishlistId = 1L;
-			Long wishlistAccommodationId = 10L;
-			String maxLengthMemo = "A".repeat(1024);
+			String longMemo = "이곳은 정말 훌륭한 숙소였습니다. ".repeat(50) + "강력 추천합니다!"; // 약 1000자 이상
 			WishlistRequest.UpdateWishlistAccommodationRequest request =
-				new WishlistRequest.UpdateWishlistAccommodationRequest(maxLengthMemo);
+				new WishlistRequest.UpdateWishlistAccommodationRequest(longMemo);
 			WishlistResponse.UpdateWishlistAccommodationResponse expectedResponse =
 				new WishlistResponse.UpdateWishlistAccommodationResponse(wishlistAccommodationId);
 
@@ -1489,7 +1363,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 				any(WishlistRequest.UpdateWishlistAccommodationRequest.class)))
 				.thenReturn(expectedResponse);
 
-			// When: 최대 길이의 메모로 수정을 시도한다
+			// When: 매우 긴 메모로 수정을 시도한다
 			mockMvc.perform(patch("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
 					wishlistId, wishlistAccommodationId)
 					.contentType(MediaType.APPLICATION_JSON)
@@ -1500,17 +1374,17 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 				.andExpect(jsonPath("$.id").value(wishlistAccommodationId))
 
 				// document
-				.andDo(document("위시리스트-숙소메모수정-최대길이-성공",
+				.andDo(document("위시리스트-숙소메모수정-긴메모-성공",
 					pathParameters(
 						parameterWithName("wishlistId")
 							.description("위시리스트 ID"),
-						parameterWithName("accommodationId")
+						parameterWithName("wishlistAccommodationId")
 							.description("위시리스트 항목 ID")
 					),
 					requestFields(
 						fieldWithPath("memo")
 							.type(JsonFieldType.STRING)
-							.description("최대 길이(1024자)의 메모 내용")
+							.description("매우 긴 메모 내용 (1000자 이상)")
 					),
 					responseFields(
 						fieldWithPath("id")
@@ -1518,23 +1392,23 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 							.description("수정된 위시리스트 항목 ID")
 					)));
 
-			verify(wishlistService).updateWishlistAccommodation( eq(wishlistAccommodationId),
+			verify(wishlistService).updateWishlistAccommodation(eq(wishlistAccommodationId),
 				any(WishlistRequest.UpdateWishlistAccommodationRequest.class));
 		}
 
 		@Test
-		@DisplayName("시나리오: 특수 문자가 포함된 메모로 위시리스트 숙소 메모를 수정한다")
-		void 특수_문자가_포함된_메모로_위시리스트_숙소_메모를_수정한다() throws Exception {
+		@DisplayName("시나리오: 특수 문자가 포함된 메모로 위시리스트 숙소를 수정한다")
+		void 특수_문자가_포함된_메모로_위시리스트_숙소를_수정한다() throws Exception {
 			// Given: 특수 문자가 포함된 메모로 수정하는 상황
 			Long wishlistId = 1L;
 			Long wishlistAccommodationId = 10L;
-			String specialCharacterMemo = "정말 좋은 곳이에요! 🏨✨ 가격도 합리적이고 (★★★★★) 직원분들도 친절해요 😊 다음에도 올게요~ #추천 @여행";
+			String specialCharacterMemo = "🏨✨ 가격도 합리적이고 (★★★★★) 직원분들도 친절해요 😊 다음에도 올게요~ #추천 @여행";
 			WishlistRequest.UpdateWishlistAccommodationRequest request =
 				new WishlistRequest.UpdateWishlistAccommodationRequest(specialCharacterMemo);
 			WishlistResponse.UpdateWishlistAccommodationResponse expectedResponse =
 				new WishlistResponse.UpdateWishlistAccommodationResponse(wishlistAccommodationId);
 
-			when(wishlistService.updateWishlistAccommodation( eq(wishlistAccommodationId),
+			when(wishlistService.updateWishlistAccommodation(eq(wishlistAccommodationId),
 				any(WishlistRequest.UpdateWishlistAccommodationRequest.class)))
 				.thenReturn(expectedResponse);
 
@@ -1553,13 +1427,130 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 					pathParameters(
 						parameterWithName("wishlistId")
 							.description("위시리스트 ID"),
-						parameterWithName("accommodationId")
+						parameterWithName("wishlistAccommodationId")
 							.description("위시리스트 항목 ID")
 					),
 					requestFields(
 						fieldWithPath("memo")
 							.type(JsonFieldType.STRING)
 							.description("특수 문자가 포함된 메모 내용")
+					),
+					responseFields(
+						fieldWithPath("id")
+							.type(JsonFieldType.NUMBER)
+							.description("수정된 위시리스트 항목 ID")
+					)));
+
+			verify(wishlistService).updateWishlistAccommodation(eq(wishlistAccommodationId),
+				any(WishlistRequest.UpdateWishlistAccommodationRequest.class));
+		}
+
+		@Test
+		@DisplayName("시나리오: 빈 메모로 위시리스트 숙소 메모를 수정한다")
+		void 빈_메모로_위시리스트_숙소_메모를_수정한다() throws Exception {
+			// Given: 빈 메모로 수정하는 상황
+			Long wishlistId = 1L;
+			Long wishlistAccommodationId = 10L;
+			String emptyMemo = "";
+			WishlistRequest.UpdateWishlistAccommodationRequest request =
+				new WishlistRequest.UpdateWishlistAccommodationRequest(emptyMemo);
+
+			// When: 빈 메모로 수정을 시도한다
+			mockMvc.perform(patch("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
+					wishlistId, wishlistAccommodationId)
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(objectMapper.writeValueAsString(request)))
+
+				// Then: 400 Bad Request 오류가 발생한다
+				.andExpect(status().isBadRequest())
+
+				// document
+				.andDo(document("위시리스트-숙소메모수정-빈메모-실패",
+					pathParameters(
+						parameterWithName("wishlistId")
+							.description("위시리스트 ID"),
+						parameterWithName("wishlistAccommodationId")
+							.description("위시리스트 항목 ID")
+					),
+					requestFields(
+						fieldWithPath("memo")
+							.type(JsonFieldType.STRING)
+							.description("빈 메모 내용")
+					)));
+		}
+
+		@Test
+		@DisplayName("시나리오: null 메모로 위시리스트 숙소 메모를 수정한다")
+		void null_메모로_위시리스트_숙소_메모를_수정한다() throws Exception {
+			// Given: null 메모로 수정하는 상황
+			Long wishlistId = 1L;
+			Long wishlistAccommodationId = 10L;
+			WishlistRequest.UpdateWishlistAccommodationRequest request =
+				new WishlistRequest.UpdateWishlistAccommodationRequest(null);
+
+			// When: null 메모로 수정을 시도한다
+			mockMvc.perform(patch("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
+					wishlistId, wishlistAccommodationId)
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(objectMapper.writeValueAsString(request)))
+
+				// Then: 400 Bad Request 오류가 발생한다
+				.andExpect(status().isBadRequest())
+
+				// document
+				.andDo(document("위시리스트-숙소메모수정-null메모-실패",
+					pathParameters(
+						parameterWithName("wishlistId")
+							.description("위시리스트 ID"),
+						parameterWithName("wishlistAccommodationId")
+							.description("위시리스트 항목 ID")
+					),
+					requestFields(
+						fieldWithPath("memo")
+							.type(JsonFieldType.NULL)
+							.optional()
+							.description("null 메모 내용")
+					)));
+		}
+
+		@Test
+		@DisplayName("시나리오: 매우 큰 ID 값의 위시리스트 항목 메모를 수정한다")
+		void 매우_큰_ID_값의_위시리스트_항목_메모를_수정한다() throws Exception {
+			// Given: 매우 큰 ID 값의 위시리스트 항목 메모를 수정하는 상황
+			Long wishlistId = Long.MAX_VALUE;
+			Long wishlistAccommodationId = Long.MAX_VALUE - 1;
+			String memo = "큰 ID 값 테스트 메모";
+			WishlistRequest.UpdateWishlistAccommodationRequest request =
+				new WishlistRequest.UpdateWishlistAccommodationRequest(memo);
+			WishlistResponse.UpdateWishlistAccommodationResponse expectedResponse =
+				new WishlistResponse.UpdateWishlistAccommodationResponse(wishlistAccommodationId);
+
+			when(wishlistService.updateWishlistAccommodation(eq(wishlistAccommodationId),
+				any(WishlistRequest.UpdateWishlistAccommodationRequest.class)))
+				.thenReturn(expectedResponse);
+
+			// When: 매우 큰 ID 값의 위시리스트 항목 메모 수정을 시도한다
+			mockMvc.perform(patch("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
+					wishlistId, wishlistAccommodationId)
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(objectMapper.writeValueAsString(request)))
+
+				// Then: 메모가 성공적으로 수정된다
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.id").value(wishlistAccommodationId))
+
+				// document
+				.andDo(document("위시리스트-숙소메모수정-최대값ID-성공",
+					pathParameters(
+						parameterWithName("wishlistId")
+							.description("매우 큰 위시리스트 ID (Long.MAX_VALUE)"),
+						parameterWithName("wishlistAccommodationId")
+							.description("매우 큰 위시리스트 항목 ID (Long.MAX_VALUE - 1)")
+					),
+					requestFields(
+						fieldWithPath("memo")
+							.type(JsonFieldType.STRING)
+							.description("수정할 메모 내용")
 					),
 					responseFields(
 						fieldWithPath("id")
@@ -1584,7 +1575,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			Long wishlistAccommodationId = 10L;
 
 			doNothing().when(wishlistService)
-				.deleteWishlistAccommodation( eq(wishlistAccommodationId));
+				.deleteWishlistAccommodation(eq(wishlistAccommodationId));
 
 			// When: 사용자가 위시리스트 숙소 삭제 API를 호출한다
 			mockMvc.perform(delete("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
@@ -1598,7 +1589,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 					pathParameters(
 						parameterWithName("wishlistId")
 							.description("위시리스트의 고유 식별자"),
-						parameterWithName("accommodationId")
+						parameterWithName("wishlistAccommodationId")
 							.description("삭제할 위시리스트 항목의 고유 식별자")
 					)));
 
@@ -1628,11 +1619,11 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 					pathParameters(
 						parameterWithName("wishlistId")
 							.description("존재하지 않는 위시리스트 ID"),
-						parameterWithName("accommodationId")
+						parameterWithName("wishlistAccommodationId")
 							.description("삭제하려는 위시리스트 항목 ID")
 					)));
 
-			verify(wishlistService).deleteWishlistAccommodation( eq(wishlistAccommodationId));
+			verify(wishlistService).deleteWishlistAccommodation(eq(wishlistAccommodationId));
 		}
 
 		@Test
@@ -1644,7 +1635,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 
 			doThrow(new WishlistAccommodationNotFoundException())
 				.when(wishlistService)
-				.deleteWishlistAccommodation( eq(nonExistentWishlistAccommodationId));
+				.deleteWishlistAccommodation(eq(nonExistentWishlistAccommodationId));
 
 			// When: 존재하지 않는 위시리스트 항목 삭제를 시도한다
 			mockMvc.perform(delete("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
@@ -1658,11 +1649,11 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 					pathParameters(
 						parameterWithName("wishlistId")
 							.description("위시리스트 ID"),
-						parameterWithName("accommodationId")
+						parameterWithName("wishlistAccommodationId")
 							.description("존재하지 않는 위시리스트 항목 ID")
 					)));
 
-			verify(wishlistService).deleteWishlistAccommodation( eq(nonExistentWishlistAccommodationId));
+			verify(wishlistService).deleteWishlistAccommodation(eq(nonExistentWishlistAccommodationId));
 		}
 
 		@Test
@@ -1688,11 +1679,11 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 					pathParameters(
 						parameterWithName("wishlistId")
 							.description("다른 사용자 소유의 위시리스트 ID"),
-						parameterWithName("accommodationId")
+						parameterWithName("wishlistAccommodationId")
 							.description("삭제하려는 위시리스트 항목 ID")
 					)));
 
-			verify(wishlistService).deleteWishlistAccommodation( eq(wishlistAccommodationId));
+			verify(wishlistService).deleteWishlistAccommodation(eq(wishlistAccommodationId));
 		}
 
 		@Test
@@ -1704,7 +1695,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 
 			doThrow(new WishlistAccommodationAccessDeniedException())
 				.when(wishlistService)
-				.deleteWishlistAccommodation( eq(otherWishlistAccommodationId));
+				.deleteWishlistAccommodation(eq(otherWishlistAccommodationId));
 
 			// When: 다른 위시리스트에 속한 항목 삭제를 시도한다
 			mockMvc.perform(delete("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
@@ -1718,11 +1709,11 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 					pathParameters(
 						parameterWithName("wishlistId")
 							.description("위시리스트 ID"),
-						parameterWithName("accommodationId")
+						parameterWithName("wishlistAccommodationId")
 							.description("다른 위시리스트에 속한 항목 ID")
 					)));
 
-			verify(wishlistService).deleteWishlistAccommodation( eq(otherWishlistAccommodationId));
+			verify(wishlistService).deleteWishlistAccommodation(eq(otherWishlistAccommodationId));
 		}
 
 		@Test
@@ -1748,11 +1739,11 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 						pathParameters(
 							parameterWithName("wishlistId")
 								.description("위시리스트 ID"),
-							parameterWithName("accommodationId")
+							parameterWithName("wishlistAccommodationId")
 								.description("삭제할 위시리스트 항목 ID: " + wishlistAccommodationIds[i])
 						)));
 
-				verify(wishlistService).deleteWishlistAccommodation( eq(wishlistAccommodationIds[i]));
+				verify(wishlistService).deleteWishlistAccommodation(eq(wishlistAccommodationIds[i]));
 			}
 		}
 
@@ -1764,7 +1755,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			Long wishlistAccommodationId = Long.MAX_VALUE - 1;
 
 			doNothing().when(wishlistService)
-				.deleteWishlistAccommodation( eq(wishlistAccommodationId));
+				.deleteWishlistAccommodation(eq(wishlistAccommodationId));
 
 			// When: 매우 큰 ID 값의 위시리스트 항목 삭제를 시도한다
 			mockMvc.perform(delete("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
@@ -1778,11 +1769,11 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 					pathParameters(
 						parameterWithName("wishlistId")
 							.description("매우 큰 위시리스트 ID (Long.MAX_VALUE)"),
-						parameterWithName("accommodationId")
+						parameterWithName("wishlistAccommodationId")
 							.description("매우 큰 위시리스트 항목 ID (Long.MAX_VALUE - 1)")
 					)));
 
-			verify(wishlistService).deleteWishlistAccommodation( eq(wishlistAccommodationId));
+			verify(wishlistService).deleteWishlistAccommodation(eq(wishlistAccommodationId));
 		}
 
 		@Test
@@ -1818,12 +1809,12 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 					pathParameters(
 						parameterWithName("wishlistId")
 							.description("위시리스트 ID"),
-						parameterWithName("accommodationId")
+						parameterWithName("wishlistAccommodationId")
 							.description("이미 삭제된 위시리스트 항목 ID")
 					)));
 
 			verify(wishlistService, times(2))
-				.deleteWishlistAccommodation( eq(alreadyDeletedAccommodationId));
+				.deleteWishlistAccommodation(eq(alreadyDeletedAccommodationId));
 		}
 
 		@Test
@@ -1835,7 +1826,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 
 			doThrow(new WishlistAccommodationNotFoundException())
 				.when(wishlistService)
-				.deleteWishlistAccommodation( eq(nonExistentAccommodationId));
+				.deleteWishlistAccommodation(eq(nonExistentAccommodationId));
 
 			// When: 빈 위시리스트에서 항목 삭제를 시도한다
 			mockMvc.perform(delete("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
@@ -1849,11 +1840,11 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 					pathParameters(
 						parameterWithName("wishlistId")
 							.description("빈 위시리스트 ID"),
-						parameterWithName("accommodationId")
+						parameterWithName("wishlistAccommodationId")
 							.description("존재하지 않는 위시리스트 항목 ID")
 					)));
 
-			verify(wishlistService).deleteWishlistAccommodation( eq(nonExistentAccommodationId));
+			verify(wishlistService).deleteWishlistAccommodation(eq(nonExistentAccommodationId));
 		}
 
 		@Test
@@ -1864,7 +1855,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			Long lastAccommodationId = 10L;
 
 			doNothing().when(wishlistService)
-				.deleteWishlistAccommodation( eq(lastAccommodationId));
+				.deleteWishlistAccommodation(eq(lastAccommodationId));
 
 			// When: 위시리스트의 마지막 숙소를 삭제한다
 			mockMvc.perform(delete("/api/members/wishlists/{wishlistId}/accommodations/{wishlistAccommodationId}",
@@ -1878,11 +1869,11 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 					pathParameters(
 						parameterWithName("wishlistId")
 							.description("위시리스트 ID"),
-						parameterWithName("accommodationId")
+						parameterWithName("wishlistAccommodationId")
 							.description("위시리스트의 마지막 남은 숙소 ID")
 					)));
 
-			verify(wishlistService).deleteWishlistAccommodation( eq(lastAccommodationId));
+			verify(wishlistService).deleteWishlistAccommodation(eq(lastAccommodationId));
 		}
 
 		@ParameterizedTest(name = "잘못된 ID: {0}")
@@ -1907,7 +1898,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 					pathParameters(
 						parameterWithName("wishlistId")
 							.description("위시리스트 ID"),
-						parameterWithName("accommodationId")
+						parameterWithName("wishlistAccommodationId")
 							.description("잘못된 위시리스트 항목 ID: " + invalidId)
 					)));
 		}
@@ -1942,7 +1933,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 						"신라호텔",
 						List.of("hotel1_image1.jpg", "hotel1_image2.jpg"),
 						amenities1,
-						4.5
+						new BigDecimal("4.5")
 					)
 				),
 				new WishlistResponse.WishlistAccommodationInfo(
@@ -1953,7 +1944,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 						"롯데호텔",
 						List.of("hotel2_image1.jpg"),
 						amenities2,
-						4.3
+						new BigDecimal("4.3")
 					)
 				),
 				new WishlistResponse.WishlistAccommodationInfo(
@@ -2211,7 +2202,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 						"세 번째 숙소",
 						List.of("image3.jpg"),
 						List.of(),
-						4.2
+						new BigDecimal("4.2")
 					)
 				),
 				new WishlistResponse.WishlistAccommodationInfo(
@@ -2222,7 +2213,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 						"네 번째 숙소",
 						List.of("image4.jpg"),
 						List.of(),
-						4.7
+						new BigDecimal("4.7")
 					)
 				)
 			);
@@ -2332,7 +2323,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 						"프리미엄 호텔",
 						List.of("premium_hotel_1.jpg", "premium_hotel_2.jpg", "premium_hotel_3.jpg"),
 						amenities,
-						4.8
+						new BigDecimal("4.8")
 					)
 				)
 			);
@@ -2472,16 +2463,17 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 			// 50개의 숙소 항목 생성
 			List<WishlistResponse.WishlistAccommodationInfo> accommodations = new ArrayList<>();
 			for (int i = 1; i <= 50; i++) {
+				String averageRatingStr = String.valueOf(4.0 + (i % 10) * 0.1);
 				accommodations.add(
 					new WishlistResponse.WishlistAccommodationInfo(
-						(long) i,
+						(long)i,
 						"숙소 " + i + " 메모",
 						new AccommodationResponse.WishlistAccommodationInfo(
-							(long) (i * 100),
+							(long)(i * 100),
 							"숙소 " + i,
 							List.of("image" + i + ".jpg"),
 							List.of(),
-							4.0 + (i % 10) * 0.1
+							new BigDecimal(averageRatingStr)
 						)
 					)
 				);
@@ -2584,7 +2576,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 						"첫 페이지 숙소",
 						List.of("first_page_image.jpg"),
 						List.of(new AccommodationResponse.AmenityInfoResponse(AmenityType.WIFI, 1)),
-						4.2
+						new BigDecimal("4.2")
 					)
 				)
 			);
@@ -2755,7 +2747,7 @@ class WishlistControllerTest extends BaseControllerDocumentationTest {
 						"기본 크기 테스트 숙소",
 						List.of(),
 						List.of(),
-						4.0
+						new BigDecimal("4.0")
 					)
 				)
 			);

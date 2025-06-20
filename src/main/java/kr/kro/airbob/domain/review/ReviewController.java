@@ -86,6 +86,7 @@ public class ReviewController {
 		return ResponseEntity.ok(response);
 	}
 
+	// todo: 리뷰 이미지 업로드 해야함
 	@GetMapping("/summary")
 	public ResponseEntity<ReviewResponse.ReviewSummary> findReviewSummary(@PathVariable Long accommodationId) {
 

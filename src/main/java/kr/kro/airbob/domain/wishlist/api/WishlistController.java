@@ -37,7 +37,6 @@ public class WishlistController {
 
 		Long memberId = (Long) request.getAttribute("memberId");
 
-		log.info(requestDto.toString());
 		WishlistResponse.CreateResponse response = wishlistService.createWishlist(requestDto, memberId);
 		return ResponseEntity.ok(response);
 	}
@@ -46,9 +45,9 @@ public class WishlistController {
 	public ResponseEntity<WishlistResponse.UpdateResponse> updateWishlist(
 		@PathVariable Long wishlistId,
 		@Valid @RequestBody WishlistRequest.updateRequest requestDto) {
-		log.info(requestDto.toString());
+
 		WishlistResponse.UpdateResponse response = wishlistService.updateWishlist(wishlistId, requestDto);
-		log.info(response.toString());
+
 		return ResponseEntity.ok(response);
 	}
 
@@ -64,7 +63,6 @@ public class WishlistController {
 
 		Long memberId = (Long) request.getAttribute("memberId");
 
-		log.info(requestDto.toString());
 		WishlistResponse.WishlistInfos response =
 			wishlistService.findWishlists(requestDto, memberId);
 		return ResponseEntity.ok(response);

@@ -20,15 +20,6 @@ public class CursorRequest {
 				size = 20; // 기본값
 			}
 		}
-
-		@Override
-		public String toString() {
-			return "CursorPageRequest{" +
-				"size=" + size +
-				", lastId=" + lastId +
-				", lastCreatedAt=" + lastCreatedAt +
-				'}';
-		}
 	}
 
 	@Builder
