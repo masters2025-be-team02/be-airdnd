@@ -71,29 +71,17 @@ include::{generated}/위시리스트-수정-존재하지않음-실패.adoc[]
 
 include::{generated}/위시리스트-숙소메모수정-null메모-실패.adoc[]
 
-include::{generated}/위시리스트-숙소메모수정-공백메모-실패.adoc[]
-
 include::{generated}/위시리스트-숙소메모수정-권한없음-실패.adoc[]
 
-include::{generated}/위시리스트-숙소메모수정-길이초과-실패.adoc[]
+include::{generated}/위시리스트-숙소메모수정-긴메모-성공.adoc[]
 
 include::{generated}/위시리스트-숙소메모수정-빈메모-실패.adoc[]
 
 include::{generated}/위시리스트-숙소메모수정-성공.adoc[]
 
-include::{generated}/위시리스트-숙소메모수정-연속수정-1.adoc[]
-
-include::{generated}/위시리스트-숙소메모수정-연속수정-2.adoc[]
-
-include::{generated}/위시리스트-숙소메모수정-연속수정-3.adoc[]
-
-include::{generated}/위시리스트-숙소메모수정-연속수정-4.adoc[]
-
-include::{generated}/위시리스트-숙소메모수정-연속수정-5.adoc[]
-
 include::{generated}/위시리스트-숙소메모수정-위시리스트없음-실패.adoc[]
 
-include::{generated}/위시리스트-숙소메모수정-최대길이-성공.adoc[]
+include::{generated}/위시리스트-숙소메모수정-최대값ID-성공.adoc[]
 
 include::{generated}/위시리스트-숙소메모수정-특수문자-성공.adoc[]
 
