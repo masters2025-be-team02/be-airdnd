@@ -17,10 +17,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import kr.kro.airbob.cursor.annotation.CursorParam;
 import kr.kro.airbob.cursor.dto.CursorRequest;
-import kr.kro.airbob.cursor.annotation.CursorParam;
-import kr.kro.airbob.cursor.dto.CursorRequest;
-import kr.kro.airbob.domain.review.ReviewService;
-import kr.kro.airbob.domain.review.ReviewSortType;
 import kr.kro.airbob.domain.review.dto.ReviewRequest;
 import kr.kro.airbob.domain.review.dto.ReviewResponse;
 import lombok.RequiredArgsConstructor;
@@ -46,24 +42,13 @@ public class ReviewController {
 		return ResponseEntity.ok(response);
 	}
 
-	@PatchMapping("/{reviewId}/content")
-	public ResponseEntity<ReviewResponse.UpdateResponse> updateContentResponse(
+	@PatchMapping("/{reviewId}")
+	public ResponseEntity<ReviewResponse.UpdateResponse> updateReview(
 		@PathVariable Long reviewId,
-		@Valid @RequestBody ReviewRequest.UpdateContentRequest requestDto) {
+		@Valid @RequestBody ReviewRequest.UpdateRequest requestDto) {
 
 		ReviewResponse.UpdateResponse response =
-			reviewService.updateContentReview(reviewId, requestDto);
-
-		return ResponseEntity.ok(response);
-	}
-
-	@PatchMapping("/{reviewId}/rating")
-	public ResponseEntity<ReviewResponse.UpdateResponse> updateRatingResponse(
-		@PathVariable Long reviewId,
-		@Valid @RequestBody ReviewRequest.UpdateRatingRequest requestDto) {
-
-		ReviewResponse.UpdateResponse response =
-			reviewService.updateRatingReview(reviewId, requestDto);
+			reviewService.updateReview(reviewId, requestDto);
 
 		return ResponseEntity.ok(response);
 	}

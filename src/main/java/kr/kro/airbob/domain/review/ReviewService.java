@@ -59,19 +59,19 @@ public class ReviewService {
 	}
 
 	@Transactional
-	public ReviewResponse.UpdateResponse updateContentReview(Long reviewId, ReviewRequest.UpdateContentRequest request) {
+	public ReviewResponse.UpdateResponse updateReview(Long reviewId, ReviewRequest.UpdateRequest request) {
 		Review review = findReviewById(reviewId);
-		review.updateContent(request.content());
-		return new ReviewResponse.UpdateResponse(review.getId());
-	}
 
-	@Transactional
-	public ReviewResponse.UpdateResponse updateRatingReview(Long reviewId, ReviewRequest.UpdateRatingRequest request) {
-		Review review = findReviewById(reviewId);
-		int oldRating = review.getRating();
-		review.updateRating(request.rating());
+		if (request.content() != null) {
+			review.updateContent(request.content());
+		}
 
-		updateReviewSummaryOnUpdate(review.getAccommodation().getId(), oldRating, request.rating());
+		if (request.rating() != null) {
+			int oldRating = review.getRating();
+			review.updateRating(request.rating());
+
+			updateReviewSummaryOnUpdate(review.getAccommodation().getId(), oldRating, request.rating());
+		}
 
 		return new ReviewResponse.UpdateResponse(review.getId());
 	}
