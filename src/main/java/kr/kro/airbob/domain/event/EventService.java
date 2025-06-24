@@ -1,5 +1,6 @@
 package kr.kro.airbob.domain.event;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import kr.kro.airbob.domain.event.common.ApplyResult;
@@ -46,9 +47,16 @@ public class EventService {
         script.setScriptText(APPLY_EVENT_SCRIPT);
         script.setResultType(String.class);
 
+        String keySet = "event:" + eventId + ":set";
+        String keyQueue = "event:" + eventId + ":queue";
+
         String result = redisTemplate.execute(script,
-                Arrays.asList("event:" + eventId + ":set", "event:" + eventId + ":queue"),
+                Arrays.asList(keySet, keyQueue),
                 String.valueOf(memberId), String.valueOf(maxParticipants));
+
+        Long ttlSeconds = 300L;
+        redisTemplate.expire(keySet, Duration.ofSeconds(ttlSeconds));
+        redisTemplate.expire(keyQueue, Duration.ofSeconds(ttlSeconds));
 
         return ApplyResult.valueOf(result.toUpperCase());
     }
@@ -92,6 +100,15 @@ public class EventService {
     }
 
     public int getEventMaxParticipants(Long eventId) {
-        return eventRepository.findMaxParticipantsById(eventId);
+        String key = "event:" + eventId + ":maxParticipants";
+        String cached = redisTemplate.opsForValue().get(key);
+
+        if (cached != null) {
+            return Integer.parseInt(cached);
+        }
+
+        Long max = eventRepository.findMaxParticipantsById(eventId); // DB 조회
+        redisTemplate.opsForValue().set(key, String.valueOf(max), Duration.ofMinutes(10));
+        return max.intValue();
     }
 }
