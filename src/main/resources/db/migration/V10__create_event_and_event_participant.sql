@@ -19,8 +19,8 @@ CREATE TABLE event_participant (
 
 INSERT INTO event (name, max_participants, start_at, end_at, status, created_at)
 VALUES (
-           '선착순 10000명 이벤트',
-           10000,
+           '선착순 1000명 이벤트',
+           1000,
            '2025-07-01 00:00:00',
            '2025-07-10 23:59:59',
            'OPEN',

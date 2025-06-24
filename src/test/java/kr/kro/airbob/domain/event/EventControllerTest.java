@@ -11,6 +11,7 @@ import static org.springframework.restdocs.request.RequestDocumentation.pathPara
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import kr.kro.airbob.domain.common.BaseControllerDocumentationTest;
 import kr.kro.airbob.domain.event.common.ApplyResult;
 import org.junit.jupiter.api.Test;
@@ -52,8 +53,8 @@ public class EventControllerTest extends BaseControllerDocumentationTest {
 
         // when
         mockMvc.perform(post("/api/event/{eventId}", eventId)
-                        .requestAttr("memberId", memberId)
-                        .contentType(MediaType.APPLICATION_JSON))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"memberId\": 123 }"))
                 // then
                 .andExpect(status().isOk())
                 .andDo(document("apply-event-success",
