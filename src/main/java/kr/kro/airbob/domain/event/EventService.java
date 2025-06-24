@@ -1,5 +1,6 @@
 package kr.kro.airbob.domain.event;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import kr.kro.airbob.domain.event.common.ApplyResult;
 import kr.kro.airbob.domain.event.entity.Event;
@@ -39,7 +40,7 @@ public class EventService {
                 """;
 
     @Transactional
-    public ApplyResult applyToEvent(Long eventId, Long memberId) {
+    public ApplyResult applyToEvent(Long eventId, Long memberId, int maxParticipants) {
 
         DefaultRedisScript<String> script = new DefaultRedisScript<>();
         script.setScriptText(APPLY_EVENT_SCRIPT);
@@ -47,7 +48,7 @@ public class EventService {
 
         String result = redisTemplate.execute(script,
                 Arrays.asList("event:" + eventId + ":set", "event:" + eventId + ":queue"),
-                String.valueOf(memberId), "10000");
+                String.valueOf(memberId), String.valueOf(maxParticipants));
 
         return ApplyResult.valueOf(result.toUpperCase());
     }
@@ -73,6 +74,10 @@ public class EventService {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new IllegalArgumentException("이벤트가 존재하지 않습니다."));
 
+        if (event.getEndAt().isBefore(LocalDateTime.now())){
+            throw new IllegalStateException("이벤트 마감됨");
+        }
+
         long count = eventParticipantRepository.countByEventId(eventId);
         if (count >= event.getMaxParticipants()) {
             throw new IllegalStateException("이벤트 마감됨");
@@ -84,5 +89,9 @@ public class EventService {
                 .build();
 
         eventParticipantRepository.save(eventParticipant);
+    }
+
+    public int getEventMaxParticipants(Long eventId) {
+        return eventRepository.findMaxParticipantsById(eventId);
     }
 }

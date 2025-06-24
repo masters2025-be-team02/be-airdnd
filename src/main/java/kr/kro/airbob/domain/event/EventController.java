@@ -4,7 +4,6 @@ import static kr.kro.airbob.domain.event.common.ApplyResult.DUPLICATE;
 import static kr.kro.airbob.domain.event.common.ApplyResult.FULL;
 import static kr.kro.airbob.domain.event.common.ApplyResult.SUCCESS;
 
-import com.sun.net.httpserver.Authenticator.Success;
 import jakarta.servlet.http.HttpServletRequest;
 import kr.kro.airbob.domain.event.common.ApplyResult;
 import lombok.RequiredArgsConstructor;
@@ -24,8 +23,10 @@ public class EventController {
 
     @PostMapping("/{eventId}")
     public ResponseEntity<String> applyEvent(@PathVariable Long eventId, HttpServletRequest request) {
+        int eventMaxParticipants = eventService.getEventMaxParticipants(eventId);
+
         Long memberId = (Long) request.getAttribute("memberId");
-        ApplyResult applyResult = eventService.applyToEvent(eventId, memberId);
+        ApplyResult applyResult = eventService.applyToEvent(eventId, memberId, eventMaxParticipants);
 
         switch (applyResult) {
             case SUCCESS -> {
