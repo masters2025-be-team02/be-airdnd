@@ -30,7 +30,7 @@ public class AccommodationRequest {
         private List<AmenityInfo> amenityInfos;
         @NotNull
         private OccupancyPolicyInfo occupancyPolicyInfo;
-        private String thumbnail_url;
+        private String thumbnailUrl;
         @NotBlank
         private String type;
 
@@ -41,11 +41,12 @@ public class AccommodationRequest {
     @AllArgsConstructor
     public static class AddressInfo{
         @NotNull
-        private Integer postalCode;
+        private String postalCode;
         @NotBlank
         private String city;
         @NotBlank
         private String country;
+        @NotBlank
         private String detail;
         @NotBlank
         private String district;

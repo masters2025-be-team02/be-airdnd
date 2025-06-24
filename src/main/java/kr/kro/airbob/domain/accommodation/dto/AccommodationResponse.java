@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import kr.kro.airbob.domain.accommodation.common.AmenityType;
+import kr.kro.airbob.domain.review.dto.ReviewResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -61,5 +62,33 @@ public class AccommodationResponse {
 		BigDecimal averageRating,
 		Boolean isInWishlist
 	) {
+	}
+
+	/*@Builder
+	public record AccommodationSearchInfo(
+		long id,
+		String name,
+		String locationSummary, // ex) 동작구 사당동
+		List<AccommodationImageUrlResponse> accommodationImageUrls,
+		Coordinate coordinate,
+		PriceResponse pricePerNight,
+		ReviewResponse.ReviewSummary review,
+		String hostName,
+		Boolean isInWishlist
+	){
+	}
+
+	@Builder
+	public record AccommodationSearchInfos(
+		List<AccommodationSearchInfo> StaySearchResultListing,
+		int totalCount
+	){
+	}*/
+
+	@Builder
+	public record Coordinate(
+		Double latitude,
+		Double longitude
+	){
 	}
 }

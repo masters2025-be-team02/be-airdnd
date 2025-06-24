@@ -22,6 +22,9 @@ import kr.kro.airbob.domain.accommodation.repository.AmenityRepository;
 import kr.kro.airbob.domain.accommodation.repository.OccupancyPolicyRepository;
 import kr.kro.airbob.domain.member.Member;
 import kr.kro.airbob.domain.member.MemberRepository;
+import kr.kro.airbob.domain.member.exception.MemberNotFoundException;
+import kr.kro.airbob.geo.GeocodingService;
+import kr.kro.airbob.geo.dto.GeocodeResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -38,17 +41,22 @@ public class AccommodationService {
     private final OccupancyPolicyRepository occupancyPolicyRepository;
     private final AddressRepository addressRepository;
 
+    private final GeocodingService geocodingService;
+
     @Transactional
     public Long createAccommodation(CreateAccommodationDto request) {
-        //todo 커스텀 예외로 만들기
+
         Member member = memberRepository.findById(request.getHostId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
+                .orElseThrow(MemberNotFoundException::new);
 
         OccupancyPolicy occupancyPolicy = OccupancyPolicy.createOccupancyPolicy(request.getOccupancyPolicyInfo());
-            occupancyPolicyRepository.save(occupancyPolicy);
+        occupancyPolicyRepository.save(occupancyPolicy);
 
-        Address address = Address.createAddress(request.getAddressInfo());
-            addressRepository.save(address);
+        String addressStr = geocodingService.buildAddressString(request.getAddressInfo());
+        GeocodeResult geocodeResult = geocodingService.getCoordinates(addressStr);
+
+        Address address = Address.createAddress(request.getAddressInfo(), geocodeResult);
+        addressRepository.save(address);
 
         Accommodation accommodation = Accommodation.createAccommodation(request, address, occupancyPolicy, member);
         Accommodation savedAccommodation = accommodationRepository.save(accommodation);
@@ -101,9 +109,13 @@ public class AccommodationService {
 
         accommodation.updateAccommodation(request);
 
-        if (request.getAddressInfo() != null) {
-            Address newAddress = Address.createAddress(request.getAddressInfo());
+        if (accommodation.getAddress().isChanged(request.getAddressInfo())) {
+            String addressStr = geocodingService.buildAddressString(request.getAddressInfo());
+            GeocodeResult geocodeResult = geocodingService.getCoordinates(addressStr);
+
+            Address newAddress = Address.createAddress(request.getAddressInfo(), geocodeResult);
             Address savedAddress = addressRepository.save(newAddress);
+
             accommodation.updateAddress(savedAddress);
         }
 
