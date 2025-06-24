@@ -35,3 +35,7 @@ spring:
     redis:
       host: ${REDIS_HOST}
       port: 6379
+
+google:
+  api:
+    key: ${GOOGLE_API_KEY}
