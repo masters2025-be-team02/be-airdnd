@@ -1,15 +1,11 @@
 package kr.kro.airbob.domain.event.entity;
 
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
-import java.time.LocalDateTime;
 import kr.kro.airbob.common.domain.BaseEntity;
-import kr.kro.airbob.domain.event.common.ParticipationStatus;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -27,13 +23,8 @@ public class EventParticipant extends BaseEntity {
     @GeneratedValue
     private Long id;
 
-    private Long userId;
+    private Long memberId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     private Event event;
-
-    private LocalDateTime appliedAt;
-
-    @Enumerated(EnumType.STRING)
-    private ParticipationStatus status;
 }
