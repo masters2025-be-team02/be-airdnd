@@ -20,8 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class EventService {
 
     private final StringRedisTemplate redisTemplate;
-    private final EventParticipantRepository eventParticipantRepository;
     private final EventRepository eventRepository;
+    private final EventSaver eventSaver;
 
     private final String APPLY_EVENT_SCRIPT = """
                 local isAlreadyApplied = redis.call("SISMEMBER", KEYS[1], ARGV[1])
@@ -70,33 +70,11 @@ public class EventService {
             if (memberId == null) break;
 
             try {
-                saveToDatabase(eventId, Long.valueOf(memberId));
+                eventSaver.saveToDatabase(eventId, Long.valueOf(memberId));
             } catch (Exception e) {
                 log.error("DB 저장 실패: memberId={}, error={}", memberId, e.getMessage());
             }
         }
-    }
-
-    @Transactional
-    protected void saveToDatabase(Long eventId, Long memberId) {
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new IllegalArgumentException("이벤트가 존재하지 않습니다."));
-
-        if (event.getEndAt().isBefore(LocalDateTime.now())){
-            throw new IllegalStateException("이벤트 마감됨");
-        }
-
-        long count = eventParticipantRepository.countByEventId(eventId);
-        if (count >= event.getMaxParticipants()) {
-            throw new IllegalStateException("이벤트 마감됨");
-        }
-
-        EventParticipant eventParticipant = EventParticipant.builder()
-                .event(event)
-                .memberId(memberId)
-                .build();
-
-        eventParticipantRepository.save(eventParticipant);
     }
 
     public int getEventMaxParticipants(Long eventId) {

@@ -16,7 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class EventServiceTest {
 
     @InjectMocks
-    private EventService eventService;
+    private EventSaver eventSaver;
 
     @Mock
     private EventRepository eventRepository;
@@ -31,12 +31,12 @@ class EventServiceTest {
         Long eventId = 1L;
         Long memberId = 42L;
 
-        Mockito.when(eventRepository.findById(eventId))
+        Mockito.when(eventRepository.findByIdWithLock(eventId))
                 .thenReturn(Optional.empty());
 
         // when & then
         Assertions.assertThrows(IllegalArgumentException.class, () -> {
-            eventService.saveToDatabase(eventId, memberId);
+            eventSaver.saveToDatabase(eventId, memberId);
         });
     }
 
@@ -53,14 +53,14 @@ class EventServiceTest {
                 .maxParticipants(100)
                 .build();
 
-        Mockito.when(eventRepository.findById(eventId))
+        Mockito.when(eventRepository.findByIdWithLock(eventId))
                 .thenReturn(Optional.of(event));
         Mockito.when(eventParticipantRepository.countByEventId(eventId))
                 .thenReturn(100L); // 정원 도달
 
         // when & then
         Assertions.assertThrows(IllegalStateException.class, () -> {
-            eventService.saveToDatabase(eventId, memberId);
+            eventSaver.saveToDatabase(eventId, memberId);
         });
     }
 }
