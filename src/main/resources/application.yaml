@@ -36,6 +36,13 @@ spring:
       host: ${REDIS_HOST}
       port: 6379
 
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+
 google:
   api:
     key: ${GOOGLE_API_KEY}
+
+ipinfo:
+  api:
+    token: ${IPINFO_API_TOKEN}
