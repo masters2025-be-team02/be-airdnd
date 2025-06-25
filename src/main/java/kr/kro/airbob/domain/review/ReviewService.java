@@ -59,19 +59,10 @@ public class ReviewService {
 	}
 
 	@Transactional
-	public ReviewResponse.UpdateResponse updateReview(Long reviewId, ReviewRequest.UpdateRequest request) {
+	public ReviewResponse.UpdateResponse updateReviewContent(Long reviewId, ReviewRequest.UpdateRequest request) {
 		Review review = findReviewById(reviewId);
 
-		if (request.content() != null) {
-			review.updateContent(request.content());
-		}
-
-		if (request.rating() != null) {
-			int oldRating = review.getRating();
-			review.updateRating(request.rating());
-
-			updateReviewSummaryOnUpdate(review.getAccommodation().getId(), oldRating, request.rating());
-		}
+		review.updateContent(request.content());
 
 		return new ReviewResponse.UpdateResponse(review.getId());
 	}

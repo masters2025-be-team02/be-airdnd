@@ -48,7 +48,7 @@ public class ReviewController {
 		@Valid @RequestBody ReviewRequest.UpdateRequest requestDto) {
 
 		ReviewResponse.UpdateResponse response =
-			reviewService.updateReview(reviewId, requestDto);
+			reviewService.updateReviewContent(reviewId, requestDto);
 
 		return ResponseEntity.ok(response);
 	}
