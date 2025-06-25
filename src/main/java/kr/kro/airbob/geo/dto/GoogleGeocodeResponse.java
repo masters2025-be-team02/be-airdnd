@@ -17,12 +17,12 @@ public class GoogleGeocodeResponse {
 	}
 
 	public record Geometry(
-		Location location
+		Coordinate location,
+		Viewport viewport
 	){
-		public record  Location (
-			Double lat,
-			Double lng
-
+		public record Viewport(
+			Coordinate northeast,
+			Coordinate southwest
 		) {
 		}
 	}

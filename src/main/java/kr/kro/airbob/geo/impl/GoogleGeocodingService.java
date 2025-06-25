@@ -9,6 +9,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest;
 import kr.kro.airbob.geo.GeocodingService;
+import kr.kro.airbob.geo.ViewportAdjuster;
+import kr.kro.airbob.geo.dto.Coordinate;
 import kr.kro.airbob.geo.dto.GeocodeResult;
 import kr.kro.airbob.geo.dto.GoogleGeocodeResponse;
 import lombok.RequiredArgsConstructor;
@@ -19,13 +21,16 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class GoogleGeocodingService implements GeocodingService {
 
+	public static final String OK = "OK";
 	private final RestTemplate restTemplate;
+	private final ViewportAdjuster viewportAdjuster;
 
 	// todo: 배포 후엔 api ip 제한 걸기
 	@Value("${google.api.key}")
 	private String googleApiKey;
 
 	private static final String GEOCODING_API_URL = "https://maps.googleapis.com/maps/api/geocode/json";
+
 	@Override
 	public GeocodeResult getCoordinates(String address) {
 		try {
@@ -41,16 +46,10 @@ public class GoogleGeocodingService implements GeocodingService {
 
 			GoogleGeocodeResponse response = restTemplate.getForObject(url, GoogleGeocodeResponse.class);
 
-			if (response != null && "OK".equals(response.getStatus()) && !response.getResults().isEmpty()) {
+			if (response != null && OK.equals(response.getStatus()) && !response.getResults().isEmpty()) {
 				GoogleGeocodeResponse.Result result = response.getResults().get(0);
-				GoogleGeocodeResponse.Geometry.Location location = result.geometry().location();
 
-				return GeocodeResult.builder()
-					.latitude(location.lat())
-					.longitude(location.lng())
-					.formattedAddress(result.formattedAddress())
-					.success(true)
-					.build();
+				return buildGeocodeResult(result);
 			} else {
 				log.warn("Geocoding 실패: {}, status: {}", address, response != null ? response.getStatus() : "null");
 				return GeocodeResult.fail();
@@ -59,6 +58,20 @@ public class GoogleGeocodingService implements GeocodingService {
 			log.error("Geocoding API 호출 중 오류 발생: {}", address, e);
 			return GeocodeResult.fail();
 		}
+	}
+
+	private GeocodeResult buildGeocodeResult(GoogleGeocodeResponse.Result result) {
+		Coordinate location = result.geometry().location();
+		GoogleGeocodeResponse.Geometry.Viewport viewport = result.geometry().viewport();
+
+		GoogleGeocodeResponse.Geometry.Viewport adjustedViewport = viewportAdjuster.adjustViewportIfSmall(viewport);
+
+		return GeocodeResult.success(
+			location.latitude(),
+			location.longitude(),
+			result.formattedAddress(),
+			adjustedViewport
+		);
 	}
 
 	@Override
