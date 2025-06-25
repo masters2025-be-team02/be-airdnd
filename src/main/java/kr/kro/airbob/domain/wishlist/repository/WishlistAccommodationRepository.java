@@ -14,9 +14,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import kr.kro.airbob.domain.wishlist.WishlistAccommodation;
-import kr.kro.airbob.domain.wishlist.dto.projection.WishlistAmenityProjection;
-import kr.kro.airbob.domain.wishlist.dto.projection.WishlistImageProjection;
-import kr.kro.airbob.domain.wishlist.dto.projection.WishlistRatingProjection;
 
 @Repository
 public interface WishlistAccommodationRepository extends JpaRepository<WishlistAccommodation, Long> {
@@ -68,44 +65,11 @@ public interface WishlistAccommodationRepository extends JpaRepository<WishlistA
 		@Param("lastCreatedAt") LocalDateTime lastCreatedAt,
 		Pageable pageable);
 
-	@Query("""
-        SELECT 
-        	new kr.kro.airbob.domain.wishlist.dto.projection.WishlistImageProjection(wa.id, ai.image_url)
-        FROM WishlistAccommodation wa
-        JOIN AccommodationImage ai ON wa.accommodation.id = ai.accommodation.id
-        WHERE wa.id IN :wishlistAccommodationIds
-        ORDER BY wa.id, ai.id
-        """)
-	List<WishlistImageProjection> findAccommodationImagesByWishlistAccommodationIds(
-		@Param("wishlistAccommodationIds") List<Long> wishlistAccommodationIds);
-
-	@Query(value = """
-		SELECT 
-			 new kr.kro.airbob.domain.wishlist.dto.projection.WishlistAmenityProjection(wa.id, aa.amenity.name, aa.count)
-		FROM WishlistAccommodation wa
-		JOIN AccommodationAmenity aa ON wa.accommodation.id = aa.accommodation.id
-		WHERE wa.id IN :wishlistAccommodationIds
-		ORDER BY wa.id, aa.amenity.name
-		""")
-	List<WishlistAmenityProjection> findAccommodationAmenitiesByWishlistAccommodationIds(
-		@Param("wishlistAccommodationIds") List<Long> wishlistAccommodationIds);
-
-	@Query(value = """
-		SELECT 
-			new kr.kro.airbob.domain.wishlist.dto.projection.WishlistRatingProjection(wa.id, AVG(r.rating))
-		FROM WishlistAccommodation  wa
-		LEFT JOIN Review r ON wa.accommodation.id = r.accommodation.id
-		WHERE wa.id IN :wishlistAccommodationIds
-		GROUP BY wa.id
-		""")
-	List<WishlistRatingProjection> findAccommodationRatingsByWishlistAccommodationIds(
-		@Param("wishlistAccommodationIds")	List<Long> wishlistAccommodationIds);
-
 	boolean existsByWishlistIdAndAccommodationId(Long wishlistId, Long accommodationId);
 
 	@Query("select wa.wishlist.id from WishlistAccommodation wa where wa.id = :wishlistAccommodationId")
 	Optional<Long> findWishlistIdByWishlistAccommodationId(
-		@Param("wishlistAccommodationId") Long wishlistAccommodationId);
+		@Param("accommodationId") Long wishlistAccommodationId);
 
 	@Query("""
 	SELECT 

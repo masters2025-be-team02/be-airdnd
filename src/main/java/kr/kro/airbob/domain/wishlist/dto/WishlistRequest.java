@@ -15,12 +15,6 @@ public class WishlistRequest {
 		@Size(max = 255)
 		String name
 	) {
-		@Override
-		public String toString() {
-			return "createRequest{" +
-				"name='" + name + '\'' +
-				'}';
-		}
 	}
 
 	public record updateRequest(
@@ -28,12 +22,6 @@ public class WishlistRequest {
 		@Size(max = 255)
 		String name
 	) {
-		@Override
-		public String toString() {
-			return "updateRequest{" +
-				"name='" + name + '\'' +
-				'}';
-		}
 	}
 
 	public record CreateWishlistAccommodationRequest(
@@ -48,11 +36,5 @@ public class WishlistRequest {
 		@Size(max = 1024)
 		String memo
 	) {
-		@Override
-		public String toString() {
-			return "UpdateWishlistAccommodationRequest{" +
-				"memo='" + memo + '\'' +
-				'}';
-		}
 	}
 }

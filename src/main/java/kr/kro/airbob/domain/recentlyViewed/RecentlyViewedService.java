@@ -1,5 +1,6 @@
 package kr.kro.airbob.domain.recentlyViewed;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -16,10 +17,12 @@ import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 
 import kr.kro.airbob.domain.accommodation.dto.AccommodationResponse;
+import kr.kro.airbob.domain.accommodation.entity.Accommodation;
+import kr.kro.airbob.domain.accommodation.entity.AccommodationAmenity;
 import kr.kro.airbob.domain.accommodation.repository.AccommodationAmenityRepository;
 import kr.kro.airbob.domain.accommodation.repository.AccommodationRepository;
-import kr.kro.airbob.domain.recentlyViewed.projection.RecentlyViewedAmenityProjection;
-import kr.kro.airbob.domain.recentlyViewed.projection.RecentlyViewedProjection;
+import kr.kro.airbob.domain.review.AccommodationReviewSummary;
+import kr.kro.airbob.domain.review.repository.AccommodationReviewSummaryRepository;
 import kr.kro.airbob.domain.wishlist.repository.WishlistAccommodationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +34,7 @@ public class RecentlyViewedService {
 
 	private final RedisTemplate<String, String> redisTemplate;
 	private final AccommodationRepository accommodationRepository;
+	private final AccommodationReviewSummaryRepository summaryRepository;
 	private final AccommodationAmenityRepository accommodationAmenityRepository;
 	private final WishlistAccommodationRepository wishlistAccommodationRepository;
 
@@ -71,27 +75,29 @@ public class RecentlyViewedService {
 
 		List<Long> accommodationIds = recentlyViewedWithScores.stream()
 			.map(tuple -> Long.parseLong(tuple.getValue()))
-			.collect(Collectors.toList());
+			.toList();
 
 		// 숙소 조회
-		List<RecentlyViewedProjection> accommodations =
-			accommodationRepository.findRecentlyViewedProjectionByIds(accommodationIds);
+		List<Accommodation> accommodations = accommodationRepository.findByIdIn(accommodationIds);
 
 		// 순서를 위한 Map
-		Map<Long, RecentlyViewedProjection> accommodationMap = accommodations.stream()
-			.collect(Collectors.toMap(RecentlyViewedProjection::id, accommodation -> accommodation));
+		Map<Long, Accommodation> accommodationMap = accommodations.stream()
+			.collect(Collectors.toMap(Accommodation::getId, accommodation -> accommodation));
+
+		// 숙소 리뷰 개수
+		Map<Long, BigDecimal> reviewRatingMap = getReviewRatingMap(accommodationIds);
 
 		// 어매니티
-		Map<Long,List<AccommodationResponse.AmenityInfoResponse>> amenityMap = getAmenityMap(accommodationIds);
+		Map<Long, List<AccommodationResponse.AmenityInfoResponse>> amenityMap = getAmenityMap(accommodationIds);
 
 		// 위시리스트 여부
-		Map<Long,Boolean> wishlistMap = getWishlistMap(memberId, accommodationIds);
+		Map<Long, Boolean> wishlistMap = getWishlistMap(memberId, accommodationIds);
 
 		// 조합
 		List<AccommodationResponse.RecentlyViewedAccommodation> recentlyViewedAccommodations = recentlyViewedWithScores.stream()
 			.map(tuple -> {
 				Long accommodationId = Long.parseLong(tuple.getValue());
-				RecentlyViewedProjection accommodation = accommodationMap.get(accommodationId);
+				Accommodation accommodation = accommodationMap.get(accommodationId);
 
 				if (accommodation == null) {
 					// 삭제된 숙소인 경우 redis에서도 제거
@@ -107,10 +113,10 @@ public class RecentlyViewedService {
 				return AccommodationResponse.RecentlyViewedAccommodation.builder()
 					.viewedAt(viewAt)
 					.accommodationId(accommodationId)
-					.accommodationName(accommodation.name())
-					.thumbnailUrl(accommodation.thumbnailUrl())
+					.accommodationName(accommodation.getName())
+					.thumbnailUrl(accommodation.getThumbnailUrl())
 					.amenities(amenityMap.getOrDefault(accommodationId, new ArrayList<>()))
-					.averageRating(accommodation.averageRating())
+					.averageRating(reviewRatingMap.get(accommodationId))
 					.isInWishlist(wishlistMap.getOrDefault(accommodationId, false))
 					.build();
 			})
@@ -134,19 +140,31 @@ public class RecentlyViewedService {
 			));
 	}
 
+	private Map<Long, BigDecimal> getReviewRatingMap(List<Long> accommodationIds) {
+		List<AccommodationReviewSummary> summaries = summaryRepository.findByAccommodationIdIn(
+			accommodationIds);
+
+		return summaries.stream()
+			.collect(Collectors.toMap(
+				AccommodationReviewSummary::getAccommodationId,
+				AccommodationReviewSummary::getAverageRating
+			));
+	}
+
+
 	private Map<Long, List<AccommodationResponse.AmenityInfoResponse>> getAmenityMap(
 		List<Long> accommodationIds) {
 
-		List<RecentlyViewedAmenityProjection> results =
-			accommodationAmenityRepository.findRecentlyViewedAmenityProjectionByAccommodationIds(accommodationIds);
+		List<AccommodationAmenity> results =
+			accommodationAmenityRepository.findAccommodationAmenitiesByAccommodationIds(accommodationIds);
 
 		return results.stream()
 			.collect(Collectors.groupingBy(
-				RecentlyViewedAmenityProjection::accommodationId,
+				aa -> aa.getAccommodation().getId(),
 				Collectors.mapping(
 					result -> new AccommodationResponse.AmenityInfoResponse(
-						result.type(),
-						result.count()
+						result.getAmenity().getName(),
+						result.getCount()
 					),
 					Collectors.toList()
 				)));

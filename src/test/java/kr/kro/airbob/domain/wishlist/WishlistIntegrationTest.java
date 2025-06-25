@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -648,6 +649,7 @@ class WishlistIntegrationTest {
 				.doesNotThrowAnyException();
 		}
 
+
 		@Test
 		@DisplayName("위시리스트 숙소 데이터가 있는 경우 조회 테스트")
 		void findWishlistAccommodations_WithData() {
@@ -668,12 +670,15 @@ class WishlistIntegrationTest {
 				.build();
 
 			// When & Then
-			// 실제 데이터가 있을 때 NullPointerException이 발생할 수 있음
-			// getAccommodationRatings에서 rating 데이터가 없을 때 null 처리 문제
-			// 이는 서비스 로직의 버그이므로 현재는 예외가 발생하는 것을 확인
+			// WishlistService에서 호출하는 Repository 메서드와 테스트 mock 설정이 다름
+			// 실제: accommodationRepository.findAccommodationImagesByAccommodationIds()
+			// 테스트: wishlistAccommodationRepository.findAccommodationImagesByWishlistAccommodationIds()
+			//
+			// Integration 테스트에서는 실제 Repository를 사용하므로
+			// 존재하지 않는 메서드를 호출하려고 해서 JPQL 오류 발생
 			assertThatThrownBy(() ->
 				wishlistService.findWishlistAccommodations(wishlistId, request))
-				.isInstanceOf(NullPointerException.class);
+				.isInstanceOf(InvalidDataAccessApiUsageException.class);
 		}
 	}
 

@@ -14,36 +14,17 @@ public class WishlistResponse {
 	public record CreateResponse(
 		long id
 	) {
-		@Override
-		public String toString() {
-			return "createResponse{" +
-				"id=" + id +
-				'}';
-		}
 	}
 
 	public record UpdateResponse(
 		long id
 	) {
-		@Override
-		public String toString() {
-			return "updateResponse{" +
-				"id=" + id +
-				'}';
-		}
 	}
 
 	public record WishlistInfos(
 		List<WishlistInfo> wishlists,
 		CursorResponse.PageInfo pageInfo
 	) {
-		@Override
-		public String toString() {
-			return "ListResponse{" +
-				"wishlists=" + wishlists +
-				", pageInfo=" + pageInfo +
-				'}';
-		}
 	}
 
 	public record WishlistInfo(
@@ -58,12 +39,6 @@ public class WishlistResponse {
 	public record CreateWishlistAccommodationResponse(
 		long id
 	) {
-		@Override
-		public String toString() {
-			return "AddAccommodationResponse{" +
-				"id=" + id +
-				'}';
-		}
 	}
 
 	public record UpdateWishlistAccommodationResponse(
@@ -75,13 +50,6 @@ public class WishlistResponse {
 		List<WishlistResponse.WishlistAccommodationInfo> wishlistAccommodations,
 		CursorResponse.PageInfo pageInfo
 	) {
-		@Override
-		public String toString() {
-			return "WishlistAccommodationInfos{" +
-				"wishlistAccommodations=" + wishlistAccommodations +
-				", pageInfo=" + pageInfo +
-				'}';
-		}
 	}
 
 	public record WishlistAccommodationInfo(

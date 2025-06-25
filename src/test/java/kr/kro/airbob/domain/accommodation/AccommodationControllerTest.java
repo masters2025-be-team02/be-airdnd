@@ -36,6 +36,7 @@ import kr.kro.airbob.domain.accommodation.interceptor.AccommodationAuthorization
 import kr.kro.airbob.domain.accommodation.repository.AccommodationRepository;
 import kr.kro.airbob.domain.auth.AuthService;
 import kr.kro.airbob.domain.recentlyViewed.interceptor.RecentlyViewedAuthorizationInterceptor;
+import kr.kro.airbob.domain.review.interceptor.ReviewAuthorizationInterceptor;
 import kr.kro.airbob.domain.wishlist.interceptor.WishlistAuthorizationInterceptor;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -77,6 +78,11 @@ class AccommodationControllerTest {
 
     @MockitoBean
     private RecentlyViewedAuthorizationInterceptor recentlyViewedAuthorizationInterceptor;
+
+    @MockitoBean
+    private ReviewAuthorizationInterceptor reviewAuthorizationInterceptor;
+
+
 
     @Autowired
     private MockMvc mockMvc;

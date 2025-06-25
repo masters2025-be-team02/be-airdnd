@@ -1,5 +1,6 @@
 package kr.kro.airbob.domain.accommodation.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -18,7 +19,7 @@ public class AccommodationResponse {
 		String name,
 		List<String> accommodationImageUrls,
 		List<AmenityInfoResponse> amenities,
-		Double averageRating
+		BigDecimal averageRating
 
 	) {
 	}
@@ -57,7 +58,7 @@ public class AccommodationResponse {
 		String accommodationName,
 		String thumbnailUrl,
 		List<AmenityInfoResponse> amenities,
-		Double averageRating,
+		BigDecimal averageRating,
 		Boolean isInWishlist
 	) {
 	}
