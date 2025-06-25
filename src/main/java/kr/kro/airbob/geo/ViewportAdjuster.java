@@ -11,6 +11,8 @@ public class ViewportAdjuster {
 
 	private static final double MIN_RADIUS_METERS = 3000; // 3km
 	private static final double ONE_DEGREE = 111.0; // 위도 1도 ≈ 111km
+	private static final double MAX_LATITUDE = 85.0; // Google Maps 위도 한계
+	private static final double MIN_LATITUDE = -85.0; // Google Maps 위도 한계
 
 	public Viewport adjustViewportIfSmall(Viewport originalViewport) {
 		if (originalViewport == null) {
@@ -26,19 +28,25 @@ public class ViewportAdjuster {
 		return originalViewport;
 	}
 
-	public Viewport createViewportFromCenter(double latitude, double longitude) {
+	public Viewport createViewportFromCenter(double centerLat, double centerLng) {
 		double radiusKm = MIN_RADIUS_METERS / 1000.0;
 		double latDelta = radiusKm / ONE_DEGREE;
-		double lngDelta = radiusKm / (ONE_DEGREE * Math.cos(Math.toRadians(latitude)));
+		double lngDelta = radiusKm / (ONE_DEGREE * Math.cos(Math.toRadians(centerLat)));
+
+		// Google Maps 범위를 벗어나지 않도록 제한
+		double topLat = Math.min(MAX_LATITUDE, centerLat + latDelta);
+		double bottomLat = Math.max(MIN_LATITUDE, centerLat - latDelta);
+		double rightLng = normalizeLongitude(centerLng + lngDelta);
+		double leftLng = normalizeLongitude(centerLng - lngDelta);
 
 		Coordinate northeast = Coordinate.builder()
-			.latitude(latitude + latDelta)
-			.longitude(longitude + lngDelta)
+			.latitude(topLat)
+			.longitude(rightLng)
 			.build();
 
 		Coordinate southwest = Coordinate.builder()
-			.latitude(latitude - latDelta)
-			.longitude(longitude - lngDelta)
+			.latitude(bottomLat)
+			.longitude(leftLng)
 			.build();
 
 		return new Viewport(northeast, southwest);
@@ -73,21 +81,16 @@ public class ViewportAdjuster {
 	private Viewport expandViewport(Viewport originalViewport) {
 		Coordinate center = calculateCenter(originalViewport);
 
-		double radiusKm = MIN_RADIUS_METERS / 1000.0;
-		double latDelta = radiusKm / ONE_DEGREE; //
-		double lngDelta = radiusKm / (ONE_DEGREE * Math.cos(Math.toRadians(center.latitude())));
+		return createViewportFromCenter(
+			center.latitude(),
+			center.longitude()
+		);
+	}
 
-		Coordinate newNortheast = Coordinate.builder()
-			.latitude(center.latitude() + latDelta)
-			.longitude(center.longitude() + lngDelta)
-			.build();
-
-		Coordinate newSouthwest = Coordinate.builder()
-			.latitude(center.latitude() - latDelta)
-			.longitude(center.longitude() - lngDelta)
-			.build();
-
-		return new Viewport(newNortheast, newSouthwest);
+	private double normalizeLongitude(double lng) {
+		while (lng > 180.0) lng -= 360.0;
+		while (lng < -180.0) lng += 360.0;
+		return lng;
 	}
 }
 
