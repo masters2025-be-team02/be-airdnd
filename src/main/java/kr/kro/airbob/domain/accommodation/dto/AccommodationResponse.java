@@ -6,6 +6,7 @@ import java.util.List;
 
 import kr.kro.airbob.domain.accommodation.common.AmenityType;
 import kr.kro.airbob.domain.review.dto.ReviewResponse;
+import kr.kro.airbob.geo.dto.Coordinate;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -49,7 +50,6 @@ public class AccommodationResponse {
 		List<RecentlyViewedAccommodation> accommodations,
 		int totalCount
 	) {
-
 	}
 
 	@Builder
@@ -64,12 +64,12 @@ public class AccommodationResponse {
 	) {
 	}
 
-	/*@Builder
+	@Builder
 	public record AccommodationSearchInfo(
 		long id,
 		String name,
 		String locationSummary, // ex) 동작구 사당동
-		List<AccommodationImageUrlResponse> accommodationImageUrls,
+		List<String> accommodationImageUrls,
 		Coordinate coordinate,
 		PriceResponse pricePerNight,
 		ReviewResponse.ReviewSummary review,
@@ -83,12 +83,14 @@ public class AccommodationResponse {
 		List<AccommodationSearchInfo> StaySearchResultListing,
 		int totalCount
 	){
-	}*/
+	}
+
 
 	@Builder
-	public record Coordinate(
-		Double latitude,
-		Double longitude
+	public record  PriceResponse(
+		String currencyCode,
+		String displayPrice,
+		int price
 	){
 	}
 }

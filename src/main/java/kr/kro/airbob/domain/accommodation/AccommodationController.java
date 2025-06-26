@@ -66,8 +66,5 @@ public class AccommodationController {
         List<AccommodationSearchResponseDto> result = accommodationService.searchAccommodations(request, pageable);
         return ResponseEntity.ok(result);
     }
-
-
-
 }
 
