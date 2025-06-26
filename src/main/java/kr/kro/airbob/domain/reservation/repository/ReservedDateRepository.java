@@ -12,7 +12,7 @@ import java.util.List;
 @Repository
 public interface ReservedDateRepository extends JpaRepository<ReservedDate, Long> {
 
-    @Query("SELECT r.reservedAt FROM ReservedDate r " +
+    @Query("SELECT r FROM ReservedDate r " +
             "WHERE r.accommodation.id = :accommodationId " +
             "AND r.reservedAt >= :checkIn AND r.reservedAt < :checkOut")
     List<ReservedDate> findReservedDates(
