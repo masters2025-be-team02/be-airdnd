@@ -10,6 +10,7 @@ import kr.kro.airbob.domain.reservation.common.ReservationStatus;
 import kr.kro.airbob.domain.reservation.dto.ReservationRequestDto;
 import kr.kro.airbob.domain.reservation.entity.Reservation;
 import kr.kro.airbob.domain.reservation.entity.ReservedDate;
+import kr.kro.airbob.domain.reservation.exception.ReservationNotFoundException;
 import kr.kro.airbob.domain.reservation.repository.ReservationRepository;
 import kr.kro.airbob.domain.reservation.repository.ReservedDateRepository;
 import lombok.RequiredArgsConstructor;
@@ -117,6 +118,18 @@ public class ReservationService {
         }
 
         return savedReservation.getId();
+    }
+
+    @Transactional
+    public void cancelReservation(Long reservationId) {
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(ReservationNotFoundException::new);
+
+        reservedDateRepository.deleteReservedDates(reservation.getAccommodation().getId(),
+                LocalDate.of(reservation.getCheckIn().getYear(), reservation.getCheckIn().getMonth(), reservation.getCheckIn().getDayOfMonth()),
+                LocalDate.of(reservation.getCheckOut().getYear(), reservation.getCheckOut().getMonth(), reservation.getCheckOut().getDayOfMonth()));
+
+        reservationRepository.delete(reservation);
     }
 
 }

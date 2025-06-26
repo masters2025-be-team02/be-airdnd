@@ -32,4 +32,9 @@ public class ReservationController {
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("id", reservationId));
     }
 
+    @DeleteMapping("/{reservationId}")
+    public void cancelReservation(@PathVariable Long reservationId) {
+        reservationService.cancelReservation(reservationId);
+    }
+
 }
