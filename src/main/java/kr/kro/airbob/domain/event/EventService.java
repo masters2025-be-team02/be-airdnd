@@ -1,7 +1,9 @@
 package kr.kro.airbob.domain.event;
 
+import jakarta.annotation.PostConstruct;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Collections;
 import kr.kro.airbob.domain.event.common.ApplyResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,7 +11,6 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,60 +22,71 @@ public class EventService {
     private final CacheManager cacheManager;
     private final StringRedisTemplate redisTemplate;
     private final EventRepository eventRepository;
-    private final EventSaver eventSaver;
 
     private final String APPLY_EVENT_SCRIPT = """
-                local isAlreadyApplied = redis.call("SISMEMBER", KEYS[1], ARGV[1])
-                if isAlreadyApplied == 1 then
+            local memberId = ARGV[1]
+                local maxQueueSize = tonumber(ARGV[2])
+                local channel = ARGV[3]
+                
+                local zsetKey = KEYS[1]
+                local seqKey = KEYS[2]
+                
+                -- 순번 증가 (score로 사용)
+                local score = redis.call('INCR', seqKey)
+                
+                -- 추가
+                local added = redis.call('ZADD', zsetKey, 'NX', score, memberId)
+                if added == 0 then
                     return "duplicate"
                 end
-                                
-                local currentQueueSize = redis.call("LLEN", KEYS[2])
-                local maxQueueSize = tonumber(ARGV[2])
-                if currentQueueSize >= maxQueueSize then
+                
+                -- 순위 확인
+                local rank = redis.call('ZRANK', zsetKey, memberId)
+                if rank >= maxQueueSize then
+                    redis.call('ZREM', zsetKey, memberId)
+                    redis.call('PUBLISH', channel, "이벤트 마감")
                     return "full"
                 end
-                                
-                redis.call("SADD", KEYS[1], ARGV[1])
-                redis.call("RPUSH", KEYS[2], ARGV[1])
+                
                 return "success"
-                """;
+        """;
+
+    @PostConstruct
+    public void preloadCache() {
+        Long eventId = 1L; // 캐싱할 이벤트 ID
+        String key = "event:" + eventId + ":maxParticipants";
+        Cache cache = cacheManager.getCache("eventMaxParticipantsCache");
+
+        if (cache != null && cache.get(key) == null) {
+            Long max = eventRepository.findMaxParticipantsById(eventId);
+            cache.put(key, max.intValue());
+            log.info("✅ 캐시 프리로드 완료: key={}, value={}", key, max);
+        }
+    }
 
     @Transactional
     public ApplyResult applyToEvent(Long eventId, Long memberId, int maxParticipants) {
-
         DefaultRedisScript<String> script = new DefaultRedisScript<>();
         script.setScriptText(APPLY_EVENT_SCRIPT);
         script.setResultType(String.class);
 
-        String keySet = "event:" + eventId + ":set";
-        String keyQueue = "event:" + eventId + ":queue";
+        String zsetKey = "event:" + eventId + ":zset";
+        String redisChannel = "event:" + eventId + ":notifications";
+        String seqKey = "event:" + eventId + ":seq";
 
-        String result = redisTemplate.execute(script,
-                Arrays.asList(keySet, keyQueue),
-                String.valueOf(memberId), String.valueOf(maxParticipants));
+        String result = redisTemplate.execute(
+                script,
+                Arrays.asList(zsetKey, seqKey),
+                String.valueOf(memberId),
+                String.valueOf(maxParticipants),
+                redisChannel
+        );
 
-        Long ttlSeconds = 300L;
-        redisTemplate.expire(keySet, Duration.ofSeconds(ttlSeconds));
-        redisTemplate.expire(keyQueue, Duration.ofSeconds(ttlSeconds));
+
+        long ttlSeconds = 300L;
+        redisTemplate.expire(zsetKey, Duration.ofSeconds(ttlSeconds));
 
         return ApplyResult.valueOf(result.toUpperCase());
-    }
-
-    @Async
-    public void consumeQueue(Long eventId) {
-        String queueKey = "event:" + eventId + ":queue";
-
-        while (true) {
-            String memberId = redisTemplate.opsForList().leftPop(queueKey);
-            if (memberId == null) break;
-
-            try {
-                eventSaver.saveToDatabase(eventId, Long.valueOf(memberId));
-            } catch (Exception e) {
-                log.error("DB 저장 실패: memberId={}, error={}", memberId, e.getMessage());
-            }
-        }
     }
 
     public int getEventMaxParticipants(Long eventId) {

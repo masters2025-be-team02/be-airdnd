@@ -21,27 +21,33 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/event")
 public class EventController {
 
+    private static boolean IS_FULL = false;
     private final EventService eventService;
 
     private record MemberRequest(Long memberId) {}
 
     @PostMapping("/{eventId}")
     public ResponseEntity<String> applyEvent(@PathVariable Long eventId, @RequestBody MemberRequest request) {
+        if (IS_FULL) return ResponseEntity.status(HttpStatus.GONE).body(FULL.getMessage());
+
         int eventMaxParticipants = eventService.getEventMaxParticipants(eventId);
         ApplyResult applyResult = eventService.applyToEvent(eventId, request.memberId, eventMaxParticipants);
 
         switch (applyResult) {
             case SUCCESS -> {
-                eventService.consumeQueue(eventId);
                 return ResponseEntity.ok(SUCCESS.getMessage());
             }
             case DUPLICATE -> {
+                log.info("result : {}", applyResult.name());
                 return ResponseEntity.status(HttpStatus.CONFLICT).body(DUPLICATE.getMessage());
             }
             case FULL -> {
+                log.info("result : {}", applyResult.name());
+                IS_FULL = true;
                 return ResponseEntity.status(HttpStatus.GONE).body(FULL.getMessage());
             }
             default -> {
+                log.info("error : {}", applyResult.name());
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("알 수 없는 오류입니다.");
             }
         }
