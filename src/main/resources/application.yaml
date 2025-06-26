@@ -37,6 +37,10 @@ spring:
 
   jackson:
     property-naming-strategy: SNAKE_CASE
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
 
   elasticsearch:
     uris: ${ELASTICSEARCH_URIS}
@@ -52,3 +56,9 @@ google:
 ipinfo:
   api:
     token: ${IPINFO_API_TOKEN}
+
+slack:
+  webhook:
+    url: ${SLACK_WEBHOOK_URL}
+  notification:
+    enabled: true
