@@ -1,5 +1,7 @@
 package kr.kro.airbob.domain.reservation;
 
+import static kr.kro.airbob.search.event.AccommodationIndexingEvents.*;
+
 import kr.kro.airbob.domain.accommodation.entity.Accommodation;
 import kr.kro.airbob.domain.accommodation.exception.AccommodationNotFoundException;
 import kr.kro.airbob.domain.accommodation.repository.AccommodationRepository;
@@ -13,9 +15,11 @@ import kr.kro.airbob.domain.reservation.entity.ReservedDate;
 import kr.kro.airbob.domain.reservation.exception.ReservationNotFoundException;
 import kr.kro.airbob.domain.reservation.repository.ReservationRepository;
 import kr.kro.airbob.domain.reservation.repository.ReservedDateRepository;
+import kr.kro.airbob.search.event.AccommodationIndexingEvents;
 import lombok.RequiredArgsConstructor;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +38,9 @@ public class ReservationService {
     private final AccommodationRepository accommodationRepository;
     private final MemberRepository memberRepository;
     private final RedissonClient redissonClient;
+
+    private final ApplicationEventPublisher eventPublisher;
+
 
     @Transactional
     public boolean preReserveDates(Long userId, Long accommodationId, ReservationRequestDto.CreateReservationDto createReservationDto) {
@@ -117,6 +124,8 @@ public class ReservationService {
             reservedDate.completeReservation();
         }
 
+        eventPublisher.publishEvent(new ReservationChangedEvent(accommodationId));
+
         return savedReservation.getId();
     }
 
@@ -130,6 +139,7 @@ public class ReservationService {
                 LocalDate.of(reservation.getCheckOut().getYear(), reservation.getCheckOut().getMonth(), reservation.getCheckOut().getDayOfMonth()));
 
         reservationRepository.delete(reservation);
-    }
 
+        eventPublisher.publishEvent(new ReservationChangedEvent(reservation.getAccommodation().getId()));
+    }
 }

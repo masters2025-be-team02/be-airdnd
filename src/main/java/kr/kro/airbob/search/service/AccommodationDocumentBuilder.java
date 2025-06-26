@@ -11,7 +11,7 @@ import kr.kro.airbob.domain.accommodation.exception.AccommodationNotFoundExcepti
 import kr.kro.airbob.domain.accommodation.repository.AccommodationAmenityRepository;
 import kr.kro.airbob.domain.accommodation.repository.AccommodationRepository;
 import kr.kro.airbob.domain.image.Image;
-import kr.kro.airbob.domain.reservation.entity.ReservationStatus;
+import kr.kro.airbob.domain.reservation.common.ReservationStatus;
 import kr.kro.airbob.domain.reservation.repository.ReservationRepository;
 import kr.kro.airbob.domain.review.AccommodationReviewSummary;
 import kr.kro.airbob.domain.review.repository.AccommodationReviewSummaryRepository;

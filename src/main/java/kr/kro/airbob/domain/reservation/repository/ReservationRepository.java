@@ -8,8 +8,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import kr.kro.airbob.domain.reservation.common.ReservationStatus;
 import kr.kro.airbob.domain.reservation.entity.Reservation;
-import kr.kro.airbob.domain.reservation.entity.ReservationStatus;
 
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
 
