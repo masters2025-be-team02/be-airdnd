@@ -1,4 +1,4 @@
--- V11__Create_failed_indexing_events_table.sql
+-- V14__Create_failed_indexing_events_table.sql
 
 CREATE TABLE failed_indexing_events (
                                         id BIGINT AUTO_INCREMENT PRIMARY KEY,
