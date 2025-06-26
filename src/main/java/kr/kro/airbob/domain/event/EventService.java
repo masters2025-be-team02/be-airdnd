@@ -1,13 +1,12 @@
 package kr.kro.airbob.domain.event;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.Arrays;
 import kr.kro.airbob.domain.event.common.ApplyResult;
-import kr.kro.airbob.domain.event.entity.Event;
-import kr.kro.airbob.domain.event.entity.EventParticipant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.scheduling.annotation.Async;
@@ -19,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class EventService {
 
+    private final CacheManager cacheManager;
     private final StringRedisTemplate redisTemplate;
     private final EventRepository eventRepository;
     private final EventSaver eventSaver;
@@ -78,15 +78,16 @@ public class EventService {
     }
 
     public int getEventMaxParticipants(Long eventId) {
+        Cache cache = cacheManager.getCache("eventMaxParticipantsCache");
         String key = "event:" + eventId + ":maxParticipants";
-        String cached = redisTemplate.opsForValue().get(key);
 
-        if (cached != null) {
-            return Integer.parseInt(cached);
+        Integer cachedValue = cache.get(key, Integer.class);
+        if (cachedValue != null) {
+            return cachedValue;
         }
 
         Long max = eventRepository.findMaxParticipantsById(eventId); // DB 조회
-        redisTemplate.opsForValue().set(key, String.valueOf(max), Duration.ofMinutes(10));
+        cache.put(key, max.intValue());
         return max.intValue();
     }
 }
