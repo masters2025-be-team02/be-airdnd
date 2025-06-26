@@ -38,6 +38,13 @@ spring:
   jackson:
     property-naming-strategy: SNAKE_CASE
 
+  elasticsearch:
+    uris: ${ELASTICSEARCH_URIS}
+    username: ${ELASTICSEARCH_USERNAME}
+    password: ${ELASTICSEARCH_PASSWORD}
+    connection-timeout: 10s
+    socket-timeout: 30s
+
 google:
   api:
     key: ${GOOGLE_API_KEY}
