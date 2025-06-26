@@ -1,27 +1,14 @@
 package kr.kro.airbob.domain.payment;
 
-import java.time.LocalDateTime;
-
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
 import kr.kro.airbob.common.domain.BaseEntity;
 import kr.kro.airbob.domain.member.Member;
-import kr.kro.airbob.domain.payment.common.PaymentGateway;
 import kr.kro.airbob.domain.payment.common.PaymentMethod;
 import kr.kro.airbob.domain.payment.common.PaymentStatus;
 import kr.kro.airbob.domain.reservation.entity.Reservation;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -31,20 +18,25 @@ import lombok.NoArgsConstructor;
 public class Payment extends BaseEntity {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+	private byte[] paymentId;
 
-	private Integer totalPrice;
+	@Column(nullable = false, unique = true)
+	private String tossPaymentKey;
+
+	// 토스내부에서 관리하는 별도의 orderId가 존재함
+	@Column(nullable = false)
+	private String tossOrderId;
+
+	private long totalAmount;
 
 	@Enumerated(EnumType.STRING)
 	private PaymentMethod paymentMethod;
-	@Enumerated(EnumType.STRING)
-	private PaymentGateway paymentGateway;
+
 	@Enumerated(EnumType.STRING)
 	private PaymentStatus status;
-	private Long transactionId;
-	private String cancelReason;
-	private LocalDateTime paidAt;
+
+	@Column(nullable = false)
+	private LocalDateTime requestedAt;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "reservation_id")

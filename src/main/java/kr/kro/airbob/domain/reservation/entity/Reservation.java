@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import kr.kro.airbob.common.domain.BaseEntity;
 import kr.kro.airbob.domain.accommodation.entity.Accommodation;
 import kr.kro.airbob.domain.member.Member;
+import kr.kro.airbob.domain.reservation.common.ReservationStatus;
 import kr.kro.airbob.domain.reservation.common.ReservationTime;
 import kr.kro.airbob.domain.reservation.dto.ReservationRequestDto;
 import lombok.*;
@@ -28,6 +29,9 @@ public class Reservation extends BaseEntity {
 
 	private Integer totalPrice;
 
+	@Enumerated(EnumType.STRING)
+	private ReservationStatus status;
+
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "accommodation_id")
 	private Accommodation accommodation;
@@ -43,6 +47,7 @@ public class Reservation extends BaseEntity {
 				.checkIn(request.getCheckInDate().atTime(ReservationTime.CHECK_IN.getHour(), ReservationTime.CHECK_IN.getMinute()))
 				.checkOut(request.getCheckOutDate().atTime(ReservationTime.CHECK_OUT.getHour(), ReservationTime.CHECK_OUT.getMinute()))
 				.totalPrice(totalPrice)
+				.status(ReservationStatus.COMPLETED)
 				.accommodation(accommodation)
 				.guest(guest)
 				.build();

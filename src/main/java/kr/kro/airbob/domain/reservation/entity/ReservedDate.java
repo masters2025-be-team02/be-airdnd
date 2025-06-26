@@ -3,6 +3,7 @@ package kr.kro.airbob.domain.reservation.entity;
 import jakarta.persistence.*;
 import kr.kro.airbob.common.domain.BaseEntity;
 import kr.kro.airbob.domain.accommodation.entity.Accommodation;
+import kr.kro.airbob.domain.reservation.common.ReservationStatus;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -20,8 +21,14 @@ public class ReservedDate extends BaseEntity {
 
     private LocalDate reservedAt;
 
+    @Enumerated(EnumType.STRING)
+    private ReservationStatus status;
+
     @ManyToOne
     @JoinColumn(name = "accommodation_id")
     private Accommodation accommodation;
 
+    public void completeReservation() {
+        this.status = ReservationStatus.COMPLETED;
+    }
 }

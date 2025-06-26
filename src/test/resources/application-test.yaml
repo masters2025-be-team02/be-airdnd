@@ -2,6 +2,17 @@ spring:
   application:
     name: airbob
 
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/testdb  # 테스트 코드에서 덮어씀
+    username: user
+    password: pass
+
+  data:
+    redis:
+      host: localhost  # 테스트 코드에서 덮어씀
+      port: 6379
+
   flyway:
     enabled: true               # Flyway 사용 활성화
     locations: classpath:db/migration  # 마이그레이션 파일 위치(기본값)

@@ -3,6 +3,7 @@ package kr.kro.airbob.domain.common;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.*;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
 
+import kr.kro.airbob.domain.reservation.interceptor.ReservationAuthorizationInterceptor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,6 +57,9 @@ public abstract class BaseControllerDocumentationTest {
 
 	@MockitoBean
 	private ReviewAuthorizationInterceptor reviewAuthorizationInterceptor;
+
+	@MockitoBean
+	private ReservationAuthorizationInterceptor reservationAuthorizationInterceptor;
 
 	@Autowired
 	protected ObjectMapper objectMapper;
