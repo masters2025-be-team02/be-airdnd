@@ -37,7 +37,7 @@ public class ReservationService {
     @Transactional
     public boolean preReserveDates(Long userId, Long accommodationId, ReservationRequestDto.CreateReservationDto createReservationDto) {
         long daysToReserve = ChronoUnit.DAYS.between(createReservationDto.getCheckInDate(), createReservationDto.getCheckOutDate());
-        Duration lockTtl = Duration.ofSeconds(15);
+        Duration lockTtl = Duration.ofSeconds(60);
 
         List<String> acquiredLockKeys = new ArrayList<>();
 
@@ -51,7 +51,11 @@ public class ReservationService {
             if (!acquired) {
                 // 락 잡기 실패 → 지금까지 잡은 락 해제
                 for (String key : acquiredLockKeys) {
-                    redissonClient.getBucket(key).delete();
+                    RBucket<String> bucket = redissonClient.getBucket(key);
+                    String lockOwner = bucket.get();
+                    if (String.valueOf(userId).equals(lockOwner)) {
+                        bucket.delete();
+                    }
                 }
                 return false;
             }
