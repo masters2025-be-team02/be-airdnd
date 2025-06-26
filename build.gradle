@@ -56,6 +56,14 @@ dependencies {
 	// MySQL JDBC 드라이버
 	runtimeOnly 'com.mysql:mysql-connector-j'
 
+	//캐시
+	implementation 'org.springframework.boot:spring-boot-starter-cache'
+	implementation 'com.github.ben-manes.caffeine:caffeine'
+
+	//프로메테우스
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation("io.micrometer:micrometer-registry-prometheus")
+
 	//query dsl
 	implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
 	annotationProcessor "com.querydsl:querydsl-apt:5.0.0:jakarta"
