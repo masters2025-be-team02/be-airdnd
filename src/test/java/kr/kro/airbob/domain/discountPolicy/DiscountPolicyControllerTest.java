@@ -1,61 +1,44 @@
 package kr.kro.airbob.domain.discountPolicy;
 
-import static org.mockito.BDDMockito.*;
-import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.*;
-import static org.springframework.restdocs.payload.PayloadDocumentation.*;
-import static org.springframework.restdocs.request.RequestDocumentation.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
-import java.time.LocalDateTime;
-import java.util.List;
-
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.http.MediaType;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
-
-import kr.kro.airbob.cursor.util.CursorDecoder;
-import kr.kro.airbob.domain.accommodation.interceptor.AccommodationAuthorizationInterceptor;
+import kr.kro.airbob.domain.common.BaseControllerDocumentationTest;
 import kr.kro.airbob.domain.discountPolicy.common.DiscountType;
 import kr.kro.airbob.domain.discountPolicy.common.PromotionType;
 import kr.kro.airbob.domain.discountPolicy.dto.request.DiscountPolicyCreateDto;
 import kr.kro.airbob.domain.discountPolicy.dto.request.DiscountPolicyUpdateDto;
 import kr.kro.airbob.domain.discountPolicy.dto.response.DiscountPolicyResponseDto;
 import kr.kro.airbob.domain.discountPolicy.entity.DiscountPolicy;
-import kr.kro.airbob.domain.recentlyViewed.interceptor.RecentlyViewedAuthorizationInterceptor;
-import kr.kro.airbob.domain.review.interceptor.ReviewAuthorizationInterceptor;
-import kr.kro.airbob.domain.wishlist.interceptor.WishlistAuthorizationInterceptor;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willDoNothing;
+import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
+import static org.springframework.restdocs.payload.PayloadDocumentation.*;
+import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
+import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @AutoConfigureRestDocs
 @WebMvcTest(DiscountPolicyController.class)
-public class DiscountPolicyControllerTest {
+public class DiscountPolicyControllerTest extends BaseControllerDocumentationTest {
 
     @MockitoBean
     private DiscountPolicyService discountPolicyService;
-    @MockitoBean
-    private CursorDecoder cursorDecoder;
-    @MockitoBean
-    private RedisTemplate<String, Object> redisTemplate;
-    @MockitoBean
-    private AccommodationAuthorizationInterceptor accommodationAuthorizationInterceptor;
 
-    @MockitoBean
-    private WishlistAuthorizationInterceptor wishlistAuthorizationInterceptor;
-
-    @MockitoBean
-    private RecentlyViewedAuthorizationInterceptor recentlyViewedAuthorizationInterceptor;
-
-    @MockitoBean
-    private ReviewAuthorizationInterceptor reviewAuthorizationInterceptor;
+    @Autowired
+    private DiscountPolicyController discountPolicyController;
 
     @Autowired
     private MockMvc mockMvc;
@@ -204,5 +187,10 @@ public class DiscountPolicyControllerTest {
                                 parameterWithName("discountPolicyId").description("삭제할 할인 정책 ID")
                         )
                 ));
+    }
+
+    @Override
+    protected Object getController() {
+        return discountPolicyController;
     }
 }

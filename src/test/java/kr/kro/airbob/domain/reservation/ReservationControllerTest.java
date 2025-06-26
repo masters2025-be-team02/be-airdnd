@@ -49,9 +49,6 @@ public class ReservationControllerTest extends BaseControllerDocumentationTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
     @BeforeEach
     void setup(RestDocumentationContextProvider restDocumentation) {
         reservationController = new ReservationController(reservationService);
