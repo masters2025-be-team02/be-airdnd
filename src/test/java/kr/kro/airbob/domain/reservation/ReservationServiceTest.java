@@ -56,6 +56,7 @@ public class ReservationServiceTest {
     @Test
     void createReservation_whenDatesAlreadyReserved() {
         // given
+        Long memberId = 1L;
         Long accommodationId = 1L;
         LocalDate checkIn = LocalDate.of(2025, 6, 20);
         LocalDate checkOut = LocalDate.of(2025, 6, 22);
@@ -76,7 +77,7 @@ public class ReservationServiceTest {
 
         // when & then
         assertThrows(AlreadyReservedException.class, () -> {
-            reservationService.createReservation(accommodationId, dto);
+            reservationService.createReservation(memberId, accommodationId, dto);
         });
 
         then(reservationRepository).should(never()).save(any());
@@ -86,6 +87,7 @@ public class ReservationServiceTest {
     @Test
     void createReservation_whenDatesAvailable() {
         // given
+        Long memberId = 1L;
         Long accommodationId = 1L;
         Long reservationId = 1L;
         LocalDate checkIn = LocalDate.of(2025, 6, 20);
@@ -110,7 +112,7 @@ public class ReservationServiceTest {
         given(reservationRepository.save(any())).willReturn(reservation);
 
         // when
-        Long savedReservationId = reservationService.createReservation(accommodationId, dto);
+        Long savedReservationId = reservationService.createReservation(memberId, accommodationId, dto);
 
         // then
         then(reservationRepository).should().save(any(Reservation.class));
@@ -143,7 +145,7 @@ public class ReservationServiceTest {
                 .willReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> reservationService.createReservation(accommodationId, request))
+        assertThatThrownBy(() -> reservationService.createReservation(memberId, accommodationId, request))
                 .isInstanceOf(MemberNotFoundException.class)
                 .hasMessage("존재하지 않는 사용자입니다.");
     }
@@ -165,7 +167,7 @@ public class ReservationServiceTest {
                 .willReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> reservationService.createReservation(accommodationId, request))
+        assertThatThrownBy(() -> reservationService.createReservation(memberId, accommodationId, request))
                 .isInstanceOf(AccommodationNotFoundException.class)
                 .hasMessage("존재하지 않는 숙소입니다.");
     }
