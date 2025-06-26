@@ -1,5 +1,7 @@
 package kr.kro.airbob.domain.accommodation;
 
+import static kr.kro.airbob.search.event.AccommodationIndexingEvents.*;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -25,7 +27,10 @@ import kr.kro.airbob.domain.member.MemberRepository;
 import kr.kro.airbob.domain.member.exception.MemberNotFoundException;
 import kr.kro.airbob.geo.GeocodingService;
 import kr.kro.airbob.geo.dto.GeocodeResult;
+import kr.kro.airbob.search.event.AccommodationIndexingEvents;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +46,7 @@ public class AccommodationService {
     private final OccupancyPolicyRepository occupancyPolicyRepository;
     private final AddressRepository addressRepository;
 
+    private final ApplicationEventPublisher eventPublisher;
     private final GeocodingService geocodingService;
 
     @Transactional
@@ -65,6 +71,8 @@ public class AccommodationService {
         if (request.getAmenityInfos() != null) {
             saveValidAmenities(request.getAmenityInfos(), savedAccommodation);
         }
+
+        eventPublisher.publishEvent(new AccommodationCreatedEvent(savedAccommodation.getId()));
 
         return savedAccommodation.getId();
     }
@@ -109,7 +117,7 @@ public class AccommodationService {
 
         accommodation.updateAccommodation(request);
 
-        if (accommodation.getAddress().isChanged(request.getAddressInfo())) {
+        if (request.getAddressInfo() != null && accommodation.getAddress().isChanged(request.getAddressInfo())) {
             String addressStr = geocodingService.buildAddressString(request.getAddressInfo());
             GeocodeResult geocodeResult = geocodingService.getCoordinates(addressStr);
 
@@ -129,6 +137,8 @@ public class AccommodationService {
             accommodationAmenityRepository.deleteAllByAccommodationId(accommodationId);
             saveValidAmenities(request.getAmenityInfos(), accommodation);
         }
+
+        eventPublisher.publishEvent(new AccommodationUpdatedEvent(accommodationId));
     }
 
     @Transactional
@@ -138,6 +148,8 @@ public class AccommodationService {
 
         accommodationAmenityRepository.deleteByAccommodationId(accommodationId);
         accommodationRepository.delete(accommodation);
+
+        eventPublisher.publishEvent(new AccommodationDeletedEvent(accommodationId));
     }
 
     public List<AccommodationSearchResponseDto> searchAccommodations(AccommodationSearchConditionDto request, Pageable pageable) {
