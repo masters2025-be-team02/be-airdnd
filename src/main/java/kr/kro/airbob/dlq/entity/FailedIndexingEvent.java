@@ -1,4 +1,4 @@
-package kr.kro.airbob.event.entity;
+package kr.kro.airbob.dlq.entity;
 
 import java.time.LocalDateTime;
 
@@ -9,6 +9,8 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import kr.kro.airbob.common.domain.BaseEntity;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,9 +20,10 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @Builder
+@Table(name = "failed_indexing_events")
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class FailedIndexingEvent {
+public class FailedIndexingEvent extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,6 +42,7 @@ public class FailedIndexingEvent {
 	private LocalDateTime failedAt;
 
 	@Column(nullable = false)
+	@Builder.Default
 	private int retryCount = 0;
 
 	@Column(nullable = false)
@@ -46,6 +50,7 @@ public class FailedIndexingEvent {
 
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
+	@Builder.Default
 	private EventStatus status = EventStatus.FAILED;
 
 	private LocalDateTime lastRetryAt;
@@ -78,6 +83,10 @@ public class FailedIndexingEvent {
 
 	public void updateStatus(EventStatus status) {
 		this.status = status;
+	}
+
+	public void updateErrorMessage(String errorMessage) {
+		this.errorMessage = errorMessage;
 	}
 
 	public enum EventStatus{
