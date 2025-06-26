@@ -73,6 +73,7 @@ dependencies {
 	//test container
 	testImplementation("org.testcontainers:junit-jupiter")
 	testImplementation("org.testcontainers:mysql")
+	testImplementation("org.testcontainers:testcontainers")
 }
 
 
