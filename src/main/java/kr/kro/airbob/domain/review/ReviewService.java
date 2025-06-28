@@ -1,8 +1,11 @@
 package kr.kro.airbob.domain.review;
 
+import static kr.kro.airbob.search.event.AccommodationIndexingEvents.*;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
@@ -23,6 +26,7 @@ import kr.kro.airbob.domain.review.exception.ReviewNotFoundException;
 import kr.kro.airbob.domain.review.exception.ReviewSummaryNotFoundException;
 import kr.kro.airbob.domain.review.repository.AccommodationReviewSummaryRepository;
 import kr.kro.airbob.domain.review.repository.ReviewRepository;
+import kr.kro.airbob.search.event.AccommodationIndexingEvents;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -37,6 +41,7 @@ public class ReviewService {
 	private final AccommodationReviewSummaryRepository summaryRepository;
 
 	private final CursorPageInfoCreator cursorPageInfoCreator;
+	private final ApplicationEventPublisher eventPublisher;
 
 	@Transactional
 	public ReviewResponse.CreateResponse createReview(Long accommodationId, ReviewRequest.CreateRequest request, Long memberId) {
@@ -55,23 +60,16 @@ public class ReviewService {
 
 		updateReviewSummaryOnCreate(accommodationId, request.rating());
 
+		eventPublisher.publishEvent(new ReviewSummaryChangedEvent(accommodationId));
+
 		return new ReviewResponse.CreateResponse(savedReview.getId());
 	}
 
 	@Transactional
-	public ReviewResponse.UpdateResponse updateContentReview(Long reviewId, ReviewRequest.UpdateContentRequest request) {
+	public ReviewResponse.UpdateResponse updateReviewContent(Long reviewId, ReviewRequest.UpdateRequest request) {
 		Review review = findReviewById(reviewId);
+
 		review.updateContent(request.content());
-		return new ReviewResponse.UpdateResponse(review.getId());
-	}
-
-	@Transactional
-	public ReviewResponse.UpdateResponse updateRatingReview(Long reviewId, ReviewRequest.UpdateRatingRequest request) {
-		Review review = findReviewById(reviewId);
-		int oldRating = review.getRating();
-		review.updateRating(request.rating());
-
-		updateReviewSummaryOnUpdate(review.getAccommodation().getId(), oldRating, request.rating());
 
 		return new ReviewResponse.UpdateResponse(review.getId());
 	}
@@ -85,6 +83,8 @@ public class ReviewService {
 		reviewRepository.delete(review);
 
 		updateReviewSummaryOnDelete(accommodationId, rating);
+
+		eventPublisher.publishEvent(new ReviewSummaryChangedEvent(accommodationId));
 	}
 
 	@Transactional(readOnly = true)

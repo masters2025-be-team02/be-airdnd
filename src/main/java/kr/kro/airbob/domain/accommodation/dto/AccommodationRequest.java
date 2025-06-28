@@ -5,9 +5,12 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 import java.util.List;
+
+import kr.kro.airbob.geo.dto.Coordinate;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 public class AccommodationRequest {
 
@@ -30,7 +33,7 @@ public class AccommodationRequest {
         private List<AmenityInfo> amenityInfos;
         @NotNull
         private OccupancyPolicyInfo occupancyPolicyInfo;
-        private String thumbnail_url;
+        private String thumbnailUrl;
         @NotBlank
         private String type;
 
@@ -39,13 +42,15 @@ public class AccommodationRequest {
     @Getter
     @Builder
     @AllArgsConstructor
+    @NoArgsConstructor
     public static class AddressInfo{
         @NotNull
-        private Integer postalCode;
+        private String postalCode;
         @NotBlank
         private String city;
         @NotBlank
         private String country;
+        @NotBlank
         private String detail;
         @NotBlank
         private String district;

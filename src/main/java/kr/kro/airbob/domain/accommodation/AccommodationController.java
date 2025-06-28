@@ -1,16 +1,8 @@
 package kr.kro.airbob.domain.accommodation;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
-import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest;
-import kr.kro.airbob.domain.accommodation.dto.AccommodationResponse;
-import kr.kro.airbob.domain.accommodation.dto.AccommodationResponse.AccommodationSearchResponseDto;
-import kr.kro.airbob.domain.auth.AuthService;
-import kr.kro.airbob.domain.auth.common.SessionUtil;
-import kr.kro.airbob.domain.member.MemberService;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +17,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest;
+import kr.kro.airbob.domain.accommodation.dto.AccommodationResponse;
+import kr.kro.airbob.domain.accommodation.dto.AccommodationResponse.AccommodationSearchResponseDto;
+import kr.kro.airbob.domain.auth.AuthService;
+import kr.kro.airbob.domain.auth.common.SessionUtil;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 @RestController
+@Slf4j
 @RequiredArgsConstructor
 @RequestMapping("/api/accommodations")
 public class AccommodationController {
@@ -42,7 +45,7 @@ public class AccommodationController {
 
         Long savedAccommodationId = accommodationService.createAccommodation(requestDto);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(Map.of("id", savedAccommodationId));
+            .body(Map.of("id", savedAccommodationId));
     }
 
     @PatchMapping("/{accommodationId}")

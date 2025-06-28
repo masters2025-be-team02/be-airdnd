@@ -10,6 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.Version;
 import kr.kro.airbob.common.domain.BaseEntity;
 import kr.kro.airbob.domain.accommodation.entity.Accommodation;
 import lombok.AccessLevel;
@@ -26,6 +27,9 @@ public class AccommodationReviewSummary extends BaseEntity {
 	@Id
 	@Column(name = "accommodation_id")
 	private Long accommodationId;
+
+	@Version
+	private Long version;
 
 	@OneToOne(fetch = FetchType.LAZY)
 	@MapsId

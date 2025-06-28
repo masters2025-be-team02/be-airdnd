@@ -66,7 +66,11 @@ public class ReviewAuthorizationInterceptor implements HandlerInterceptor {
 
 		// -- 숙소 예약자 여부 --
 
-		if (method.equalsIgnoreCase("POST")) { // 리뷰 작성 통과
+		if (method.equalsIgnoreCase("POST")) { // 리뷰 작성
+			if (reviewRepository.existsByAccommodationIdAndAuthorId(accommodationId, requestMemberId)) { // 이미 작성했으면 409
+				response.sendError(HttpServletResponse.SC_CONFLICT, "이미 해당 숙소에 대한 리뷰를 작성하셨습니다.");
+				return false;
+			}
 			return true;
 		}
 

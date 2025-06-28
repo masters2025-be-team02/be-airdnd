@@ -24,7 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.List;
-import kr.kro.airbob.config.WebMvcConfig;
+
 import kr.kro.airbob.cursor.util.CursorDecoder;
 import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest.AddressInfo;
 import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest.AmenityInfo;
@@ -33,7 +33,6 @@ import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest.OccupancyPoli
 import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest.UpdateAccommodationDto;
 import kr.kro.airbob.domain.accommodation.dto.AccommodationResponse.AccommodationSearchResponseDto;
 import kr.kro.airbob.domain.accommodation.interceptor.AccommodationAuthorizationInterceptor;
-import kr.kro.airbob.domain.accommodation.repository.AccommodationRepository;
 import kr.kro.airbob.domain.auth.AuthService;
 import kr.kro.airbob.domain.recentlyViewed.interceptor.RecentlyViewedAuthorizationInterceptor;
 import kr.kro.airbob.domain.review.interceptor.ReviewAuthorizationInterceptor;
@@ -46,8 +45,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.FilterType;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.restdocs.RestDocumentationContextProvider;
@@ -120,7 +117,7 @@ class AccommodationControllerTest {
                 .description("좋은 숙소입니다.")
                 .basePrice(50000)
                 .hostId(1L)
-                .thumbnail_url("http://example.com/image.jpg")
+                .thumbnailUrl("http://example.com/image.jpg")
                 .type("VILLA")
                 .addressInfo(AddressInfo.builder()
                         .postalCode(12345)

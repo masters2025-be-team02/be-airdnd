@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import kr.kro.airbob.domain.accommodation.common.AmenityType;
+import kr.kro.airbob.domain.review.dto.ReviewResponse;
+import kr.kro.airbob.geo.dto.Coordinate;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -48,7 +50,6 @@ public class AccommodationResponse {
 		List<RecentlyViewedAccommodation> accommodations,
 		int totalCount
 	) {
-
 	}
 
 	@Builder
@@ -62,4 +63,5 @@ public class AccommodationResponse {
 		Boolean isInWishlist
 	) {
 	}
+
 }

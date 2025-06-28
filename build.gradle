@@ -42,6 +42,19 @@ dependencies {
 	//해싱
 	implementation 'org.mindrot:jbcrypt:0.4'
 
+	//httpclient
+	implementation 'org.apache.httpcomponents.client5:httpclient5'
+
+	//elasticsearch
+	implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
+	implementation 'co.elastic.clients:elasticsearch-java'
+
+	// retry
+	implementation 'org.springframework.retry:spring-retry'
+
+	// aop
+	implementation 'org.springframework.boot:spring-boot-starter-aop'
+
 	//Redis
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 

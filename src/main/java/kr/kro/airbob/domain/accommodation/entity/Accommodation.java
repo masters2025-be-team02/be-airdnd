@@ -56,7 +56,7 @@ public class Accommodation extends BaseEntity {
 				.name(request.getName())
 				.description(request.getDescription())
 				.basePrice(request.getBasePrice())
-				.thumbnailUrl(request.getThumbnail_url())
+				.thumbnailUrl(request.getThumbnailUrl())
 				.type(AccommodationType.valueOf(request.getType()))
 				.address(address)
 				.occupancyPolicy(occupancyPolicy)

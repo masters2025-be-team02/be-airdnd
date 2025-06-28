@@ -137,7 +137,7 @@ class WishlistIntegrationTest {
 
 	private Address createAndSaveAddress(String city) {
 		Address address = Address.builder()
-			.postalCode(12345)
+			.postalCode("12345")
 			.city(city)
 			.country("KR")
 			.district("District")
