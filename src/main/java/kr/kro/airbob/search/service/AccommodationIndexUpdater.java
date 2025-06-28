@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
+import org.springframework.data.elasticsearch.core.query.ScriptType;
 import org.springframework.data.elasticsearch.core.query.UpdateQuery;
 import org.springframework.stereotype.Component;
 
@@ -29,10 +30,17 @@ public class AccommodationIndexUpdater {
 			.orElse(null);
 
 		Map<String, Object> params = new HashMap<>();
-		params.put("averageRating", reviewSummary != null ? reviewSummary.getAverageRating().doubleValue() : null);
-		params.put("reviewCount", reviewSummary != null ? reviewSummary.getTotalReviewCount() : 0);
+
+		double averageRating = (reviewSummary != null && reviewSummary.getAverageRating() != null)
+			? reviewSummary.getAverageRating().doubleValue()
+			: 0.0;
+		int reviewCount = reviewSummary != null ? reviewSummary.getTotalReviewCount() : 0;
+
+		params.put("averageRating", averageRating);
+		params.put("reviewCount", reviewCount);
 
 		UpdateQuery updateQuery = UpdateQuery.builder(accommodationId.toString())
+			.withScriptType(ScriptType.INLINE)
 			.withScript(
 				"ctx._source.averageRating = params.averageRating; ctx._source.reviewCount = params.reviewCount")
 			.withParams(params)
@@ -44,10 +52,15 @@ public class AccommodationIndexUpdater {
 	public void updateReservedDatesInIndex(Long accommodationId) {
 		List<LocalDate> reservedDates = getReservedDates(accommodationId);
 
+		List<String> reservedDateStrings = reservedDates.stream()
+			.map(LocalDate::toString)
+			.toList();
+
 		Map<String, Object> params = new HashMap<>();
-		params.put("reservedDates", reservedDates);
+		params.put("reservedDates", reservedDateStrings);
 
 		UpdateQuery updateQuery = UpdateQuery.builder(accommodationId.toString())
+			.withScriptType(ScriptType.INLINE)
 			.withScript("ctx._source.reservedDates = params.reservedDates")
 			.withParams(params)
 			.build();

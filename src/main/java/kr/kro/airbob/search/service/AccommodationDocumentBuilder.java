@@ -9,8 +9,9 @@ import kr.kro.airbob.domain.accommodation.entity.Accommodation;
 import kr.kro.airbob.domain.accommodation.entity.AccommodationAmenity;
 import kr.kro.airbob.domain.accommodation.exception.AccommodationNotFoundException;
 import kr.kro.airbob.domain.accommodation.repository.AccommodationAmenityRepository;
+import kr.kro.airbob.domain.accommodation.repository.AccommodationImageRepository;
 import kr.kro.airbob.domain.accommodation.repository.AccommodationRepository;
-import kr.kro.airbob.domain.image.Image;
+import kr.kro.airbob.domain.image.AccommodationImage;
 import kr.kro.airbob.domain.reservation.common.ReservationStatus;
 import kr.kro.airbob.domain.reservation.repository.ReservationRepository;
 import kr.kro.airbob.domain.review.AccommodationReviewSummary;
@@ -25,6 +26,7 @@ public class AccommodationDocumentBuilder {
 	private final AccommodationRepository accommodationRepository;
 	private final AccommodationAmenityRepository amenityRepository;
 	private final ReservationRepository reservationRepository;
+	private final AccommodationImageRepository imageRepository;
 	private final AccommodationReviewSummaryRepository reviewSummaryRepository;
 
 	public AccommodationDocument buildAccommodationDocument(Long accommodationId) {
@@ -88,9 +90,9 @@ public class AccommodationDocumentBuilder {
 	}
 
 	private List<String> getAccommodationImages(Long accommodationId, String thumbnailUrl) {
-		List<String> imageUrls = accommodationRepository.findAccommodationImagesByAccommodationId(accommodationId)
+		List<String> imageUrls = imageRepository.findImagesByAccommodationId(accommodationId)
 			.stream()
-			.map(Image::getImageUrl)
+			.map(AccommodationImage::getImageUrl)
 			.toList();
 
 		// 이미지가 없는 경우 썸네일 조회

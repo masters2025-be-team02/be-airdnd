@@ -8,7 +8,10 @@ import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 import kr.kro.airbob.dlq.service.DeadLetterQueueService;
 import kr.kro.airbob.search.document.AccommodationDocument;
@@ -26,9 +29,9 @@ public class AccommodationIndexingService {
 	private final AccommodationIndexUpdater indexUpdater;
 	private final DeadLetterQueueService dlqService;
 
-	@EventListener
+	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
 	@Async
-	@Transactional(readOnly = true)
+	@Transactional(readOnly = true, propagation = Propagation.REQUIRES_NEW)
 	@Retryable(
 		//todo: 모든 handle 메서드 구체적 예외 적용 필요
 		retryFor = {Exception.class},
@@ -50,9 +53,9 @@ public class AccommodationIndexingService {
 		dlqService.saveFailedEvent("AccommodationCreatedEvent", event, e);
 	}
 
-	@EventListener
+	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
 	@Async
-	@Transactional(readOnly = true)
+	@Transactional(readOnly = true, propagation = Propagation.REQUIRES_NEW)
 	@Retryable(
 		//todo: 모든 handle 메서드 구체적 예외 적용 필요
 		retryFor = {Exception.class},
@@ -74,7 +77,7 @@ public class AccommodationIndexingService {
 		dlqService.saveFailedEvent("AccommodationUpdatedEvent", event, e);
 	}
 
-	@EventListener
+	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
 	@Async
 	@Retryable(
 		//todo: 모든 handle 메서드 구체적 예외 적용 필요
@@ -97,9 +100,8 @@ public class AccommodationIndexingService {
 	}
 
 	// 리뷰 변경 이벤트 (생성/삭제)
-	@EventListener
+	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
 	@Async
-	@Transactional(readOnly = true)
 	@Retryable(
 		//todo: 모든 handle 메서드 구체적 예외 적용 필요
 		retryFor = {Exception.class},
@@ -121,9 +123,8 @@ public class AccommodationIndexingService {
 	}
 
 	// 예약 변경 이벤트 (생성/삭제)
-	@EventListener
+	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
 	@Async
-	@Transactional(readOnly = true)
 	@Retryable(
 		retryFor = {Exception.class},
 		maxAttempts = 3,
