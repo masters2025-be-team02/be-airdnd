@@ -16,6 +16,8 @@ public class ReviewRequest {
 
 		@NotNull(message = "평점은 필수입니다.")
 		@Positive(message = "평점은 양수여야 합니다.")
+		@Min(1)
+		@Max(5)
 		Integer rating,
 
 		@NotBlank(message = "리뷰 본문은 공백일 수 없습니다.")
