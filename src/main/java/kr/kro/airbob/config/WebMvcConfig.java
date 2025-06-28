@@ -55,8 +55,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
 		registry.addInterceptor(reviewInterceptor)
 			.addPathPatterns("/api/accommodations/*/reviews/**");
 
-		registry.addInterceptor(reservationInterceptor)
-				.addPathPatterns("/api/reservations/accommodations/**");
+		// registry.addInterceptor(reservationInterceptor)
+		// 		.addPathPatterns("/api/reservations/accommodations/**"); // todo: 수정 필요
 	}
 
 	@Bean
@@ -66,7 +66,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
 		bean.addUrlPatterns("/api/accommodations", "/api/accommodations/*",
 			"/api/accommodations/*/reviews", "/api/accommodations/*/reviews/*",
 			"/api/members/wishlists", "/api/members/wishlists/*",
-			"/api/members/recentlyViewed", "/api/members/recentlyViewed/*", "/api/reservations/accommodations/*");
+			"/api/members/recentlyViewed", "/api/members/recentlyViewed/*",
+			"/api/reservations/accommodations/*");
 		bean.setOrder(1);
 		return bean;
 	}
