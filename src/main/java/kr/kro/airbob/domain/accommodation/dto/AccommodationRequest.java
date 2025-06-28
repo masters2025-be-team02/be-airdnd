@@ -10,6 +10,7 @@ import kr.kro.airbob.geo.dto.Coordinate;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 public class AccommodationRequest {
 
@@ -41,6 +42,7 @@ public class AccommodationRequest {
     @Getter
     @Builder
     @AllArgsConstructor
+    @NoArgsConstructor
     public static class AddressInfo{
         @NotNull
         private String postalCode;
@@ -103,31 +105,5 @@ public class AccommodationRequest {
         private Integer guestCount;
         private List<String> amenityTypes;
         private List<String> accommodationTypes;
-    }
-
-    public record AccommodationSearchRequest(
-
-        // 지도 드래그 검색
-        Coordinate dragCoordinate,
-
-        // 목적지 검색
-        String destination,
-
-        Integer minPrice,
-        Integer maxPrice,
-        LocalDate checkIn,
-        LocalDate checkOut,
-        OccupancyRequest occupancyRequest,
-        List<String> amenityTypes,
-        List<String> accommodationTypes
-    ){
-    }
-
-    public record OccupancyRequest(
-        Integer adultOccupancy,
-        Integer childOccupancy,
-        Integer infantOccupancy,
-        Integer petOccupancy
-    ){
     }
 }

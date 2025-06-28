@@ -64,33 +64,4 @@ public class AccommodationResponse {
 	) {
 	}
 
-	@Builder
-	public record AccommodationSearchInfo(
-		long id,
-		String name,
-		String locationSummary, // ex) 동작구 사당동
-		List<String> accommodationImageUrls,
-		Coordinate coordinate,
-		PriceResponse pricePerNight,
-		ReviewResponse.ReviewSummary review,
-		String hostName,
-		Boolean isInWishlist
-	){
-	}
-
-	@Builder
-	public record AccommodationSearchInfos(
-		List<AccommodationSearchInfo> StaySearchResultListing,
-		int totalCount
-	){
-	}
-
-
-	@Builder
-	public record  PriceResponse(
-		String currencyCode,
-		String displayPrice,
-		int price
-	){
-	}
 }

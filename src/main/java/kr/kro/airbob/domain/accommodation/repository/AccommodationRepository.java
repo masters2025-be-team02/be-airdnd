@@ -1,6 +1,5 @@
 package kr.kro.airbob.domain.accommodation.repository;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,11 +42,10 @@ public interface AccommodationRepository extends JpaRepository<Accommodation, Lo
 	Optional<Accommodation> findByIdAllRelations(@Param("accommodationId") Long accommodationId);
 
 	@Query("""
-		SELECT 
-			ai
-		FROM AccommodationImage ai
-		WHERE ai.accommodation.id = :accommodationId
-		ORDER BY ai.accommodation.id
-		""")
-	List<AccommodationImage> findAccommodationImagesByAccommodationId(@Param("accommodationId") Long accommodationId);
+    SELECT ai
+    FROM AccommodationImage ai
+    WHERE ai.accommodation.id = :accommodationId
+    ORDER BY ai.accommodation.id
+    """)
+	List<AccommodationImage> findImagesByAccommodationId(@Param("accommodationId") Long accommodationId);
 }

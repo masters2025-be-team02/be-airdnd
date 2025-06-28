@@ -14,6 +14,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Entity
 @Getter
@@ -36,6 +37,7 @@ public class Address extends BaseEntity {
 	private Double longitude;
 
 	public static Address createAddress(AccommodationRequest.AddressInfo addressInfo, GeocodeResult geocodeResult) {
+
 		return Address.builder()
 			.country(addressInfo.getCountry())
 			.city(addressInfo.getCity())
