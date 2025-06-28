@@ -39,14 +39,14 @@ public class ViewportAdjuster {
 		double rightLng = normalizeLongitude(centerLng + lngDelta);
 		double leftLng = normalizeLongitude(centerLng - lngDelta);
 
-		Coordinate northeast = Coordinate.builder()
-			.latitude(topLat)
-			.longitude(rightLng)
+		Location northeast = Location.builder()
+			.lat(topLat)
+			.lng(rightLng)
 			.build();
 
-		Coordinate southwest = Coordinate.builder()
-			.latitude(bottomLat)
-			.longitude(leftLng)
+		Location southwest = Location.builder()
+			.lat(bottomLat)
+			.lng(leftLng)
 			.build();
 
 		return new Viewport(northeast, southwest);
@@ -57,21 +57,21 @@ public class ViewportAdjuster {
 		return distance / 2.0;
 	}
 
-	private double calculateDistance(Coordinate p1, Coordinate p2) {
+	private double calculateDistance(Location p1, Location p2) {
 		// m
-		double latDiff = p1.latitude() - p2.latitude();
-		double lngDiff = p1.longitude() - p2.longitude();
+		double latDiff = p1.lat() - p2.lat();
+		double lngDiff = p1.lng() - p2.lng();
 
 		// km
 		double latDistance = Math.abs(latDiff) * ONE_DEGREE;
-		double lngDistance = Math.abs(lngDiff) * ONE_DEGREE * Math.cos(Math.toRadians(p1.latitude()));
+		double lngDistance = Math.abs(lngDiff) * ONE_DEGREE * Math.cos(Math.toRadians(p1.lat()));
 
 		return Math.sqrt(latDistance * latDistance + lngDistance * lngDistance) * 1000; // m
 	}
 
 	private Coordinate calculateCenter(Viewport viewport) {
-		double centerLat = (viewport.northeast().latitude() + viewport.southwest().latitude()) / 2.0;
-		double centerLng = (viewport.northeast().longitude() + viewport.southwest().longitude()) / 2.0;
+		double centerLat = (viewport.northeast().lat() + viewport.southwest().lat()) / 2.0;
+		double centerLng = (viewport.northeast().lng() + viewport.southwest().lng()) / 2.0;
 		return Coordinate.builder()
 			.latitude(centerLat)
 			.longitude(centerLng)

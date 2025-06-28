@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest;
 import kr.kro.airbob.geo.GeocodingService;
 import kr.kro.airbob.geo.ViewportAdjuster;
@@ -24,6 +26,7 @@ public class GoogleGeocodingService implements GeocodingService {
 	public static final String OK = "OK";
 	private final RestTemplate restTemplate;
 	private final ViewportAdjuster viewportAdjuster;
+	private final ObjectMapper objectMapper;
 
 	// todo: 배포 후엔 api ip 제한 걸기
 	@Value("${google.api.key}")
@@ -33,6 +36,7 @@ public class GoogleGeocodingService implements GeocodingService {
 
 	@Override
 	public GeocodeResult getCoordinates(String address) {
+
 		try {
 
 			URI baseUri = URI.create(GEOCODING_API_URL);
@@ -47,7 +51,7 @@ public class GoogleGeocodingService implements GeocodingService {
 			GoogleGeocodeResponse response = restTemplate.getForObject(url, GoogleGeocodeResponse.class);
 
 			if (response != null && OK.equals(response.getStatus()) && !response.getResults().isEmpty()) {
-				GoogleGeocodeResponse.Result result = response.getResults().get(0);
+				GoogleGeocodeResponse.Result result = response.getResults().getFirst();
 
 				return buildGeocodeResult(result);
 			} else {
@@ -61,14 +65,14 @@ public class GoogleGeocodingService implements GeocodingService {
 	}
 
 	private GeocodeResult buildGeocodeResult(GoogleGeocodeResponse.Result result) {
-		Coordinate location = result.geometry().location();
+		GoogleGeocodeResponse.Geometry.Location location = result.geometry().location();
 		GoogleGeocodeResponse.Geometry.Viewport viewport = result.geometry().viewport();
 
 		GoogleGeocodeResponse.Geometry.Viewport adjustedViewport = viewportAdjuster.adjustViewportIfSmall(viewport);
 
 		return GeocodeResult.success(
-			location.latitude(),
-			location.longitude(),
+			location.lat(),
+			location.lng(),
 			result.formattedAddress(),
 			adjustedViewport
 		);
@@ -76,6 +80,7 @@ public class GoogleGeocodingService implements GeocodingService {
 
 	@Override
 	public String buildAddressString(AccommodationRequest.AddressInfo addressInfo) {
+
 		return String.format("%s %s %s %s %s",
 				addressInfo.getCountry(),
 				addressInfo.getCity(),

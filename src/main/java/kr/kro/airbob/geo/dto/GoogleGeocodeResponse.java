@@ -2,6 +2,7 @@ package kr.kro.airbob.geo.dto;
 
 import java.util.List;
 
+import lombok.Builder;
 import lombok.Getter;
 
 @Getter
@@ -17,13 +18,20 @@ public class GoogleGeocodeResponse {
 	}
 
 	public record Geometry(
-		Coordinate location,
+		Location location,
 		Viewport viewport
 	){
 		public record Viewport(
-			Coordinate northeast,
-			Coordinate southwest
+			Location northeast,
+			Location southwest
 		) {
 		}
+
+		@Builder
+		public record Location(
+			Double lat,
+			Double lng
+
+		){}
 	}
 }
