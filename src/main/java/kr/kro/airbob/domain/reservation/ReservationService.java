@@ -2,6 +2,7 @@ package kr.kro.airbob.domain.reservation;
 
 import static kr.kro.airbob.search.event.AccommodationIndexingEvents.*;
 
+import jakarta.annotation.PostConstruct;
 import kr.kro.airbob.domain.accommodation.entity.Accommodation;
 import kr.kro.airbob.domain.accommodation.exception.AccommodationNotFoundException;
 import kr.kro.airbob.domain.accommodation.repository.AccommodationRepository;
@@ -29,6 +30,10 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
 @Service
 @RequiredArgsConstructor
 public class ReservationService {
@@ -40,7 +45,6 @@ public class ReservationService {
     private final RedissonClient redissonClient;
 
     private final ApplicationEventPublisher eventPublisher;
-
 
     @Transactional
     public boolean preReserveDates(Long userId, Long accommodationId, ReservationRequestDto.CreateReservationDto createReservationDto) {
