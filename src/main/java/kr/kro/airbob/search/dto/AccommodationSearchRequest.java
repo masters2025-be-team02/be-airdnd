@@ -3,6 +3,8 @@ package kr.kro.airbob.search.dto;
 import java.time.LocalDate;
 import java.util.List;
 
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,7 +19,9 @@ public class AccommodationSearchRequest {
 		private String destination;
 
 		// 가격 필터
+		@Min(value = 0, message = "최소 가격은 0원 이상이어야 합니다")
 		private Integer minPrice;
+		@Min(value = 0, message = "최대 가격은 0원 이상이어야 합니다")
 		private Integer maxPrice;
 
 		// 날짜
@@ -25,9 +29,13 @@ public class AccommodationSearchRequest {
 		private LocalDate checkOut;
 
 		// 인원 수
+		@PositiveOrZero
 		private Integer adultOccupancy;
+		@PositiveOrZero
 		private Integer childOccupancy;
+		@PositiveOrZero
 		private Integer infantOccupancy;
+		@PositiveOrZero
 		private Integer petOccupancy;
 
 		// 편의시설
@@ -36,12 +44,41 @@ public class AccommodationSearchRequest {
 		// 숙소 타입
 		private List<String> accommodationTypes;
 
-		// 총 인원 수 계산
+		// 총 인원 수 계산 (유아, 펫 제외)
 		public int getTotalGuests() {
 			return (adultOccupancy != null ? adultOccupancy : 0) +
-				(childOccupancy != null ? childOccupancy : 0) +
-				(infantOccupancy != null ? infantOccupancy : 0) +
-				(petOccupancy != null ? petOccupancy : 0);
+				(childOccupancy != null ? childOccupancy : 0);
+		}
+
+		public boolean hasPet() {
+			return (petOccupancy != null) && petOccupancy > 0;
+		}
+
+		public boolean isValidOccupancy() {
+			int adults = adultOccupancy != null ? adultOccupancy : 0;
+			return adults >= 1;
+		}
+
+		public boolean isValidPriceRange() {
+			if (minPrice != null && maxPrice != null) {
+				return minPrice <= maxPrice;
+			}
+			return true;
+		}
+
+		public void setDefaultOccupancy() {
+			if (adultOccupancy == null || adultOccupancy < 1) {
+				this.adultOccupancy = 1;
+			}
+			if (childOccupancy == null) {
+				this.childOccupancy = 0;
+			}
+			if (infantOccupancy == null) {
+				this.infantOccupancy = 0;
+			}
+			if (petOccupancy == null) {
+				this.petOccupancy = 0;
+			}
 		}
 	}
 
