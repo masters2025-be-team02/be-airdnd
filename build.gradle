@@ -62,7 +62,9 @@ dependencies {
 
 	//프로메테우스
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'io.micrometer:micrometer-core'
 	implementation("io.micrometer:micrometer-registry-prometheus")
+	implementation 'com.zaxxer:HikariCP'
 
 	//query dsl
 	implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
