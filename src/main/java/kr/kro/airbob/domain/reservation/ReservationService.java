@@ -1,5 +1,6 @@
 package kr.kro.airbob.domain.reservation;
 
+import java.time.LocalDate;
 import kr.kro.airbob.domain.accommodation.entity.Accommodation;
 import kr.kro.airbob.domain.accommodation.exception.AccommodationNotFoundException;
 import kr.kro.airbob.domain.accommodation.repository.AccommodationRepository;
@@ -30,16 +31,14 @@ public class ReservationService {
     private final MemberRepository memberRepository;
 
     @Transactional
-    public Long createReservation(Long accommodationId, ReservationRequestDto.CreateReservationDto createReservationDto) {
-        // todo 로그인 적용
-        Long userId = 1L;
-        Member guest = memberRepository.findById(userId)
+    public Long createReservation(Long accommodationId, ReservationRequestDto.CreateReservationDto createReservationDto, long memberId) {
+        Member guest = memberRepository.findById(memberId)
                 .orElseThrow(MemberNotFoundException::new);
 
         Accommodation accommodation = accommodationRepository.findById(accommodationId)
                 .orElseThrow(AccommodationNotFoundException::new);
 
-        List<ReservedDate> alreadyReservedDates = reservedDateRepository.findReservedDates(accommodationId, createReservationDto.getCheckInDate(), createReservationDto.getCheckOutDate());
+        List<LocalDate> alreadyReservedDates = reservedDateRepository.findReservedDates(accommodationId, createReservationDto.getCheckInDate(), createReservationDto.getCheckOutDate());
 
         if (!alreadyReservedDates.isEmpty()) {
             throw new AlreadyReservedException();

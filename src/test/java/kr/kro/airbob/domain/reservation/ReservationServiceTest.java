@@ -72,11 +72,11 @@ public class ReservationServiceTest {
 
         given(memberRepository.findById(anyLong())).willReturn(Optional.of(guest));
         given(accommodationRepository.findById(accommodationId)).willReturn(Optional.of(accommodation));
-        given(reservedDateRepository.findReservedDates(accommodationId, checkIn, checkOut)).willReturn(List.of(reservedDate));
+        given(reservedDateRepository.findReservedDates(accommodationId, checkIn, checkOut)).willReturn(List.of(reservedDate.getReservedAt()));
 
         // when & then
         assertThrows(AlreadyReservedException.class, () -> {
-            reservationService.createReservation(accommodationId, dto);
+            reservationService.createReservation(accommodationId, dto, anyLong());
         });
 
         then(reservationRepository).should(never()).save(any());
@@ -110,7 +110,7 @@ public class ReservationServiceTest {
         given(reservationRepository.save(any())).willReturn(reservation);
 
         // when
-        Long savedReservationId = reservationService.createReservation(accommodationId, dto);
+        Long savedReservationId = reservationService.createReservation(accommodationId, dto, anyLong());
 
         // then
         then(reservationRepository).should().save(any(Reservation.class));
@@ -135,7 +135,7 @@ public class ReservationServiceTest {
     @DisplayName("존재하지 않는 유저가 예약하려고 하면 예외가 발생해야 한다.")
     void createReservation_shouldThrowException_whenMemberNotFound()  {
         // given
-        Long memberId = 1L;
+        long memberId = 1L;
         Long accommodationId = 1L;
         ReservationRequestDto.CreateReservationDto request = mock(ReservationRequestDto.CreateReservationDto.class);
 
@@ -143,7 +143,7 @@ public class ReservationServiceTest {
                 .willReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> reservationService.createReservation(accommodationId, request))
+        assertThatThrownBy(() -> reservationService.createReservation(accommodationId, request,  memberId))
                 .isInstanceOf(MemberNotFoundException.class)
                 .hasMessage("존재하지 않는 사용자입니다.");
     }
@@ -152,7 +152,7 @@ public class ReservationServiceTest {
     @DisplayName("존재하지 않는 숙소를 예약하려고 하면 예외가 발생해야 한다.")
     void createReservation_shouldThrowException_whenAccommodationNotFound()  {
         // given
-        Long memberId = 1L;
+        long memberId = 1L;
         Long accommodationId = 1L;
         ReservationRequestDto.CreateReservationDto request = mock(ReservationRequestDto.CreateReservationDto.class);
 
@@ -165,7 +165,7 @@ public class ReservationServiceTest {
                 .willReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> reservationService.createReservation(accommodationId, request))
+        assertThatThrownBy(() -> reservationService.createReservation(accommodationId, request, memberId))
                 .isInstanceOf(AccommodationNotFoundException.class)
                 .hasMessage("존재하지 않는 숙소입니다.");
     }

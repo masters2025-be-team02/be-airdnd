@@ -59,11 +59,11 @@ public class GlobalExceptionHandler {
 	}
 
 	@ExceptionHandler(AlreadyReservedException.class)
-	public ResponseEntity<Void> handleAlreadyReservedException(AlreadyReservedException e) {
+	public ResponseEntity<String> handleAlreadyReservedException(AlreadyReservedException e) {
 		log.error("AlreadyReservedException: {}", e.getMessage());
 		return ResponseEntity
 				.status(HttpStatus.CONFLICT)
-				.build();
+				.body(e.getMessage());
 	}
 
 	@ExceptionHandler(WishlistNotFoundException.class)
