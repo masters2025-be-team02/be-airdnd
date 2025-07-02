@@ -52,3 +52,18 @@ management:
   endpoint:
     prometheus:
       access: unrestricted
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        minimumNumberOfCalls: 5
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+
+    instances:
+      redisEventQueue:
+        baseConfig: default

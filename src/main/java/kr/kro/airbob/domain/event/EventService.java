@@ -1,5 +1,6 @@
 package kr.kro.airbob.domain.event;
 
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.time.Duration;
 import java.util.Arrays;
 import kr.kro.airbob.domain.event.common.ApplyResult;
@@ -46,6 +47,7 @@ public class EventService {
         return "success"
     """;
     @Transactional
+    @CircuitBreaker(name = "redisEventQueue", fallbackMethod = "fallback")
     public ApplyResult applyToEvent(Long eventId, Long memberId, int maxParticipants) {
         DefaultRedisScript<String> script = new DefaultRedisScript<>();
         script.setScriptText(APPLY_EVENT_SCRIPT);
@@ -68,6 +70,9 @@ public class EventService {
         return ApplyResult.valueOf(result.toUpperCase());
     }
 
+    private ApplyResult fallback(Throwable t) {
+        return ApplyResult.ERROR;
+    }
     @Cacheable(value = "eventMaxParticipantsCache", key = "'event:' + #eventId + ':maxParticipants'")
     public int getEventMaxParticipants(Long eventId) {
         Long max = eventRepository.findMaxParticipantsById(eventId);

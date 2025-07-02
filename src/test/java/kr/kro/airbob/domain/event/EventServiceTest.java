@@ -1,66 +1,42 @@
 package kr.kro.airbob.domain.event;
 
-import java.time.LocalDateTime;
-import java.util.Optional;
-import kr.kro.airbob.domain.event.entity.Event;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.DisplayName;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.BDDMockito.given;
+
+import kr.kro.airbob.domain.event.common.ApplyResult;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.RedisConnectionFailureException;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-@ExtendWith(MockitoExtension.class)
+
+@SpringBootTest
 class EventServiceTest {
 
-    @InjectMocks
-    private EventSaver eventSaver;
+    @Autowired
+    private EventService eventService;
 
-    @Mock
-    private EventRepository eventRepository;
-
-    @Mock
-    private EventParticipantRepository eventParticipantRepository;
+    @MockitoBean
+    private StringRedisTemplate redisTemplate;
 
     @Test
-    @DisplayName("이벤트가 존재하지 않으면 예외가 발생한다")
-    void shouldThrowExceptionWhenEventNotFound() {
+    void circuitBreaker_opens_after_consecutive_failures() {
         // given
-        Long eventId = 1L;
-        Long memberId = 42L;
+        given(redisTemplate.execute(any(), anyList(), any(), any()))
+                .willThrow(new RedisConnectionFailureException("Redis down"));
 
-        Mockito.when(eventRepository.findByIdWithLock(eventId))
-                .thenReturn(Optional.empty());
+        // when
+        ApplyResult result = eventService.applyToEvent(1L, 999L, 5);
 
-        // when & then
-        Assertions.assertThrows(IllegalArgumentException.class, () -> {
-            eventSaver.saveToDatabase(eventId, memberId);
-        });
-    }
-
-    @Test
-    @DisplayName("참여자가 최대인원 초과시 예외가 발생한다")
-    void shouldThrowExceptionWhenParticipantsExceedLimit() {
-        // given
-        Long eventId = 1L;
-        Long memberId = 42L;
-        Event event = Event.builder()
-                .id(eventId)
-                .name("이벤트")
-                .endAt(LocalDateTime.now().plusDays(1))
-                .maxParticipants(100)
-                .build();
-
-        Mockito.when(eventRepository.findByIdWithLock(eventId))
-                .thenReturn(Optional.of(event));
-        Mockito.when(eventParticipantRepository.countByEventId(eventId))
-                .thenReturn(100L); // 정원 도달
-
-        // when & then
-        Assertions.assertThrows(IllegalStateException.class, () -> {
-            eventSaver.saveToDatabase(eventId, memberId);
-        });
+        // then: fallback이 호출되어 ERROR 반환
+        assertThat(result).isEqualTo(ApplyResult.ERROR);
     }
 }

@@ -57,7 +57,7 @@ public class EventController {
             }
             default -> {
                 log.info("error : {}", applyResult.name());
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("알 수 없는 오류입니다.");
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(applyResult.getMessage());
             }
         }
     }
