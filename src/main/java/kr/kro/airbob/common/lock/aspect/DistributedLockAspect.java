@@ -4,6 +4,7 @@ import java.lang.reflect.Method;
 import java.util.concurrent.TimeUnit;
 import kr.kro.airbob.common.lock.annotation.DistributedLock;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -18,6 +19,7 @@ import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.stereotype.Component;
 
 @Aspect
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class DistributedLockAspect {
@@ -34,7 +36,7 @@ public class DistributedLockAspect {
 
         RLock lock = redissonClient.getLock(lockName);
         boolean isLocked = false;
-
+        log.info("Lock name: {}", lockName); // Aspect 안에
         try {
             isLocked = lock.tryLock(
                     distributedLock.waitTime(),
@@ -42,10 +44,10 @@ public class DistributedLockAspect {
                     TimeUnit.SECONDS
             );
 
+            log.info("스레드 {}: 락 획득 결과 = {}", Thread.currentThread().getName(), isLocked);
             if (!isLocked) {
                 throw new IllegalStateException("Lock 획득 실패: " + lockName);
             }
-
             return joinPoint.proceed();
         } finally {
             if (isLocked && lock.isHeldByCurrentThread()) {

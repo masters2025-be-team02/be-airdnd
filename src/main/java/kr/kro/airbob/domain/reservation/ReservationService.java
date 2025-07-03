@@ -41,7 +41,6 @@ public class ReservationService {
                 .orElseThrow(MemberNotFoundException::new);
         Accommodation accommodation = accommodationRepository.findById(accommodationId)
                 .orElseThrow(AccommodationNotFoundException::new);
-
         validateReservationAvailability(accommodationId, createReservationDto);
 
         saveReservedDates(createReservationDto, accommodation);
