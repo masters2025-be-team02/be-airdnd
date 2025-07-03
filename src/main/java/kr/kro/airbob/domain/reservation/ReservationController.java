@@ -23,9 +23,12 @@ public class ReservationController {
     public ResponseEntity<Map<String,Long>> createReservation(@PathVariable Long accommodationId,
                                                               @RequestBody ReservationRequestDto.CreateReservationDto createReservationDto,
                                                               HttpServletRequest request) {
-        //todo 커스텀 에러 생성
+
         long memberId = (long) request.getAttribute("memberId");
+
+        reservationService.validReservationDates(createReservationDto);
         Long reservationId = reservationService.createReservation(accommodationId, createReservationDto, memberId);
+
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("id", reservationId));
     }
 

@@ -1,6 +1,7 @@
 package kr.kro.airbob.domain.reservation;
 
 import java.time.LocalDate;
+import kr.kro.airbob.common.lock.annotation.DistributedLock;
 import kr.kro.airbob.domain.accommodation.entity.Accommodation;
 import kr.kro.airbob.domain.accommodation.exception.AccommodationNotFoundException;
 import kr.kro.airbob.domain.accommodation.repository.AccommodationRepository;
@@ -33,9 +34,8 @@ public class ReservationService {
     private final MemberRepository memberRepository;
 
     @Transactional
+    @DistributedLock(key = "#accommodationId", lockName = "reservation")
     public Long createReservation(Long accommodationId, ReservationRequestDto.CreateReservationDto createReservationDto, long memberId) {
-
-        validReservationRequest(createReservationDto);
 
         Member guest = memberRepository.findById(memberId)
                 .orElseThrow(MemberNotFoundException::new);
@@ -44,12 +44,13 @@ public class ReservationService {
 
         validateReservationAvailability(accommodationId, createReservationDto);
 
-        Reservation savedReservation = saveReservation(createReservationDto, guest, accommodation);
         saveReservedDates(createReservationDto, accommodation);
+        Reservation savedReservation = saveReservation(createReservationDto, guest, accommodation);
 
         return savedReservation.getId();
     }
 
+    //예약된 날짜 저장
     private void saveReservedDates(ReservationRequestDto.CreateReservationDto dto, Accommodation accommodation) {
         long days = calculateReservationDaysCount(dto);
 
@@ -63,6 +64,7 @@ public class ReservationService {
         reservedDateRepository.saveAll(dates);
     }
 
+    //예약 내역 저장
     private Reservation saveReservation(ReservationRequestDto.CreateReservationDto dto, Member guest, Accommodation accommodation) {
         long days = calculateReservationDaysCount(dto);
         int totalPrice = (int) (days * accommodation.getBasePrice());
@@ -74,6 +76,7 @@ public class ReservationService {
         return ChronoUnit.DAYS.between(dto.getCheckInDate(), dto.getCheckOutDate());
     }
 
+    //숙소가 이미 예약된 날짜가 없는지 검증
     private void validateReservationAvailability(Long accommodationId, CreateReservationDto createReservationDto) {
         List<LocalDate> alreadyReservedDates = reservedDateRepository.findReservedDates(accommodationId, createReservationDto.getCheckInDate(), createReservationDto.getCheckOutDate());
 
@@ -82,7 +85,8 @@ public class ReservationService {
         }
     }
 
-    private void validReservationRequest(CreateReservationDto createReservationDto) {
+    //체크인, 체크아웃 날짜 검증
+    public void validReservationDates(CreateReservationDto createReservationDto) {
         if (!createReservationDto.getCheckInDate().isBefore(createReservationDto.getCheckOutDate())) {
             throw new InvalidReservationDateException();
         }
