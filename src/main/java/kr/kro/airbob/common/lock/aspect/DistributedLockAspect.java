@@ -3,6 +3,7 @@ package kr.kro.airbob.common.lock.aspect;
 import java.lang.reflect.Method;
 import java.util.concurrent.TimeUnit;
 import kr.kro.airbob.common.lock.annotation.DistributedLock;
+import kr.kro.airbob.common.lock.exception.LockAcquisitionFailedException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -36,7 +37,7 @@ public class DistributedLockAspect {
 
         RLock lock = redissonClient.getLock(lockName);
         boolean isLocked = false;
-        log.info("Lock name: {}", lockName); // Aspect 안에
+
         try {
             isLocked = lock.tryLock(
                     distributedLock.waitTime(),
@@ -44,9 +45,8 @@ public class DistributedLockAspect {
                     TimeUnit.SECONDS
             );
 
-            log.info("스레드 {}: 락 획득 결과 = {}", Thread.currentThread().getName(), isLocked);
             if (!isLocked) {
-                throw new IllegalStateException("Lock 획득 실패: " + lockName);
+                throw new LockAcquisitionFailedException(lockName);
             }
             return joinPoint.proceed();
         } finally {

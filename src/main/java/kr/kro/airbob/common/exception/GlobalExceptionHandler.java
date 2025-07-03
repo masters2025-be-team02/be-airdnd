@@ -2,6 +2,7 @@ package kr.kro.airbob.common.exception;
 
 import java.util.stream.Collectors;
 
+import kr.kro.airbob.common.lock.exception.LockAcquisitionFailedException;
 import kr.kro.airbob.domain.accommodation.exception.AccommodationNotFoundException;
 import kr.kro.airbob.domain.reservation.exception.AlreadyReservedException;
 import kr.kro.airbob.domain.auth.exception.NotEqualHostException;
@@ -59,9 +60,9 @@ public class GlobalExceptionHandler {
 			.build();
 	}
 
-	@ExceptionHandler(AlreadyReservedException.class)
-	public ResponseEntity<String> handleAlreadyReservedException(AlreadyReservedException e) {
-		log.error("AlreadyReservedException: {}", e.getMessage());
+	@ExceptionHandler({AlreadyReservedException.class, LockAcquisitionFailedException.class})
+	public ResponseEntity<String> handleAlreadyReservedException(Exception e) {
+		log.error("Exception: {}, {}",e, e.getMessage());
 		return ResponseEntity
 				.status(HttpStatus.CONFLICT)
 				.body(e.getMessage());
