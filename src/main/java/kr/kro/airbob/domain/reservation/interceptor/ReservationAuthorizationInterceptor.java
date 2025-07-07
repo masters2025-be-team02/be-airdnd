@@ -15,6 +15,7 @@ public class ReservationAuthorizationInterceptor implements HandlerInterceptor {
 
     private final ReservationRepository reservationRepository;
 
+    @Override
     public boolean preHandle(final HttpServletRequest request, final HttpServletResponse response, final Object handler) throws IOException {
 
         String method = request.getMethod();
@@ -30,18 +31,8 @@ public class ReservationAuthorizationInterceptor implements HandlerInterceptor {
             return false;
         }
 
-        // URI에서 숙소 ID 추출 (예: /api/reservations/accommodations/123)
-        String[] accommodationSegments = uri.split("/");
-        Long accommodationId;
-        try{
-            accommodationId = Long.parseLong(accommodationSegments[accommodationSegments.length - 1]);
-        }catch (NumberFormatException e){
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "유효하지 않은 숙소 ID입니다.");
-            return false;
-        }
-
         // 수정/삭제가 아니면 통과
-        if (!(method.equals("POST") || method.equals("DELETE"))) {
+        if (!method.equals("DELETE")) {
             return true;
         }
 
@@ -57,7 +48,7 @@ public class ReservationAuthorizationInterceptor implements HandlerInterceptor {
         }
 
         if(!reservationMemberId.equals(requestMemberId)) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "해당 예약은 예약자만 .");
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "해당 예약은 예약자만 취소할 수 있습니다.");
             return false;
         }
 
