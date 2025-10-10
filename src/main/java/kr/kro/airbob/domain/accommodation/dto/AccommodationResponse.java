@@ -7,16 +7,13 @@ import java.util.List;
 import kr.kro.airbob.domain.accommodation.common.AmenityType;
 import kr.kro.airbob.domain.review.dto.ReviewResponse;
 import kr.kro.airbob.geo.dto.Coordinate;
-import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class AccommodationResponse {
 
-	public record Create(long id) {
+	private AccommodationResponse() {
 	}
 
 	public record WishlistAccommodationInfo(

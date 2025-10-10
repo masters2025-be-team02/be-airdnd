@@ -1,12 +1,5 @@
 package kr.kro.airbob.domain.accommodation.entity;
 
-import java.time.LocalTime;
-import java.util.UUID;
-
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
-
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -15,12 +8,11 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToOne;
-import jakarta.persistence.PrePersist;
 import kr.kro.airbob.common.domain.BaseEntity;
 import kr.kro.airbob.domain.accommodation.common.AccommodationType;
 import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest;
 import kr.kro.airbob.domain.accommodation.dto.AccommodationRequest.UpdateAccommodationDto;
-import kr.kro.airbob.domain.member.entity.Member;
+import kr.kro.airbob.domain.member.Member;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -37,10 +29,6 @@ public class Accommodation extends BaseEntity {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-
-	@JdbcTypeCode(SqlTypes.BINARY)
-	@Column(nullable = false, unique = true, updatable = false, columnDefinition = "BINARY(16)")
-	private UUID accommodationUid;
 
 	private String name;
 
@@ -62,33 +50,18 @@ public class Accommodation extends BaseEntity {
 	@OneToOne(fetch = FetchType.LAZY)
 	private Member member;
 
-	@Column(nullable = false)
-	private LocalTime checkInTime;
-
-	@Column(nullable = false)
-	private LocalTime checkOutTime;
-
-	@PrePersist
-	protected void onCreate() {
-		if (this.accommodationUid == null) {
-			this.accommodationUid = UUID.randomUUID();
-		}
-	}
-
 	public static Accommodation createAccommodation(AccommodationRequest.CreateAccommodationDto request,
 													Address address, OccupancyPolicy occupancyPolicy, Member member) {
 		return Accommodation.builder()
-			.name(request.getName())
-			.description(request.getDescription())
-			.basePrice(request.getBasePrice())
-			.thumbnailUrl(request.getThumbnailUrl())
-			.type(AccommodationType.valueOf(request.getType()))
-			.address(address)
-			.occupancyPolicy(occupancyPolicy)
-			.member(member)
-			.checkInTime(request.getCheckInTime())
-			.checkOutTime(request.getCheckOutTime())
-			.build();
+				.name(request.getName())
+				.description(request.getDescription())
+				.basePrice(request.getBasePrice())
+				.thumbnailUrl(request.getThumbnailUrl())
+				.type(AccommodationType.valueOf(request.getType()))
+				.address(address)
+				.occupancyPolicy(occupancyPolicy)
+				.member(member)
+				.build();
 	}
 
 	public void updateAccommodation(UpdateAccommodationDto request) {

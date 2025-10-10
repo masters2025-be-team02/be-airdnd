@@ -1,11 +1,19 @@
 package kr.kro.airbob.domain.wishlist.exception;
 
-import kr.kro.airbob.common.exception.BaseException;
-import kr.kro.airbob.common.exception.ErrorCode;
+public class WishlistAccommodationAccessDeniedException extends RuntimeException{
 
-public class WishlistAccommodationAccessDeniedException extends BaseException {
+	public static final String ERROR_MESSAGE = "위시리스트 항목에 대한 접근 권한이 없습니다.";
+
 
 	public WishlistAccommodationAccessDeniedException() {
-		super(ErrorCode.WISHLIST_ACCOMMODATION_ACCESS_DENIED);
+		super(ERROR_MESSAGE);
+	}
+
+	public WishlistAccommodationAccessDeniedException(String message) {
+		super(message);
+	}
+
+	public WishlistAccommodationAccessDeniedException(String message, Throwable cause) {
+		super(message, cause);
 	}
 }

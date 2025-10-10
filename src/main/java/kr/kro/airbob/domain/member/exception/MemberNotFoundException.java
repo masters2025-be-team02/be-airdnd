@@ -1,11 +1,10 @@
 package kr.kro.airbob.domain.member.exception;
 
-import kr.kro.airbob.common.exception.BaseException;
-import kr.kro.airbob.common.exception.ErrorCode;
+public class MemberNotFoundException extends RuntimeException{
 
-public class MemberNotFoundException extends BaseException {
+	public static final String ERROR_MESSAGE = "존재하지 않는 사용자입니다.";
 
 	public MemberNotFoundException() {
-		super(ErrorCode.MEMBER_NOT_FOUND);
+		super(ERROR_MESSAGE);
 	}
 }

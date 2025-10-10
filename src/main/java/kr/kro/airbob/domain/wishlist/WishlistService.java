@@ -11,7 +11,6 @@ import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import kr.kro.airbob.common.context.UserContext;
 import kr.kro.airbob.cursor.dto.CursorRequest;
 import kr.kro.airbob.cursor.dto.CursorResponse;
 import kr.kro.airbob.cursor.util.CursorPageInfoCreator;
@@ -22,13 +21,11 @@ import kr.kro.airbob.domain.accommodation.exception.AccommodationNotFoundExcepti
 import kr.kro.airbob.domain.accommodation.repository.AccommodationAmenityRepository;
 import kr.kro.airbob.domain.accommodation.repository.AccommodationRepository;
 import kr.kro.airbob.domain.image.AccommodationImage;
-import kr.kro.airbob.domain.member.entity.Member;
-import kr.kro.airbob.domain.member.repository.MemberRepository;
+import kr.kro.airbob.domain.member.Member;
+import kr.kro.airbob.domain.member.MemberRepository;
 import kr.kro.airbob.domain.member.exception.MemberNotFoundException;
-import kr.kro.airbob.domain.review.entity.AccommodationReviewSummary;
+import kr.kro.airbob.domain.review.AccommodationReviewSummary;
 import kr.kro.airbob.domain.review.repository.AccommodationReviewSummaryRepository;
-import kr.kro.airbob.domain.wishlist.dto.WishlistAccommodationRequest;
-import kr.kro.airbob.domain.wishlist.dto.WishlistAccommodationResponse;
 import kr.kro.airbob.domain.wishlist.dto.WishlistRequest;
 import kr.kro.airbob.domain.wishlist.dto.WishlistResponse;
 import kr.kro.airbob.domain.wishlist.exception.WishlistAccommodationDuplicateException;
@@ -54,10 +51,9 @@ public class WishlistService {
 	private final CursorPageInfoCreator cursorPageInfoCreator;
 
 	@Transactional
-	public WishlistResponse.Create createWishlist(WishlistRequest.Create request) {
+	public WishlistResponse.CreateResponse createWishlist(WishlistRequest.createRequest request, Long loggedInMemberId) {
 
-		Long memberId = getMemberId();
-		final Member member = findMemberById(memberId);
+		final Member member = findMemberById(loggedInMemberId);
 
 		Wishlist wishlist = Wishlist.builder()
 			.name(request.name())
@@ -65,17 +61,17 @@ public class WishlistService {
 			.build();
 
 		Wishlist savedWishlist = wishlistRepository.save(wishlist);
-		return new WishlistResponse.Create(savedWishlist.getId());
+		return new WishlistResponse.CreateResponse(savedWishlist.getId());
 	}
 
 	@Transactional
-	public WishlistResponse.Update updateWishlist(Long wishlistId, WishlistRequest.Update request) {
+	public WishlistResponse.UpdateResponse updateWishlist(Long wishlistId, WishlistRequest.updateRequest request) {
 
 		Wishlist wishlist = findWishlistById(wishlistId);
 
 		wishlist.updateName(request.name());
 
-		return new WishlistResponse.Update(wishlist.getId());
+		return new WishlistResponse.UpdateResponse(wishlist.getId());
 	}
 
 	@Transactional
@@ -89,15 +85,13 @@ public class WishlistService {
 	}
 
 	@Transactional(readOnly = true)
-	public WishlistResponse.WishlistInfos findWishlists(CursorRequest.CursorPageRequest request) {
+	public WishlistResponse.WishlistInfos findWishlists(CursorRequest.CursorPageRequest request, Long loggedInMemberId) {
 
 		Long lastId = request.lastId();
 		LocalDateTime lastCreatedAt = request.lastCreatedAt();
 
-		Long memberId = getMemberId();
-
 		Slice<Wishlist> wishlistSlice = wishlistRepository.findByMemberIdWithCursor(
-			memberId,
+			loggedInMemberId,
 			lastId,
 			lastCreatedAt,
 			PageRequest.of(0, request.size())
@@ -134,8 +128,8 @@ public class WishlistService {
 	}
 
 	@Transactional
-	public WishlistAccommodationResponse.Create createWishlistAccommodation(Long wishlistId,
-		WishlistAccommodationRequest.Create request) {
+	public WishlistResponse.CreateWishlistAccommodationResponse createWishlistAccommodation(Long wishlistId,
+		WishlistRequest.CreateWishlistAccommodationRequest request) {
 
 		Accommodation accommodation = findAccommodationById(request.accommodationId());
 		validateWishlistAccommodationDuplicate(wishlistId, accommodation.getId());
@@ -150,17 +144,17 @@ public class WishlistService {
 		WishlistAccommodation savedWishlistAccommodation
 			= wishlistAccommodationRepository.save(wishlistAccommodation);
 
-		return new WishlistAccommodationResponse.Create(savedWishlistAccommodation.getId());
+		return new WishlistResponse.CreateWishlistAccommodationResponse(savedWishlistAccommodation.getId());
 	}
 
 	@Transactional
-	public WishlistAccommodationResponse.Update updateWishlistAccommodation(
-		Long wishlistAccommodationId, WishlistAccommodationRequest.Update request) {
+	public WishlistResponse.UpdateWishlistAccommodationResponse updateWishlistAccommodation(
+		Long wishlistAccommodationId, WishlistRequest.UpdateWishlistAccommodationRequest request) {
 
 		WishlistAccommodation wishlistAccommodation = findWishlistAccommodation(wishlistAccommodationId);
 		wishlistAccommodation.updateMemo(request.memo());
 
-		return new WishlistAccommodationResponse.Update(wishlistAccommodation.getId());
+		return new WishlistResponse.UpdateWishlistAccommodationResponse(wishlistAccommodation.getId());
 	}
 
 	@Transactional
@@ -172,7 +166,7 @@ public class WishlistService {
 	}
 
 	@Transactional(readOnly = true)
-	public WishlistAccommodationResponse.WishlistAccommodationInfos findWishlistAccommodations(Long wishlistId,
+	public WishlistResponse.WishlistAccommodationInfos findWishlistAccommodations(Long wishlistId,
 		CursorRequest.CursorPageRequest request) {
 
 		Long lastId = request.lastId();
@@ -194,7 +188,7 @@ public class WishlistService {
 				WishlistAccommodation::getId,
 				WishlistAccommodation::getCreatedAt
 			);
-			return new WishlistAccommodationResponse.WishlistAccommodationInfos(List.of(), pageInfo);
+			return new WishlistResponse.WishlistAccommodationInfos(List.of(), pageInfo);
 		}
 
 		List<Long> accommodationIds = wishlistAccommodations.stream().map(wa -> wa.getAccommodation().getId()).toList();
@@ -208,7 +202,7 @@ public class WishlistService {
 		// 숙소 리뷰 평점
 		Map<Long, BigDecimal> ratingMap = getAccommodationRatings(accommodationIds);
 
-		List<WishlistAccommodationResponse.WishlistAccommodationInfo> wishlistAccommodationInfos = wishlistAccommodations.stream()
+		List<WishlistResponse.WishlistAccommodationInfo> wishlistAccommodationInfos = wishlistAccommodations.stream()
 			.map(wa -> {
 				Accommodation accommodation = wa.getAccommodation();
 				Long accommodationId = accommodation.getId();
@@ -222,7 +216,7 @@ public class WishlistService {
 						ratingMap.get(accommodationId)
 					);
 
-				return new WishlistAccommodationResponse.WishlistAccommodationInfo(
+				return new WishlistResponse.WishlistAccommodationInfo(
 					wa.getId(),
 					wa.getMemo(),
 					accommodationInfo
@@ -236,7 +230,7 @@ public class WishlistService {
 			WishlistAccommodation::getCreatedAt
 		);
 
-		return new WishlistAccommodationResponse.WishlistAccommodationInfos(wishlistAccommodationInfos, pageInfo);
+		return new WishlistResponse.WishlistAccommodationInfos(wishlistAccommodationInfos, pageInfo);
 	}
 
 	private Map<Long, List<String>> getAccommodationImageUrls(List<Long> accommodationIds) {
@@ -304,9 +298,5 @@ public class WishlistService {
 		if (wishlistAccommodationRepository.existsByWishlistIdAndAccommodationId(wishlistId, accommodationId)) {
 			throw new WishlistAccommodationDuplicateException();
 		}
-	}
-
-	private Long getMemberId() {
-		return UserContext.get().id();
 	}
 }

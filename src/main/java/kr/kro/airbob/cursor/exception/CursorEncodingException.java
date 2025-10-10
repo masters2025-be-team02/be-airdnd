@@ -1,15 +1,18 @@
 package kr.kro.airbob.cursor.exception;
 
-import kr.kro.airbob.common.exception.BaseException;
-import kr.kro.airbob.common.exception.ErrorCode;
+public class CursorEncodingException extends RuntimeException {
 
-public class CursorEncodingException extends BaseException {
-
-	public CursorEncodingException() {
-		super(ErrorCode.CURSOR_ENCODING_ERROR);
-	}
+	public static final String ERROR_MESSAGE = "커서 인코딩 중 예외가 발생하였습니다.";
 
 	public CursorEncodingException(String message) {
-		super(message, ErrorCode.CURSOR_ENCODING_ERROR);
+		super(message);
+	}
+
+	public CursorEncodingException() {
+		super(ERROR_MESSAGE);
+	}
+
+	public CursorEncodingException(String message, Throwable cause) {
+		super(message, cause);
 	}
 }

@@ -1,11 +1,10 @@
 package kr.kro.airbob.domain.accommodation.exception;
 
-import kr.kro.airbob.common.exception.BaseException;
-import kr.kro.airbob.common.exception.ErrorCode;
+public class AccommodationNotFoundException extends RuntimeException {
 
-public class AccommodationNotFoundException extends BaseException {
+    public static final String ERROR_MESSAGE = "존재하지 않는 숙소입니다.";
 
     public AccommodationNotFoundException() {
-        super(ErrorCode.ACCOMMODATION_NOT_FOUND);
+        super(ERROR_MESSAGE);
     }
 }

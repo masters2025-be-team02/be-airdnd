@@ -1,11 +1,10 @@
 package kr.kro.airbob.domain.member.exception;
 
-import kr.kro.airbob.common.exception.BaseException;
-import kr.kro.airbob.common.exception.ErrorCode;
+public class DuplicatedEmailException extends RuntimeException{
 
-public class DuplicatedEmailException extends BaseException {
+	public static final String ERROR_MESSAGE = "이미 존재하는 이메일입니다.";
 
 	public DuplicatedEmailException() {
-		super(ErrorCode.EMAIL_DUPLICATION);
+		super(ERROR_MESSAGE);
 	}
 }

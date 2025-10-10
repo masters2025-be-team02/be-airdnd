@@ -1,11 +1,10 @@
 package kr.kro.airbob.domain.review.exception;
 
-import kr.kro.airbob.common.exception.BaseException;
-import kr.kro.airbob.common.exception.ErrorCode;
+public class ReviewSummaryNotFoundException extends RuntimeException{
 
-public class ReviewSummaryNotFoundException extends BaseException {
+	private static final String ERROR_MESSAGE = "존재하지 않는 숙소 리뷰 요약입니다.";
 
 	public ReviewSummaryNotFoundException() {
-		super(ErrorCode.REVIEW_SUMMARY_NOT_FOUND);
+		super(ERROR_MESSAGE);
 	}
 }

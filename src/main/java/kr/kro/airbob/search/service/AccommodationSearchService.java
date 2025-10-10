@@ -16,7 +16,6 @@ import org.springframework.data.elasticsearch.core.query.Criteria;
 import org.springframework.data.elasticsearch.core.query.CriteriaQuery;
 import org.springframework.stereotype.Service;
 
-import kr.kro.airbob.common.context.UserContext;
 import kr.kro.airbob.domain.wishlist.repository.WishlistAccommodationRepository;
 import kr.kro.airbob.geo.GeocodingService;
 import kr.kro.airbob.geo.IpCountryService;
@@ -40,7 +39,7 @@ public class AccommodationSearchService {
 	private final WishlistAccommodationRepository wishlistAccommodationRepository;
 
 	public AccommodationSearchResponse.AccommodationSearchInfos searchAccommodations(
-		AccommodationSearchRequest.AccommodationSearchRequestDto searchRequest, String clientIp,
+		AccommodationSearchRequest.AccommodationSearchRequestDto searchRequest, Long memberId, String clientIp,
 		AccommodationSearchRequest.MapBoundsDto mapBounds, Pageable pageable) {
 
 		// 요청 검증
@@ -72,7 +71,7 @@ public class AccommodationSearchService {
 		}
 
 		List<Long> accommodationIds = documents.stream().map(AccommodationDocument::accommodationId).toList();
-		Long memberId = getMemberId();
+
 		Set<Long> wishlistAccommodationIds = getWishlistAccommodationIds(accommodationIds, memberId);
 
 		List<AccommodationSearchResponse.AccommodationSearchInfo> searchInfos = documents.stream()
@@ -245,9 +244,5 @@ public class AccommodationSearchService {
 
 		return wishlistAccommodationRepository.findAccommodationIdsByMemberIdAndAccommodationIds(memberId,
 			accommodationIds);
-	}
-
-	private Long getMemberId() {
-		return UserContext.get().id();
 	}
 }

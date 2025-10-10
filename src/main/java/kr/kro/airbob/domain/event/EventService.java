@@ -61,7 +61,7 @@ public class EventService {
         return ApplyResult.valueOf(result.toUpperCase());
     }
 
-    @Async("generalTaskExecutor")
+    @Async
     public void consumeQueue(Long eventId) {
         String queueKey = "event:" + eventId + ":queue";
 
