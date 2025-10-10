@@ -2,10 +2,8 @@ package kr.kro.airbob.geo;
 
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestTemplate;
 
 import kr.kro.airbob.geo.dto.GeocodeResult;
@@ -15,13 +13,10 @@ import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class IpCountryService {
 
-	private final RestClient restClient;
-
-	public IpCountryService(@Qualifier("generalRestClient") RestClient restClient) {
-		this.restClient = restClient;
-	}
+	private final RestTemplate restTemplate;
 
 	@Value("${ipinfo.api.token}")
 	private String ipinfoToken;
@@ -29,11 +24,7 @@ public class IpCountryService {
 	public Optional<GeocodeResult> getCountryFromIp(String ip) {
 		try {
 			String url = String.format("https://ipinfo.io/lite/%s?token=%s", ip, ipinfoToken);
-
-			IpInfoResponse response = restClient.get()
-				.uri(url)
-				.retrieve()
-				.body(IpInfoResponse.class);
+			IpInfoResponse response = restTemplate.getForObject(url, IpInfoResponse.class);
 
 			if (response != null) {
 				return Optional.of(GeocodeResult.builder()

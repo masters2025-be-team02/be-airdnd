@@ -1,11 +1,10 @@
 package kr.kro.airbob.domain.auth.exception;
 
-import kr.kro.airbob.common.exception.BaseException;
-import kr.kro.airbob.common.exception.ErrorCode;
+public class NotEqualHostException extends RuntimeException{
 
-public class NotEqualHostException extends BaseException {
+	public static final String ERROR_MESSAGE = "호스트와 다른 사용자입니다.";
 
 	public NotEqualHostException() {
-		super(ErrorCode.HOST_ACCESS_DENIED);
+		super(ERROR_MESSAGE);
 	}
 }

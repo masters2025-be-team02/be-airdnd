@@ -1,16 +1,17 @@
 package kr.kro.airbob.domain.discountPolicy;
 
-import java.util.List;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import kr.kro.airbob.domain.discountPolicy.dto.DiscountPolicyRequest;
-import kr.kro.airbob.domain.discountPolicy.dto.DiscountPolicyResponse;
+import kr.kro.airbob.domain.discountPolicy.dto.request.DiscountPolicyCreateDto;
+import kr.kro.airbob.domain.discountPolicy.dto.request.DiscountPolicyUpdateDto;
+import kr.kro.airbob.domain.discountPolicy.dto.response.DiscountPolicyResponseDto;
 import kr.kro.airbob.domain.discountPolicy.entity.DiscountPolicy;
 import kr.kro.airbob.domain.discountPolicy.exception.DiscountNotFoundException;
 import kr.kro.airbob.domain.discountPolicy.repository.DiscountPolicyRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -19,24 +20,19 @@ public class DiscountPolicyService {
     private final DiscountPolicyRepository discountPolicyRepository;
 
     @Transactional(readOnly = true)
-    public DiscountPolicyResponse.DiscountPolicyInfos findValidDiscountPolicies() {
-        List<DiscountPolicy> discountPolicies = discountPolicyRepository.findByIsActiveTrue();
-        List<DiscountPolicyResponse.DiscountPolicyInfo> infos = discountPolicies.stream()
-            .map(DiscountPolicyResponse.DiscountPolicyInfo::of)
-            .toList();
-
-        return new DiscountPolicyResponse.DiscountPolicyInfos(infos);
+    public List<DiscountPolicyResponseDto> findValidDiscountPolicies() {
+        return new ArrayList<>(discountPolicyRepository.findActiveDiscountPolicies());
     }
 
     @Transactional
-    public void createDiscountPolicy(DiscountPolicyRequest.Create discountPolicyCreateDto) {
+    public void createDiscountPolicy(DiscountPolicyCreateDto discountPolicyCreateDto) {
         DiscountPolicy discountPolicy = DiscountPolicy.of(discountPolicyCreateDto);
 
         discountPolicyRepository.save(discountPolicy);
     }
 
     @Transactional
-    public void updateDiscountPolicy(DiscountPolicyRequest.Update discountPolicyUpdateDto, Long discountPolicyId) {
+    public void updateDiscountPolicy(DiscountPolicyUpdateDto discountPolicyUpdateDto, Long discountPolicyId) {
         DiscountPolicy discountPolicy = discountPolicyRepository.findById(discountPolicyId)
                 .orElseThrow(DiscountNotFoundException::new);
 

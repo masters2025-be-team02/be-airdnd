@@ -1,19 +1,16 @@
 package kr.kro.airbob.domain.auth.filter;
 
-import java.io.IOException;
-
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
-
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import kr.kro.airbob.common.context.UserContext;
-import kr.kro.airbob.common.context.UserInfo;
+import java.io.IOException;
+import java.util.Optional;
 import kr.kro.airbob.domain.auth.common.SessionUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
 
 @Component
 @Slf4j
@@ -49,16 +46,11 @@ public class SessionAuthFilter extends OncePerRequestFilter {
             return;
         }
 
-        try {
-            long memberId = checkMemberIdType(sessionId);
+        long memberId = checkMemberIdType(sessionId);
 
-            UserInfo userInfo = new UserInfo(memberId);
-            UserContext.set(userInfo);
+        request.setAttribute("memberId", memberId);
 
-            filterChain.doFilter(request, response);
-        } finally{
-            UserContext.clear();
-        }
+        filterChain.doFilter(request, response);
     }
 
     private long checkMemberIdType(String sessionId) {

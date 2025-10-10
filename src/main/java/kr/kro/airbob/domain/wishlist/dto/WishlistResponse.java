@@ -5,19 +5,18 @@ import java.util.List;
 
 import kr.kro.airbob.cursor.dto.CursorResponse;
 import kr.kro.airbob.domain.accommodation.dto.AccommodationResponse;
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class WishlistResponse {
 
+	private WishlistResponse() {
+	}
 
-	public record Create(
+	public record CreateResponse(
 		long id
 	) {
 	}
 
-	public record Update(
+	public record UpdateResponse(
 		long id
 	) {
 	}
@@ -37,5 +36,26 @@ public class WishlistResponse {
 	) {
 	}
 
+	public record CreateWishlistAccommodationResponse(
+		long id
+	) {
+	}
 
+	public record UpdateWishlistAccommodationResponse(
+		long id
+	) {
+	}
+
+	public record WishlistAccommodationInfos(
+		List<WishlistResponse.WishlistAccommodationInfo> wishlistAccommodations,
+		CursorResponse.PageInfo pageInfo
+	) {
+	}
+
+	public record WishlistAccommodationInfo(
+		long id,
+		String name,
+		AccommodationResponse.WishlistAccommodationInfo accommodationInfo
+	) {
+	}
 }
