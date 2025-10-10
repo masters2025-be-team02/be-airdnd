@@ -16,12 +16,13 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 
+import kr.kro.airbob.common.context.UserContext;
 import kr.kro.airbob.domain.accommodation.dto.AccommodationResponse;
 import kr.kro.airbob.domain.accommodation.entity.Accommodation;
 import kr.kro.airbob.domain.accommodation.entity.AccommodationAmenity;
 import kr.kro.airbob.domain.accommodation.repository.AccommodationAmenityRepository;
 import kr.kro.airbob.domain.accommodation.repository.AccommodationRepository;
-import kr.kro.airbob.domain.review.AccommodationReviewSummary;
+import kr.kro.airbob.domain.review.entity.AccommodationReviewSummary;
 import kr.kro.airbob.domain.review.repository.AccommodationReviewSummaryRepository;
 import kr.kro.airbob.domain.wishlist.repository.WishlistAccommodationRepository;
 import lombok.RequiredArgsConstructor;
@@ -42,7 +43,8 @@ public class RecentlyViewedService {
 	private static final int MAX_COUNT = 100;
 	private static final long TTL_DAYS = 7;
 
-	public void addRecentlyViewed(Long memberId, Long accommodationId) {
+	public void addRecentlyViewed(Long accommodationId) {
+		Long memberId = getMemberId();
 		String key = RECENTLY_VIEWED_KEY_PREFIX + memberId;
 		long timestamp = System.currentTimeMillis();
 
@@ -55,12 +57,14 @@ public class RecentlyViewedService {
 		redisTemplate.expire(key, Duration.ofDays(TTL_DAYS));
 	}
 
-	public void removeRecentlyViewed(Long memberId, Long accommodationId) {
+	public void removeRecentlyViewed(Long accommodationId) {
+		Long memberId = getMemberId();
 		String key = RECENTLY_VIEWED_KEY_PREFIX + memberId;
 		redisTemplate.opsForZSet().remove(key, accommodationId.toString());
 	}
 
-	public AccommodationResponse.RecentlyViewedAccommodations getRecentlyViewed(Long memberId) {
+	public AccommodationResponse.RecentlyViewedAccommodations getRecentlyViewed() {
+		Long memberId = getMemberId();
 		String key = RECENTLY_VIEWED_KEY_PREFIX + memberId;
 
 		Set<ZSetOperations.TypedTuple<String>> recentlyViewedWithScores = redisTemplate.opsForZSet()
@@ -73,39 +77,41 @@ public class RecentlyViewedService {
 				.build();
 		}
 
-		List<Long> accommodationIds = recentlyViewedWithScores.stream()
+		// Redis에서 모든 ID를 Set으로 추출
+		Set<Long> accommodationIdsFromRedis = recentlyViewedWithScores.stream()
 			.map(tuple -> Long.parseLong(tuple.getValue()))
-			.toList();
+			.collect(Collectors.toSet());
 
-		// 숙소 조회
-		List<Accommodation> accommodations = accommodationRepository.findByIdIn(accommodationIds);
-
-		// 순서를 위한 Map
-		Map<Long, Accommodation> accommodationMap = accommodations.stream()
+		// DB에서 존재하는 숙소 정보만 조회
+		List<Accommodation> accommodationsInDb = accommodationRepository.findByIdIn(new ArrayList<>(accommodationIdsFromRedis));
+		Map<Long, Accommodation> accommodationMap = accommodationsInDb.stream()
 			.collect(Collectors.toMap(Accommodation::getId, accommodation -> accommodation));
 
-		// 숙소 리뷰 개수
-		Map<Long, BigDecimal> reviewRatingMap = getReviewRatingMap(accommodationIds);
+		Set<Long> existingIdsInDb = accommodationMap.keySet();
+		List<String> idsToDeleteFromRedis = accommodationIdsFromRedis.stream()
+			.filter(id -> !existingIdsInDb.contains(id))
+			.map(String::valueOf)
+			.toList();
 
-		// 어매니티
-		Map<Long, List<AccommodationResponse.AmenityInfoResponse>> amenityMap = getAmenityMap(accommodationIds);
+		if (!idsToDeleteFromRedis.isEmpty()) {
+			log.info("Redis에서 삭제된 숙소 ID 제거: {}", idsToDeleteFromRedis);
+			redisTemplate.opsForZSet().remove(key, idsToDeleteFromRedis.toArray(new Object[0]));
+		}
 
-		// 위시리스트 여부
-		Map<Long, Boolean> wishlistMap = getWishlistMap(memberId, accommodationIds);
+		List<Long> existingIdList = new ArrayList<>(existingIdsInDb);
+		Map<Long, BigDecimal> reviewRatingMap = getReviewRatingMap(existingIdList);
+		Map<Long, List<AccommodationResponse.AmenityInfoResponse>> amenityMap = getAmenityMap(existingIdList);
+		Map<Long, Boolean> wishlistMap = getWishlistMap(memberId, existingIdList);
 
-		// 조합
 		List<AccommodationResponse.RecentlyViewedAccommodation> recentlyViewedAccommodations = recentlyViewedWithScores.stream()
 			.map(tuple -> {
 				Long accommodationId = Long.parseLong(tuple.getValue());
 				Accommodation accommodation = accommodationMap.get(accommodationId);
 
 				if (accommodation == null) {
-					// 삭제된 숙소인 경우 redis에서도 제거
-					redisTemplate.opsForZSet().remove(key, accommodationId.toString());
 					return null;
 				}
 
-				// 조회 시각 (score)
 				LocalDateTime viewAt = Instant.ofEpochMilli(tuple.getScore().longValue())
 					.atZone(ZoneId.systemDefault())
 					.toLocalDateTime();
@@ -115,13 +121,13 @@ public class RecentlyViewedService {
 					.accommodationId(accommodationId)
 					.accommodationName(accommodation.getName())
 					.thumbnailUrl(accommodation.getThumbnailUrl())
-					.amenities(amenityMap.getOrDefault(accommodationId, new ArrayList<>()))
+					.amenities(amenityMap.getOrDefault(accommodationId, List.of()))
 					.averageRating(reviewRatingMap.get(accommodationId))
 					.isInWishlist(wishlistMap.getOrDefault(accommodationId, false))
 					.build();
 			})
 			.filter(Objects::nonNull)
-			.collect(Collectors.toList());
+			.toList();
 
 		return AccommodationResponse.RecentlyViewedAccommodations.builder()
 			.accommodations(recentlyViewedAccommodations)
@@ -168,5 +174,9 @@ public class RecentlyViewedService {
 					),
 					Collectors.toList()
 				)));
+	}
+
+	private Long getMemberId() {
+		return UserContext.get().id();
 	}
 }
